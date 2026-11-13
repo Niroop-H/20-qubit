@@ -24,7 +24,9 @@ export const StateVectorView: React.FC<StateVectorViewProps> = ({
         <p className="text-[10px] text-neutral-400 pb-3">
           Showing {info.shownStates.toLocaleString()} strongest amplitudes of {info.nonZeroStates.toLocaleString()} non-zero states
           ({info.totalStates.toLocaleString()} possible basis states).
-          {info.truncated ? " This is a ranked summary, not the full statevector." : ""}
+          {info.truncated
+            ? ` Retained probability mass: ${(100 * info.retainedProbabilityMass).toPrecision(4)}%; omitted: ${(100 * info.omittedProbabilityMass).toPrecision(4)}%.`
+            : ""}
         </p>
       )}
       <table className="w-full text-left text-[11px] font-mono">
@@ -65,7 +67,7 @@ export const StateVectorView: React.FC<StateVectorViewProps> = ({
                       />
                     </div>
                     <span className="text-white text-[10px]">
-                      {(prob * 100).toFixed(1)}%
+                      {(prob * 100 < 0.01 ? (prob * 100).toExponential(2) : (prob * 100).toFixed(2))}%
                     </span>
                   </div>
                 </td>
