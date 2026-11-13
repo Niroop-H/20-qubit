@@ -1,4 +1,5 @@
 import React from "react";
+import { MAX_QUBITS } from "../../../engine/src/studio/model";
 import {
   Play,
   Settings2,
@@ -42,7 +43,7 @@ export const CircuitControls: React.FC<HeaderProps> = ({
             onChange={(e) => setQubits(Number(e.target.value))}
             disabled={isRunning}
           >
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+            {Array.from({ length: MAX_QUBITS }, (_, i) => i + 1).map((n) => (
               <option key={n} value={n}>
                 {n.toString().padStart(2, "0")}
               </option>

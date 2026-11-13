@@ -3,10 +3,12 @@ import { SimulationResult } from "../types";
 
 interface StateVectorViewProps {
   stateVector: SimulationResult["stateVector"];
+  info?: SimulationResult["stateVectorInfo"];
 }
 
 export const StateVectorView: React.FC<StateVectorViewProps> = ({
-  stateVector
+  stateVector,
+  info,
 }) => {
   if (!stateVector || stateVector.length === 0) {
     return (
@@ -18,6 +20,13 @@ export const StateVectorView: React.FC<StateVectorViewProps> = ({
 
   return (
     <div className="overflow-y-auto h-full">
+      {info && (
+        <p className="text-[10px] text-neutral-400 pb-3">
+          Showing {info.shownStates.toLocaleString()} strongest amplitudes of {info.nonZeroStates.toLocaleString()} non-zero states
+          ({info.totalStates.toLocaleString()} possible basis states).
+          {info.truncated ? " This is a ranked summary, not the full statevector." : ""}
+        </p>
+      )}
       <table className="w-full text-left text-[11px] font-mono">
         <thead>
           <tr className="border-b border-ibm-gray text-neutral-500 uppercase text-[9px] tracking-wider">

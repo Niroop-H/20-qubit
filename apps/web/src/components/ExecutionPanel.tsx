@@ -145,7 +145,7 @@ export const ExecutionPanel: React.FC<ExecutionPanelProps> = ({
             shots={shots}
           />
         ) : (
-          <StateVectorView stateVector={result.stateVector} />
+          <StateVectorView stateVector={result.stateVector} info={result.stateVectorInfo} />
         )}
       </div>
     </div>
