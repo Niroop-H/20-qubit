@@ -5,8 +5,9 @@
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {performance} from "node:perf_hooks";
-import {mkdirSync,writeFileSync} from "node:fs";
+import {mkdirSync,writeFileSync,readFileSync} from "node:fs";
 import {chromium} from "playwright";
+import {createHash} from "node:crypto";
 const base="http://127.0.0.1:4173", evidence=[],started=performance.now();
 let server,browser;
 const test=async(name,action)=>{
@@ -115,6 +116,24 @@ async function main(){
   assert.ok(text.includes("Clifford stabilizer tableau"));
   assert.ok(text.includes("1,000"));
   return{qubits:1000,completed:true,exactClifford:true};
+ });
+ await test("1000-qubit experiment exports a reproducible signed-input evidence record",async()=>{
+  const downloadReady=page.waitForEvent("download",{timeout:15000});
+  await page.getByRole("button",{name:"Download reproducible JSON"}).click();
+  const downloaded=await downloadReady;
+  assert.match(downloaded.suggestedFilename(),/1000Q-experiment\.json/);
+  const path=await downloaded.path();
+  assert.ok(path,"Download path unavailable");
+  const evidence=JSON.parse(readFileSync(path,"utf8"));
+  assert.equal(evidence.schema,"MAH-Quantum-Experiment/v1");
+  assert.equal(evidence.circuit.logicalQubits,1000);
+  assert.equal(evidence.execution.requestedShots,256);
+  assert.equal(evidence.execution.completedShots,256);
+  assert.equal(evidence.execution.method,"stabilizer-tableau");
+  assert.equal(evidence.execution.exactForSupportedCircuit,true);
+  assert.equal(evidence.circuit.sha256,createHash("sha256").update(evidence.circuit.openQasm).digest("hex"));
+  assert.equal(Object.values(evidence.measurement.counts).reduce((a,b)=>a+b,0),256);
+  return{sha256Verified:true,qubits:1000,shots:256,method:"stabilizer-tableau"};
  });
  await test("2048-qubit Hadamard preset executes without statevector",async()=>{
   await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("2048");
