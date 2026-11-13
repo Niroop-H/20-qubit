@@ -156,7 +156,7 @@ const badCases=[
  ["21 width",()=>new QuantumCircuit(21)],
  ["noninteger width",()=>new QuantumCircuit(2.5)],
  ["negative width QASM",()=>qasm("x q[0];",0)],
- ["21 quantum QASM",()=>qasm("x q[0];",21)],
+ ["101 quantum QASM",()=>qasm("x q[0];",101)],
  ["duplicate step identifier",()=>validateProgram({qubits:2,bits:2,steps:[{id:"dup",gate:"H",targets:[0]},{id:"dup",gate:"H",targets:[1]}]})],
  ["target above width",()=>validateProgram({qubits:2,bits:2,steps:[{id:"out",gate:"X",targets:[2]}]})],
  ["control equals target",()=>validateProgram({qubits:2,bits:2,steps:[{id:"equal",gate:"CX",targets:[0],controls:[0]}]})],
@@ -169,7 +169,7 @@ const badCases=[
  ["negative seed",()=>simulate(qasm("x q[0];",1),64,-1)],
  ["seed beyond uint32",()=>simulate(qasm("x q[0];",1),64,4294967296)],
  ["oversize noisy work",()=>simulate(qasm("h q;"),8192,1,{...noise,enabled:true})],
- ["bad request schema",()=>simulateRequest({qubits:21,bits:21,steps:[],shots:64,seed:1})],
+ ["bad request schema",()=>simulateRequest({qubits:101,bits:101,steps:[],shots:64,seed:1})],
 ];
 for(const [name,fn] of badCases)caseRun("negative validation",name,()=>{
  assert.throws(fn);return {rejected:true};
