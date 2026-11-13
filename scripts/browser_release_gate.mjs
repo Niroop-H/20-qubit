@@ -42,7 +42,7 @@ async function main(){
   await page.getByRole("link",{name:/1000\+ Qubit workspace/i}).waitFor({timeout:25000});
   const copy=await page.locator(".landing").innerText();
   assert.ok(copy.includes("CONTROLLED WORKSPACE ACCESS"));
-  assert.ok(copy.includes("100 logical qubits"));
+  assert.match(copy,/100\s+logical qubits/i);
   assert.ok(!copy.includes("NO SIGN-UP REQUIRED"));
   return{controlledAccessDisclosure:true,largeWorkspaceLinked:true};
  });
