@@ -190,8 +190,13 @@ async function main(){
   return{rejected:true,maxConnectedQubits:18,misleadingOutput:false};
  });
  await test("Mobile-width 1000+ workspace remains usable with no page-level horizontal overflow",async()=>{
-  const mobile=await page.context().newPage();
-  await mobile.setViewportSize({width:390,height:844});
+  const mobileContext=await browser.newContext({viewport:{width:390,height:844}});
+  await mobileContext.addInitScript(()=>{
+   localStorage.setItem("mah-workspace-access-v1",JSON.stringify({
+    version:1,active:"c0",codes:{"c0":{usedMs:0,cooldownUntil:0}},owner:null,heartbeat:0
+   }));
+  });
+  const mobile=await mobileContext.newPage();
   try{
    await mobile.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
    await mobile.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:25000});
@@ -201,7 +206,7 @@ async function main(){
    await mobile.getByRole("button",{name:"Run quantum circuit"}).click();
    await mobile.locator(".large-telemetry").getByText("Clifford stabilizer tableau").waitFor({timeout:60000});
    return{viewportPx:widths.viewport,pagePx:widths.page,executed:true};
-  }finally{await mobile.close();}
+  }finally{await mobileContext.close();}
  });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
