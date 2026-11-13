@@ -97,6 +97,14 @@ async function main(){
   await page.getByText(/No 2\^n amplitude array is allocated/).waitFor({timeout:10000});
   return{bounded:true};
  });
+ await test("100-qubit Studio executes non-Clifford entanglement in independent cluster",async()=>{
+  await page.getByRole("tab",{name:"Code"}).click();
+  const src='OPENQASM 2.0;\nqreg q[100];\ncreg c[100];\nh q[0];\nt q[0];\ncx q[0],q[99];\nh q[99];\n';
+  await page.getByRole("textbox",{name:"Quantum code editor"}).fill(src);
+  await page.getByRole("button",{name:"Compile & run"}).click();
+  await page.locator(".result-telemetry").filter({hasText:"Exact partitioned statevector"}).waitFor({timeout:60000});
+  return{qubits:100,method:"partitioned statevector",completed:true};
+ });
  await test("1000+ dedicated page runs exact 1000-qubit GHZ in Chromium worker",async()=>{
   const response=await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
   assert.equal(response?.status(),200);
@@ -119,12 +127,22 @@ async function main(){
   assert.ok(text.includes("32 / 32"));
   return{qubits:2048,shots:32,completed:true};
  });
- await test("1000-qubit non-Clifford entangling workload is rejected",async()=>{
-  const src='OPENQASM 2.0;\nqreg q[1000];\ncreg c[1000];\nh q[0];\nt q[0];\ncx q[0],q[999];\n';
+ await test("1000-qubit non-Clifford entanglement runs when its cluster is bounded",async()=>{
+  const src='OPENQASM 2.0;\nqreg q[1000];\ncreg c[1000];\nh q[0];\nt q[0];\ncx q[0],q[999];\nh q[999];\n';
   await page.getByRole("textbox",{name:"Large quantum QASM code"}).fill(src);
   await page.getByRole("button",{name:"Run quantum circuit"}).click();
-  await page.getByRole("alert").filter({hasText:/non-Clifford/i}).waitFor({timeout:20000});
-  return{rejected:true,misleadingOutput:false};
+  await page.getByText("Partitioned exact statevectors").waitFor({timeout:30000});
+  const text=await page.locator(".large-results").innerText();
+  assert.ok(text.includes("1,000"));
+  return{qubits:1000,method:"partitioned statevector",completed:true};
+ });
+ await test("1000-qubit oversized non-Clifford entangled cluster rejects safely",async()=>{
+  const lines=['OPENQASM 2.0;','qreg q[1000];','creg c[1000];','h q[0];','t q[0];'];
+  for(let q=1;q<19;q++)lines.push('cx q['+(q-1)+'],q['+q+'];');
+  await page.getByRole("textbox",{name:"Large quantum QASM code"}).fill(lines.join('\n'));
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.getByRole("alert").filter({hasText:/19 qubits/i}).waitFor({timeout:30000});
+  return{rejected:true,maxConnectedQubits:18,misleadingOutput:false};
  });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
