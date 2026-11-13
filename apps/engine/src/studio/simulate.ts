@@ -26,6 +26,12 @@ export interface StudioResult {
     nonZeroStates: number;
     shownStates: number;
     truncated: boolean;
+    retainedProbabilityMass: number;
+    omittedProbabilityMass: number;
+  };
+  distributionInfo: {
+    shownOutcomes: number;
+    omittedIdealProbabilityMass: number;
   };
   bloch: Bloch[];
   executionTimeMs: number;
@@ -63,6 +69,7 @@ export function summarizeState(c: QuantumCircuit, limit = 128) {
     best.splice(lo, 0, { index: i, probability });
     if (best.length > limit) best.pop();
   }
+  const retainedProbabilityMass = best.reduce((sum, state) => sum + state.probability, 0);
   const stateVector = best.map(({ index }) => ({
     state: "|" + index.toString(2).padStart(c.numQubits, "0") + "⟩",
     real: c.real[index],
@@ -77,6 +84,8 @@ export function summarizeState(c: QuantumCircuit, limit = 128) {
       nonZeroStates,
       shownStates: stateVector.length,
       truncated: nonZeroStates > stateVector.length,
+      retainedProbabilityMass: Math.min(1, retainedProbabilityMass),
+      omittedProbabilityMass: Math.max(0, 1 - retainedProbabilityMass),
     },
   };
 }
@@ -313,6 +322,9 @@ export function simulate(
     idealProbabilities[label] = idealDistribution[index];
     probabilities[label] = (counts[label] ?? 0) / shots;
   }
+  const omittedIdealProbabilityMass = Math.max(
+    0, 1 - Array.from(keys).reduce((sum, index) => sum + idealDistribution[index], 0)
+  );
   const { stateVector, stateVectorInfo } = summarizeState(ideal);
   onProgress?.(1);
   return {
@@ -321,6 +333,10 @@ export function simulate(
     idealProbabilities,
     stateVector,
     stateVectorInfo,
+    distributionInfo: {
+      shownOutcomes: keys.size,
+      omittedIdealProbabilityMass,
+    },
     bloch: blochVectors(ideal),
     seed,
     executionTimeMs: performance.now() - start,
