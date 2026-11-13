@@ -72,7 +72,7 @@ export function parseLargeQasm(source:string):LargeProgram{
    if(!hit)throw new Error("Unsupported syntax (loops and custom gates are unavailable).");
    const name=hit[1].toLowerCase(),args=hit[2]===undefined?[]:hit[2].split(",").map(expression);
    const nargs:{[gate:string]:number}={id:0,h:0,x:0,y:0,z:0,s:0,t:0,sdg:0,tdg:0,rx:1,ry:1,rz:1,u:3,u3:3,cx:0,cz:0,swap:0,ccx:0};
-   if(!(name in nargs))throw new Error("Unsupported scalable instruction "+name);
+   if(!Object.prototype.hasOwnProperty.call(nargs,name))throw new Error("Unsupported scalable instruction "+name);
    if(args.length!==nargs[name])throw new Error(name+" expects "+nargs[name]+" angle parameters.");
    const operands=hit[3].split(",").map(s=>address(s,"q"));
    const arity=name==="ccx"?3:["cx","cz","swap"].includes(name)?2:1;
