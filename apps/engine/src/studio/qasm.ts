@@ -1,4 +1,4 @@
-import { Program, Step, validateProgram, MAX_STEPS } from "./model";
+import { Program, Step, validateProgram, MAX_STEPS, MAX_QUBITS } from "./model";
 
 /** Recursive-descent arithmetic only; never evaluates JavaScript or Python. */
 export function expression(source: string): number {
@@ -133,8 +133,8 @@ export function parseQasm(source: string): Program {
           cname = m[2];
           p.bits = Number(m[3]);
         }
-        if (Number(m[3]) < 1 || Number(m[3]) > 8)
-          throw new Error("Registers support 1–8 bits.");
+        if (Number(m[3]) < 1 || Number(m[3]) > MAX_QUBITS)
+          throw new Error("Registers support 1–" + MAX_QUBITS + " bits.");
         continue;
       }
       if ((m = /^(qubit|bit)\[(\d+)\]\s+([a-zA-Z_]\w*)$/.exec(text))) {
@@ -150,8 +150,8 @@ export function parseQasm(source: string): Program {
           cname = m[3];
           p.bits = Number(m[2]);
         }
-        if (Number(m[2]) < 1 || Number(m[2]) > 8)
-          throw new Error("Registers support 1–8 bits.");
+        if (Number(m[2]) < 1 || Number(m[2]) > MAX_QUBITS)
+          throw new Error("Registers support 1–" + MAX_QUBITS + " bits.");
         continue;
       }
       if (!qname) throw new Error("Declare a quantum register first.");
