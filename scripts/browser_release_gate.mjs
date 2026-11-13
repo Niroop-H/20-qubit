@@ -41,7 +41,7 @@ async function main(){
   await page.getByRole("combobox",{name:"Qubit count"}).waitFor({timeout:30000});
   const select=page.getByRole("combobox",{name:"Qubit count"});
   const options=await select.locator("option").allTextContents();
-  assert.equal(options.length,20);
+  assert.equal(options.length,100);
   await select.selectOption("20");
   assert.equal(await select.inputValue(),"20");
   return{qubitOptions:options.length,selected:20};
@@ -63,8 +63,8 @@ async function main(){
  });
  await test("QASM code editor declares 20-qubit capability",async()=>{
   await page.getByRole("tab",{name:"Code"}).click();
-  await page.getByText(/1–20 logical qubits/).waitFor({timeout:10000});
-  return{capabilityLabel:"1–20 logical qubits"};
+  await page.getByText(/1–100 logical qubits/).waitFor({timeout:10000});
+  return{capabilityLabel:"1–100 logical qubits"};
  });
  await test("20-bit long-range Bell QASM compiles and executes in browser",async()=>{
   const source='OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[20];\ncreg c[20];\nh q[0];\ncx q[0],q[19];\n';
@@ -83,6 +83,49 @@ async function main(){
   assert.ok(text.includes("8,192"));
   return{shots:8192,completed:true};
  });
+ await test("100-qubit Studio runs true q0–q99 Bell circuit",async()=>{
+  await page.getByRole("tab",{name:"Code"}).click();
+  const src='OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[100];\ncreg c[100];\nh q[0];\ncx q[0],q[99];\n';
+  await page.getByRole("textbox",{name:"Quantum code editor"}).fill(src);
+  await page.getByRole("button",{name:"Compile & run"}).click();
+  await page.locator(".result-telemetry").filter({hasText:"Exact Clifford stabilizer tableau"}).waitFor({timeout:60000});
+  assert.equal(await page.getByRole("combobox",{name:"Qubit count"}).inputValue(),"100");
+  return{qubits:100,backend:"exact Clifford tableau",completed:true};
+ });
+ await test("100-qubit state inspector rejects full dense amplitude view honestly",async()=>{
+  await page.getByRole("tab",{name:"Inspector"}).click();
+  await page.getByText(/No 2\^n amplitude array is allocated/).waitFor({timeout:10000});
+  return{bounded:true};
+ });
+ await test("1000+ dedicated page runs exact 1000-qubit GHZ in Chromium worker",async()=>{
+  const response=await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  assert.equal(response?.status(),200);
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.getByText("Exact Z-basis support dimension").waitFor({timeout:60000});
+  const text=await page.locator(".large-results").innerText();
+  assert.ok(text.includes("Clifford stabilizer tableau"));
+  assert.ok(text.includes("1,000"));
+  return{qubits:1000,completed:true,exactClifford:true};
+ });
+ await test("2048-qubit Hadamard preset executes without statevector",async()=>{
+  await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("2048");
+  await page.getByRole("combobox",{name:"Large circuit preset"}).selectOption("plus");
+  await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("32");
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.getByText("Exact Z-basis support dimension").waitFor({timeout:60000});
+  const text=await page.locator(".large-results").innerText();
+  assert.ok(text.includes("2,048"));
+  assert.ok(text.includes("32 / 32"));
+  return{qubits:2048,shots:32,completed:true};
+ });
+ await test("1000-qubit non-Clifford entangling workload is rejected",async()=>{
+  const src='OPENQASM 2.0;\nqreg q[1000];\ncreg c[1000];\nh q[0];\nt q[0];\ncx q[0],q[999];\n';
+  await page.getByRole("textbox",{name:"Large quantum QASM code"}).fill(src);
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.getByRole("alert").filter({hasText:/non-Clifford/i}).waitFor({timeout:20000});
+  return{rejected:true,misleadingOutput:false};
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
@@ -97,7 +140,7 @@ finally{
  const result={schema:"MQ-DSQ-BROWSER-RELEASE/v1",dateUtc:new Date().toISOString(),
   sha:process.env.GITHUB_SHA||"local",
   environment:"GitHub Actions Chromium, locally hosted production build; no cloud deployment",
-  scope:"20-qubit Studio interface and worker smoke; access control not evaluated",
+  scope:"20/100/1000+/2048 quantum UIs and worker smoke; access control not evaluated",
   durationMs:+(performance.now()-started).toFixed(2),
   counts:{total:evidence.length,passed:evidence.length-fails.length,failed:fails.length},cases:evidence};
  mkdirSync("artifacts",{recursive:true});
