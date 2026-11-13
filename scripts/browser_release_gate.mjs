@@ -133,7 +133,7 @@ async function main(){
   await page.getByRole("button",{name:"Run quantum circuit"}).click();
   await page.getByText("Partitioned exact statevectors").waitFor({timeout:30000});
   const text=await page.locator(".large-results").innerText();
-  assert.ok(text.includes("1,000"));
+  assert.match(text,/1[,\s.]*000/,"Expected 1,000 logical qubits in telemetry, saw: "+text.slice(0,250));
   return{qubits:1000,method:"partitioned statevector",completed:true};
  });
  await test("1000-qubit oversized non-Clifford entangled cluster rejects safely",async()=>{
