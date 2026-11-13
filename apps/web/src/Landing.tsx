@@ -55,7 +55,7 @@ const faqs = [
   ],
   [
     "What can I build?",
-    "Explore up to 8 qubits, build circuits with 256 operations, compile OpenQASM, inspect quantum states, and export your work.",
+    "Explore up to 20 logical qubits, build circuits with 256 operations, compile OpenQASM, inspect quantum states, and export your work.",
   ],
 ];
 export default function Landing() {
@@ -140,7 +140,7 @@ export default function Landing() {
         <div className="land-facts">
           <span>YOUR IDEAS. YOUR DEVICE.</span>
           <p>
-            <b>08</b> qubits to explore
+            <b>20</b> logical qubits to explore
           </p>
           <p>
             <b>256</b> operations per circuit
