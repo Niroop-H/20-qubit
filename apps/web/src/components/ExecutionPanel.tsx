@@ -130,6 +130,11 @@ export const ExecutionPanel: React.FC<ExecutionPanelProps> = ({
       <p className="result-state-label">
         {result.stateLabel} · seed {result.seed}
       </p>
+      {result.distributionInfo?.omittedIdealProbabilityMass > 1e-12 && (
+        <p className="result-state-label">
+          This is a partial ideal distribution: {(result.distributionInfo.omittedIdealProbabilityMass * 100).toPrecision(4)}% of exact ideal probability mass is omitted from the tabular output. All sampled counts are retained.
+        </p>
+      )}
       {/* Tab content */}
       <div
         id="result-content"
@@ -145,7 +150,7 @@ export const ExecutionPanel: React.FC<ExecutionPanelProps> = ({
             shots={shots}
           />
         ) : (
-          <StateVectorView stateVector={result.stateVector} />
+          <StateVectorView stateVector={result.stateVector} info={result.stateVectorInfo} />
         )}
       </div>
     </div>

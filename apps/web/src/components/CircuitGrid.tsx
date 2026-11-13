@@ -90,7 +90,7 @@ export const CircuitGrid: React.FC<Props> = ({
             <span className="wire-label">
               q[{q}] <small>|0⟩</small>
             </span>
-            {steps.map((s, i) => (
+            {steps.map((s, i) => (s.targets.includes(q) || s.controls?.includes(q)) ? (
               <div
                 key={s.id}
                 className="wire-slot"
@@ -116,7 +116,7 @@ export const CircuitGrid: React.FC<Props> = ({
                   </button>
                 )}
               </div>
-            ))}
+            ) : null)}
             <button
               className="append-slot"
               style={{ left: 80 + steps.length * 55 }}

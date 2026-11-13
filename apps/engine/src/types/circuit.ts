@@ -27,7 +27,7 @@ export const CircuitStepSchema = z.object({
   gate: GateTypeSchema,
   targets: z.array(z.number().int().min(0)).min(1),
   controls: z.array(z.number().int().min(0)).optional().default([]),
-  classical: z.number().int().min(0).max(7).optional(),
+  classical: z.number().int().min(0).max(19).optional(),
   params: z.record(z.string(), z.number().finite()).optional().default({}),
 });
 
@@ -54,8 +54,8 @@ export const NoiseConfigSchema = z.object({
 export type NoiseConfig = z.infer<typeof NoiseConfigSchema>;
 
 export const ExecutionRequestSchema = z.object({
-  qubits: z.number().int().min(1).max(8),
-  bits: z.number().int().min(1).max(8).optional(),
+  qubits: z.number().int().min(1).max(20),
+  bits: z.number().int().min(1).max(20).optional(),
   seed: z.number().int().min(0).max(4294967295).default(42),
   shots: z.number().int().min(1).max(8192).default(1024),
   steps: z.array(CircuitStepSchema).max(256),

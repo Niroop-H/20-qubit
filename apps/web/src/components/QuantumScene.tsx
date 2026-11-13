@@ -65,7 +65,7 @@ export const QuantumScene: React.FC<QuantumSceneProps> = ({
             <span>ACTIVE QUBITS</span>
           </div>
           <div>
-            <b>{2 ** qubits}</b>
+            <b>{(2 ** qubits).toLocaleString()}</b>
             <span>BASIS STATES</span>
           </div>
           <div>
@@ -94,10 +94,15 @@ export const QuantumScene: React.FC<QuantumSceneProps> = ({
               <div className="chip-die">
                 <img src="/mah-quantum-logo.jpg" alt="" />
               </div>
-              {Array.from({ length: 8 }, (_, i) => (
+              {Array.from({ length: 20 }, (_, i) => (
                 <span
                   key={i}
-                  className={`qubit-node node-${i} ${i < qubits ? "node-active" : ""}`}
+                  className={`qubit-node ${i < qubits ? "node-active" : ""}`}
+                  style={{
+                    left: `${14 + (i % 5) * 17}%`,
+                    top: `${17 + Math.floor(i / 5) * 21}%`,
+                    animationDelay: `${(i % 8) * 0.3}s`,
+                  }}
                 />
               ))}
               <span className="chip-engraving">MAH / QUANTUM</span>

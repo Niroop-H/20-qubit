@@ -20,6 +20,19 @@ export interface StudioResult {
     magnitude: number;
     phase: number;
   }[];
+  /** Bounded, largest-magnitude ideal amplitudes, not the entire statevector. */
+  stateVectorInfo: {
+    totalStates: number;
+    nonZeroStates: number;
+    shownStates: number;
+    truncated: boolean;
+    retainedProbabilityMass: number;
+    omittedProbabilityMass: number;
+  };
+  distributionInfo: {
+    shownOutcomes: number;
+    omittedIdealProbabilityMass: number;
+  };
   bloch: Bloch[];
   executionTimeMs: number;
   seed: number;
@@ -31,6 +44,52 @@ export interface StudioResult {
     fidelityEstimated: number | null;
   };
 }
+
+/**
+ * Select only the strongest basis amplitudes. Never materialize a million JS
+ * objects for a 20-qubit state or transfer them across a browser Worker.
+ */
+export function summarizeState(c: QuantumCircuit, limit = 128) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 512)
+    throw new Error("State summary limit must be between 1 and 512.");
+  const best: { index: number; probability: number }[] = [];
+  let nonZeroStates = 0;
+  for (let i = 0; i < c.stateSize; i++) {
+    const probability = c.real[i] * c.real[i] + c.imag[i] * c.imag[i];
+    if (probability <= 1e-14) continue;
+    nonZeroStates++;
+    if (best.length === limit && probability <= best[best.length - 1].probability)
+      continue;
+    let lo = 0, hi = best.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (probability > best[mid].probability) hi = mid;
+      else lo = mid + 1;
+    }
+    best.splice(lo, 0, { index: i, probability });
+    if (best.length > limit) best.pop();
+  }
+  const retainedProbabilityMass = best.reduce((sum, state) => sum + state.probability, 0);
+  const stateVector = best.map(({ index }) => ({
+    state: "|" + index.toString(2).padStart(c.numQubits, "0") + "⟩",
+    real: c.real[index],
+    imag: c.imag[index],
+    magnitude: Math.hypot(c.real[index], c.imag[index]),
+    phase: Math.atan2(c.imag[index], c.real[index]),
+  }));
+  return {
+    stateVector,
+    stateVectorInfo: {
+      totalStates: c.stateSize,
+      nonZeroStates,
+      shownStates: stateVector.length,
+      truncated: nonZeroStates > stateVector.length,
+      retainedProbabilityMass: Math.min(1, retainedProbabilityMass),
+      omittedProbabilityMass: Math.max(0, 1 - retainedProbabilityMass),
+    },
+  };
+}
+
 export function seededRandom(seed: number) {
   let a = seed >>> 0;
   return () => {
@@ -182,13 +241,41 @@ export function simulate(
     }
     return bits.reverse().join("");
   };
-  const idealProbabilities: Record<string, number> = {};
-  for (let i = 0; i < probs.length; i++) {
-    const label = map(i);
-    idealProbabilities[label] = (idealProbabilities[label] ?? 0) + probs[i];
+  // Typed-array marginal distribution avoids allocating up to 2^20 string keys.
+  // A non-measurement circuit can directly reuse its exact basis probabilities.
+  const idealDistribution = measures.length ? new Float64Array(2 ** width) : probs;
+  if (measures.length) {
+    const positions = measures.map((s) => [1 << s.targets[0], 1 << (s.classical ?? s.targets[0])]);
+    for (let i = 0; i < probs.length; i++) {
+      let classical = 0;
+      for (const [qMask, cMask] of positions)
+        if (i & qMask) classical |= cMask;
+      idealDistribution[classical] += probs[i];
+    }
+  }
+  // One CDF build plus O(log 2^n) inverse-CDF samples, rather than
+  // O(shots * 2^n) linear scans for ideal executions.
+  const cdf = n?.enabled ? null : new Float64Array(probs.length);
+  if (cdf) {
+    let running = 0;
+    for (let i = 0; i < probs.length; i++) {
+      running += probs[i];
+      cdf[i] = running;
+    }
   }
   const counts: Record<string, number> = {};
   const draw = (prob: Float64Array) => {
+    if (cdf && prob === probs) {
+      const r = rng() * cdf[cdf.length - 1];
+      let lo = 0, hi = cdf.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        if (r < cdf[mid]) hi = mid;
+        else lo = mid + 1;
+      }
+      return lo;
+    }
+    // Independent noisy Kraus trajectories cannot reuse the ideal CDF.
     const r = rng();
     let sum = 0;
     for (let i = 0; i < prob.length; i++) {
@@ -212,25 +299,44 @@ export function simulate(
     counts[label] = (counts[label] ?? 0) + 1;
     if (shot % 128 === 0) onProgress?.(shot / shots);
   }
+  // Retain all observed outcomes and up to 64 likely ideal outcomes.
+  // Recharts, JSON exports and localStorage must never receive 2^20 entries.
+  const ranked: number[] = [];
+  for (let i = 0; i < idealDistribution.length; i++) {
+    if (idealDistribution[i] <= 1e-15) continue;
+    if (ranked.length < 64) {
+      ranked.push(i);
+      if (ranked.length === 64)
+        ranked.sort((a, b) => idealDistribution[a] - idealDistribution[b]);
+    } else if (idealDistribution[i] > idealDistribution[ranked[0]]) {
+      ranked[0] = i;
+      ranked.sort((a, b) => idealDistribution[a] - idealDistribution[b]);
+    }
+  }
+  const keys = new Set<number>(ranked);
+  for (const label of Object.keys(counts)) keys.add(parseInt(label, 2));
+  const idealProbabilities: Record<string, number> = {};
   const probabilities: Record<string, number> = {};
-  for (const key of new Set([
-    ...Object.keys(idealProbabilities),
-    ...Object.keys(counts),
-  ]))
-    probabilities[key] = (counts[key] ?? 0) / shots;
-  const stateVector = Array.from({ length: ideal.stateSize }, (_, i) => ({
-    state: `|${i.toString(2).padStart(p.qubits, "0")}⟩`,
-    real: ideal.real[i],
-    imag: ideal.imag[i],
-    magnitude: Math.hypot(ideal.real[i], ideal.imag[i]),
-    phase: Math.atan2(ideal.imag[i], ideal.real[i]),
-  }));
+  for (const index of keys) {
+    const label = index.toString(2).padStart(width, "0");
+    idealProbabilities[label] = idealDistribution[index];
+    probabilities[label] = (counts[label] ?? 0) / shots;
+  }
+  const omittedIdealProbabilityMass = Math.max(
+    0, 1 - Array.from(keys).reduce((sum, index) => sum + idealDistribution[index], 0)
+  );
+  const { stateVector, stateVectorInfo } = summarizeState(ideal);
   onProgress?.(1);
   return {
     counts,
     probabilities,
     idealProbabilities,
     stateVector,
+    stateVectorInfo,
+    distributionInfo: {
+      shownOutcomes: keys.size,
+      omittedIdealProbabilityMass,
+    },
     bloch: blochVectors(ideal),
     seed,
     executionTimeMs: performance.now() - start,

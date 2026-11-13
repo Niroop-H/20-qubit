@@ -23,10 +23,16 @@ export const HistogramView: React.FC<HistogramViewProps> = ({
   counts,
   shots,
 }) => {
-  // Sort by state label for consistent display
-  const data = Object.keys(probabilities)
-    .sort()
-    .map((state) => ({
+  // Limit rendered bars: 20 qubits can yield thousands of observed labels.
+  const allKeys = Object.keys(probabilities);
+  const visibleKeys = allKeys
+    .sort((a, b) =>
+      Math.max(probabilities[b], idealProbabilities[b] ?? 0) -
+      Math.max(probabilities[a], idealProbabilities[a] ?? 0)
+    )
+    .slice(0, 32)
+    .sort();
+  const data = visibleKeys.map((state) => ({
       state: `|${state}⟩`,
       probability: probabilities[state],
       ideal: idealProbabilities[state] ?? 0,
@@ -42,6 +48,13 @@ export const HistogramView: React.FC<HistogramViewProps> = ({
   }
 
   return (
+    <div className="h-full flex flex-col">
+    {allKeys.length > data.length && (
+      <p className="text-[10px] text-neutral-400 px-2 pb-1">
+        Showing the 32 most significant outcomes of {allKeys.length.toLocaleString()}; exports retain all sampled outcomes.
+      </p>
+    )}
+    <div className="flex-1 min-h-0">
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
         data={data}
@@ -79,7 +92,7 @@ export const HistogramView: React.FC<HistogramViewProps> = ({
           formatter={(value: number, name: string) => {
             if (name === "probability" || name === "Ideal probability")
               return [
-                `${(value * 100).toFixed(2)}%`,
+                `${value * 100 < 0.01 ? (value * 100).toExponential(2) : (value * 100).toFixed(2)}%`,
                 name === "probability"
                   ? "Observed frequency"
                   : "Ideal probability",
@@ -104,5 +117,7 @@ export const HistogramView: React.FC<HistogramViewProps> = ({
         />
       </BarChart>
     </ResponsiveContainer>
+    </div>
+    </div>
   );
 };

@@ -73,7 +73,7 @@ describe("Studio compiler, execution and transforms", () => {
     assert.throws(() => parseQasm(qasm("cx q[0],q[0];")), /distinct/);
     assert.throws(() => parseQasm(qasm("ccx q[0],q[1],q[0];")), /distinct/);
     assert.throws(() => parseQasm(qasm("x q[0];".repeat(257))), /256/);
-    assert.throws(() => validateProgram({ qubits: 9, bits: 9, steps: [] }));
+    assert.throws(() => validateProgram({ qubits: 21, bits: 21, steps: [] }));
     assert.throws(() =>
       validateProgram({
         qubits: 1,
@@ -237,7 +237,7 @@ describe("Studio compiler, execution and transforms", () => {
     assert.deepEqual(simulateRequest({ ...p, shots: 128, seed: 4 }).counts, {
       "1": 128,
     });
-    assert.throws(() => simulateRequest({ ...p, qubits: 17 }));
+    assert.throws(() => simulateRequest({ ...p, qubits: 21 }));
   });
   it("Qiskit exports operands and angles in execution order", () => {
     const p = parseQasm(

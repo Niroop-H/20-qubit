@@ -1,22 +1,48 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Program } from "../../../engine/src/studio/model";
-import {
-  idealState,
-  blochVectors,
-  expectation,
-} from "../../../engine/src/studio/simulate";
+import type { Bloch, StudioResult } from "../../../engine/src/studio/simulate";
 export function Inspector({ program }: { program: Program }) {
   const [position, setPosition] = useState(program.steps.length),
     [pauli, setPauli] = useState("Z".repeat(program.qubits));
   const through = Math.min(position, program.steps.length);
-  const state = useMemo(() => idealState(program, through), [program, through]);
-  const vectors = blochVectors(state);
-  let observable = "";
-  try {
-    observable = expectation(state, pauli).toFixed(6);
-  } catch (e) {
-    observable = (e as Error).message;
-  }
+  type Snapshot = {
+    vectors: Bloch[];
+    amplitudes: StudioResult["stateVector"];
+    info: StudioResult["stateVectorInfo"];
+  };
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const [observable, setObservable] = useState("Calculating…");
+  const [error, setError] = useState("");
+  const workerRef = useRef<Worker | null>(null);
+  useEffect(() => {
+    const worker = new Worker(new URL("../services/inspector.worker.ts", import.meta.url), {
+      type: "module",
+    });
+    workerRef.current = worker;
+    setSnapshot(null);
+    setError("");
+    setObservable("Calculating…");
+    worker.onmessage = (event) => {
+      const data = event.data;
+      if (data.kind === "snapshot")
+        setSnapshot({ vectors: data.vectors, amplitudes: data.amplitudes, info: data.info });
+      else if (data.kind === "expectation")
+        setObservable(data.value);
+      else if (data.kind === "error")
+        setError(data.error);
+    };
+    worker.onerror = () => setError("State inspection failed. Try reloading the studio.");
+    worker.postMessage({ kind: "initialize", program, through, pauli });
+    return () => {
+      worker.terminate();
+      if (workerRef.current === worker) workerRef.current = null;
+    };
+  }, [program, through]);
+  // Reuse the computed state when changing Pauli operators.
+  useEffect(() => {
+    workerRef.current?.postMessage({ kind: "expectation", pauli });
+  }, [pauli, program, through]);
+  const vectors = snapshot?.vectors ?? [];
   return (
     <div className="lab-panel inspector">
       <div className="panel-intro">
@@ -29,6 +55,8 @@ export function Inspector({ program }: { program: Program }) {
         </div>
         <span className="lab-tag">IDEAL REFERENCE</span>
       </div>
+      {error && <p role="alert" className="text-red-400 text-xs">{error}</p>}
+      {!snapshot && !error && <p role="status" className="text-xs text-neutral-400">Computing the ideal state in a background worker…</p>}
       <label className="step-scrubber">
         After operation{" "}
         <b>
@@ -145,23 +173,29 @@ export function Inspector({ program }: { program: Program }) {
           not a shot estimate.
         </small>
       </div>
+      {snapshot && <p className="text-xs text-neutral-400">
+        Displaying {snapshot.info.shownStates} strongest amplitudes from {snapshot.info.nonZeroStates.toLocaleString()} non-zero basis states
+        {snapshot.info.truncated
+          ? ` (ranked summary; ${(100 * snapshot.info.omittedProbabilityMass).toPrecision(4)}% of probability mass omitted)`
+          : ""}.
+      </p>}
       <div className="amplitude-grid">
-        {Array.from({ length: state.stateSize }, (_, i) => {
-          const r = state.real[i],
-            im = state.imag[i],
+        {snapshot?.amplitudes.map((entry) => {
+          const r = entry.real,
+            im = entry.imag,
             p = r * r + im * im;
           if (p < 1e-12) return null;
           const phase = Math.atan2(im, r);
           return (
-            <div key={i}>
+            <div key={entry.state}>
               <span
                 className="phase-disk"
                 style={{
                   background: `conic-gradient(from ${(phase * 180) / Math.PI}deg, #dfbf7d 0 4deg, #1b2935 4deg)`,
                 }}
               />
-              <code>|{i.toString(2).padStart(program.qubits, "0")}⟩</code>
-              <b>{(100 * p).toFixed(2)}%</b>
+              <code>{entry.state}</code>
+              <b>{100 * p < 0.01 ? (100 * p).toExponential(2) : (100 * p).toFixed(2)}%</b>
               <small>{phase.toFixed(3)} rad</small>
             </div>
           );

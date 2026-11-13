@@ -1,0 +1,28 @@
+name: Quantum Studio CI
+on:
+  push:
+    branches: [main, feat/20-qubit-simulator]
+  pull_request:
+    branches: [main]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:web
+      - run: node scripts/verify-20.mjs
+      - run: python -m unittest discover -s backend -p 'test_*.py'
+      - name: Save quantum validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quantum-20-validation
+          path: artifacts/quantum-20-validation.json
+          if-no-files-found: ignore
