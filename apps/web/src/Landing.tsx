@@ -19,7 +19,7 @@ function QuantumGlobe({playing, excited}:{playing:boolean;excited:boolean}) {
  const [expanded,setExpanded]=useState(false);
  const [macro,setMacro]=useState(false);
  return <div className={`landchip-scene ${macro ? "chip-macro" : ""} ${playing ? "" : "landchip-paused"} ${excited ? "landchip-active" : ""} ${expanded ? "processor-expanded" : ""}`} onPointerMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--tilt',`${(e.clientX-r.left)/r.width*22-11}deg`);}} onPointerLeave={e=>e.currentTarget.style.setProperty('--tilt','0deg')}>
- <div className="core-environment" aria-hidden="true"><div className="core-halo halo-outer"/><div className="core-halo halo-inner"/><div className="core-halo halo-ticks"/><div className="core-nebula"/><div className="core-rays"/><svg className="core-signals" viewBox="0 0 600 520">{Array.from({length:12},(_,i)=>{const y=50+i*36;return <g key={i} style={{animationDelay:`${i*.25}s`}}><path className="signal-track" d={`M 0 ${y} H ${65+i%3*20} L 170 260 H 430 L ${515-i%3*20} ${y} H 600`}/><path className="signal-packet" style={{animationDelay:`${i*.23}s`}} d={`M 0 ${y} H ${65+i%3*20} L 170 260 H 430 L ${515-i%3*20} ${y} H 600`}/></g>;})}</svg><div className="core-readout readout-left">Q / 08<br/><span>COUPLED ARRAY</span><i/><i/><i/><i/><i/></div><div className="core-readout readout-right">MAH / CORE<br/><span>ARCHITECTURE VIEW</span><b>⌁ ⌁ ⌁</b></div></div><div className="processor-reticle" aria-hidden="true"/><div className="landchip-orbit orbit-a"/><div className="landchip-orbit orbit-b"/>
+ <div className="core-environment" aria-hidden="true"><div className="core-halo halo-outer"/><div className="core-halo halo-inner"/><div className="core-halo halo-ticks"/><div className="core-nebula"/><div className="core-rays"/><svg className="core-signals" viewBox="0 0 600 520">{Array.from({length:12},(_,i)=>{const y=50+i*36;return <g key={i} style={{animationDelay:`${i*.25}s`}}><path className="signal-track" d={`M 0 ${y} H ${65+i%3*20} L 170 260 H 430 L ${515-i%3*20} ${y} H 600`}/><path className="signal-packet" style={{animationDelay:`${i*.23}s`}} d={`M 0 ${y} H ${65+i%3*20} L 170 260 H 430 L ${515-i%3*20} ${y} H 600`}/></g>;})}</svg><div className="core-readout readout-left">Q / SIM<br/><span>CONCEPT VIEW</span><i/><i/><i/><i/><i/></div><div className="core-readout readout-right">MAH / CORE<br/><span>ARCHITECTURE VIEW</span><b>⌁ ⌁ ⌁</b></div></div><div className="processor-reticle" aria-hidden="true"/><div className="landchip-orbit orbit-a"/><div className="landchip-orbit orbit-b"/>
  <span className="processor-callout callout-one">01 / CONTROL INTERFACE<i/></span><span className="processor-callout callout-two">02 / QUBIT LATTICE<i/></span>
  <div className="landchip-assembly mah-red-assembly" role="img" aria-label="MAH Quantum red circuit board with polished gold frame, ceramic contact banks, metal shield, branded emblem and two exposed die windows">
  <div className="core-underlight"/><div className="core-platform"><i/><i/><i/></div>
@@ -42,8 +42,8 @@ function ParticleField(){
 }
 const faqs = [
   [
-    "Is it really free?",
-    "Yes. Your calculations run on your device, in your browser. There are no API keys, subscriptions, or paid compute services required.",
+    "How does workspace access work?",
+    "The public website introduces the platform; the computational workspaces require authorized access. Supported simulations run locally in your browser. Commercial access terms depend on the organization.",
   ],
   [
     "Do I need to know quantum computing?",
@@ -55,7 +55,7 @@ const faqs = [
   ],
   [
     "What can I build?",
-    "Explore up to 100 logical qubits using exact algorithms suited to each circuit, build circuits with 256 operations, compile OpenQASM, inspect quantum states, and export your work.",
+    "Use the 100-logical-qubit Studio or the separate 1000+ Qubit workspace (up to 4,096 logical qubits for specified circuit families). Exact dense statevectors are limited to 20 qubits; larger circuits use restricted mathematical representations.",
   ],
 ];
 export default function Landing() {
@@ -85,12 +85,12 @@ export default function Landing() {
               <a className="land-button" href="/studio">
                 Enter the Studio <ArrowUpRight size={20} />
               </a>
-              <a className="text-link" href="#explore">
-                Take a closer look <span>↓</span>
+              <a className="text-link" href="/1000-plus">
+                1000+ Qubit workspace <span>↗</span>
               </a>
             </div>
             <p className="hero-note">
-              FREE TO EXPLORE <span> / </span> NO SIGN-UP REQUIRED
+              CLASSICAL QUANTUM SIMULATION <span> / </span> CONTROLLED WORKSPACE ACCESS
             </p>
           </div>
           <div className="hero-object">
@@ -146,7 +146,7 @@ export default function Landing() {
             <b>256</b> operations per circuit
           </p>
           <p>
-            <b>0</b> cloud compute fees
+            <b>LOCAL</b> device-based computation
           </p>
           <a href="/studio">
             Start experimenting <ArrowUpRight size={18} />
