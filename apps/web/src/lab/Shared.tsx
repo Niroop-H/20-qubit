@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { download } from '../services/projects';
 import './lab.css';
 import SiteHeader from '../SiteHeader';
-export const destinations=[['/studio','Quantum Computing'],['/lab','Quantum Lab Twin'],['/sensing','Sensing & Metrology'],['/communication','Communication & Cryptography']];
+export const destinations=[['/studio','Quantum Computing'],['/1000-plus','1000+ Qubit'],['/lab','Quantum Lab Twin'],['/sensing','Sensing & Metrology'],['/communication','Communication & Cryptography']];
 export function LabNav(){return <SiteHeader/>}
 export function Page({eyebrow,title,description,children}:{eyebrow:string;title:string;description:string;children:ReactNode}){useEffect(()=>{document.title=`${title} | MAH Quantum`;},[title]);return <div className="quantum-page"><LabNav/><main><header className="quantum-page-title"><span>{eyebrow}</span><h1>{title}</h1><p>{description}</p></header>{children}</main><footer className="quantum-footer">MAH Quantum — Devashri S Quantum </footer></div>}
 export function Control({label,value,onChange,min,max,step=1,unit=''}:{label:string;value:number;onChange:(v:number)=>void;min:number;max:number;step?:number;unit?:string}){return <label className="lab-control"><span>{label}<span><NumericValue label={label} value={value} onChange={onChange} min={min} max={max} step={step}/> {unit}</span></span><input type="range" aria-label={label} value={value} min={min} max={max} step={step} onChange={e=>onChange(Number(e.target.value))}/><small>{min} — {max} {unit}</small></label>}
