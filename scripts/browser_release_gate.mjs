@@ -131,7 +131,7 @@ async function main(){
   const src='OPENQASM 2.0;\nqreg q[1000];\ncreg c[1000];\nh q[0];\nt q[0];\ncx q[0],q[999];\nh q[999];\n';
   await page.getByRole("textbox",{name:"Large quantum QASM code"}).fill(src);
   await page.getByRole("button",{name:"Run quantum circuit"}).click();
-  await page.getByText("Partitioned exact statevectors").waitFor({timeout:30000});
+  await page.locator(".large-telemetry").getByText("Partitioned exact statevectors").waitFor({timeout:30000});
   const text=await page.locator(".large-results").innerText();
   assert.match(text,/1[,\s.]*000/,"Expected 1,000 logical qubits in telemetry, saw: "+text.slice(0,250));
   return{qubits:1000,method:"partitioned statevector",completed:true};
