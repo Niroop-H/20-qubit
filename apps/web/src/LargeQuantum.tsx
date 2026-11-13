@@ -64,7 +64,7 @@ export default function LargeQuantum(){
  const counts=result?Object.entries(result.counts).sort((a,b)=>b[1]-a[1]):[];
  const countTotal=counts.reduce((a,[,v])=>a+v,0);
  return <Page eyebrow="MAH QUANTUM / COMPUTATION" title="1000+ Qubit"
-   description="Exact simulation of selected large circuit families. Clifford stabilizer states and separable non-Clifford states—no exponential dense statevector allocation, no physical quantum processor.">
+   description="Exact simulation of supported large circuit families: Clifford stabilizers, separable states, and bounded independent non-Clifford entangled components. No global exponential statevector or physical quantum processor.">
   <section className="large-intro" aria-label="Large quantum computing specifications">
    <div><b>1,000–4,096</b><small>Logical qubits supported</small></div>
    <div><b>8,192</b><small>Maximum expanded operations</small></div>
@@ -103,7 +103,7 @@ export default function LargeQuantum(){
     <div className="large-source-header"><strong>Static OpenQASM subset</strong><span>Editable · {source.length.toLocaleString()} characters</span></div>
     <textarea className="large-code" aria-label="Large quantum QASM code" spellCheck={false} value={source}
      onChange={e=>{setSource(e.target.value);setResult(null);setError("");}} disabled={running}/>
-    <p className="large-footnote">Supported exact backends: Clifford gates I/H/S/X/Y/Z/CX/CZ/SWAP, or arbitrary supported single-qubit gates with SWAP. Non-Clifford entangling circuits are rejected. Terminal measurements only.</p>
+    <p className="large-footnote">Supported exact methods: Clifford stabilizers; separable one-qubit gates; or non-Clifford entangled clusters up to 18 qubits each (aggregate limit: 2^20 amplitudes). Includes CCX/Toffoli. Oversize connected circuits are rejected. Terminal measurements only.</p>
     <div className="large-actions">
      <button className="large-primary" onClick={run} disabled={running}>{running?"Computing…":"Run quantum circuit"}</button>
      {running&&<button onClick={cancel}>Cancel computation</button>}
@@ -120,7 +120,7 @@ export default function LargeQuantum(){
      <small>{testName}</small>
     </div>:<>
      <div className="large-telemetry">
-      <div><span>Method</span><b>{result.method==="stabilizer-tableau"?"Clifford stabilizer tableau":"Separable pure-state"}</b></div>
+      <div><span>Method</span><b>{result.method==="stabilizer-tableau"?"Clifford stabilizer tableau":result.method==="separable-state"?"Separable pure-state":"Partitioned exact statevectors"}</b></div>
       <div><span>Logical qubits</span><b>{result.backendInfo.qubitCount.toLocaleString()}</b></div>
       <div><span>Completed shots</span><b>{countTotal.toLocaleString()} / {result.backendInfo.shots.toLocaleString()}</b></div>
       <div><span>Computational time</span><b>{result.executionTimeMs.toFixed(1)} ms</b></div>
@@ -132,6 +132,7 @@ export default function LargeQuantum(){
       <small>Each allowed full measurement bitstring has probability 2<sup>−{result.supportRank}</sup>. Very small probabilities are shown symbolically rather than rounded to false numerical precision.</small>
      </div>}
      {result.method==="separable-state"&&<p className="large-scope">Single-qubit complex amplitudes are propagated exactly; each output basis probability is a product of the individual qubit probabilities.</p>}
+     {result.method==="partitioned-statevector"&&<p className="large-scope">{result.detail} No full-register statevector is allocated.</p>}
      <div className="large-outcome-header"><b>Most frequent measured outcomes</b><span>{counts.length.toLocaleString()} distinct · showing {Math.min(24,counts.length)}</span></div>
      <div className="large-outcomes">
       {counts.slice(0,24).map(([bits,count])=><div className="large-outcome" key={bits}>
@@ -147,8 +148,8 @@ export default function LargeQuantum(){
   </div>
   <section className="large-explain">
    <h2>What the mathematical engine can and cannot do</h2>
-   <p>Large Clifford circuits (including entangled GHZ and graph states) are represented exactly by a stabilizer tableau. Separable circuits with arbitrary supported one-qubit rotations are represented as products of 2-component vectors. Neither method creates 2<sup>n</sup> complex amplitudes.</p>
-   <p>Circuits combining non-Clifford transformations with general entanglement may require exponential resources. This workspace refuses those workloads instead of returning an invented result. It does not claim arbitrary 4,096-qubit universal simulation, real quantum-hardware behavior, or guaranteed real-time performance.</p>
+   <p>Large Clifford circuits (including entangled GHZ and graph states) use exact stabilizer tableaux. Separable circuits use products of 2-component complex vectors. Non-Clifford circuits with bounded independent entangled subcircuits use partitioned exact statevectors. None constructs the global 2<sup>n</sup> statevector.</p>
+   <p>Strongly connected non-Clifford circuits beyond 18 entangled qubits per cluster or the total state budget may require exponential resources. This workspace refuses those workloads rather than fabricating results. No arbitrary 4,096-qubit universal simulation, physical QPU, or guaranteed real-time SLA is claimed.</p>
   </section>
  </Page>;
 }

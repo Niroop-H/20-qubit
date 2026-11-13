@@ -71,11 +71,11 @@ export function parseLargeQasm(source:string):LargeProgram{
    hit=/^([a-zA-Z][a-zA-Z0-9]*)(?:\((.*)\))?\s+(.+)$/.exec(statement);
    if(!hit)throw new Error("Unsupported syntax (loops and custom gates are unavailable).");
    const name=hit[1].toLowerCase(),args=hit[2]===undefined?[]:hit[2].split(",").map(expression);
-   const nargs:{[gate:string]:number}={id:0,h:0,x:0,y:0,z:0,s:0,t:0,sdg:0,tdg:0,rx:1,ry:1,rz:1,u:3,u3:3,cx:0,cz:0,swap:0};
+   const nargs:{[gate:string]:number}={id:0,h:0,x:0,y:0,z:0,s:0,t:0,sdg:0,tdg:0,rx:1,ry:1,rz:1,u:3,u3:3,cx:0,cz:0,swap:0,ccx:0};
    if(!(name in nargs))throw new Error("Unsupported scalable instruction "+name);
    if(args.length!==nargs[name])throw new Error(name+" expects "+nargs[name]+" angle parameters.");
    const operands=hit[3].split(",").map(s=>address(s,"q"));
-   const arity=["cx","cz","swap"].includes(name)?2:1;
+   const arity=name==="ccx"?3:["cx","cz","swap"].includes(name)?2:1;
    if(operands.length!==arity)throw new Error(name+" requires "+arity+" operand(s).");
    const width=Math.max(...operands.map(a=>a.length));
    if(operands.some(a=>a.length!==1&&a.length!==width))throw new Error("Registers must be compatible.");
@@ -85,6 +85,7 @@ export function parseLargeQasm(source:string):LargeProgram{
     else if(name==="u"||name==="u3")add("U",[q[0]],[],{theta:args[0],phi:args[1],lambda:args[2]});
     else if(["rx","ry","rz"].includes(name))add(name.toUpperCase() as Step["gate"],[q[0]],[],{theta:args[0]});
     else if(name==="cx"||name==="cz")add(name.toUpperCase() as Step["gate"],[q[1]],[q[0]]);
+    else if(name==="ccx")add("CCX",[q[2]],[q[0],q[1]]);
     else add(name==="id"?"I":name.toUpperCase() as Step["gate"],q);
    }
   }catch(e){

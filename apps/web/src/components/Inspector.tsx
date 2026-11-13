@@ -54,7 +54,7 @@ export function Inspector({ program }: { program: Program }) {
       <div className="panel-intro"><div><h3>Exact scalable-state inspector</h3>
       <p>The current circuit has {program.qubits} logical qubits. No 2^n amplitude array is allocated.</p></div>
       <span className="lab-tag">SCALABLE EXECUTION</span></div>
-      <p className="text-xs text-neutral-400">Run the circuit to inspect exact measurement probabilities and sampled outcomes. Full amplitude views and Bloch diagnostics remain available for the ≤20-qubit dense backend. Above 20 qubits, supported circuits use stabilizer or separable-state representations, which are not fully displayed as a dense statevector.</p>
+      <p className="text-xs text-neutral-400">Run the circuit to inspect exact measurement probabilities and sampled outcomes. Full amplitude views and Bloch diagnostics remain available for the ≤20-qubit dense backend. Above 20 qubits, supported circuits use stabilizer, separable-state or bounded partitioned representations, which are not fully displayed as a dense statevector.</p>
     </div>
   );
   return (

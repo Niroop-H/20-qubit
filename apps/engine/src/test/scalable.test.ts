@@ -72,9 +72,83 @@ describe("exact scalable 100-qubit and 1000+ qubit engines",()=>{
   assert.equal(Object.values(out.counts).reduce((a,b)=>a+b,0),4096);
   assert.ok(Object.keys(out.counts).every(x=>x.length===100));
  });
- it("rejects unsupported entangled non-Clifford circuits rather than returning invented results",()=>{
-  const p=program(100,[op("h","H",[0]),op("t","T",[0]),op("cx","CX",[1],[0])]);
-  assert.throws(()=>simulateScalable(p,128,7),/non-Clifford/i);
+ it("simulates 100-qubit non-Clifford entangled subcircuits exactly",()=>{
+  const p=program(100,[
+   op("h","H",[0]),op("cx","CX",[99],[0]),op("t","T",[99]),
+   op("h2","H",[0]),op("ry","RY",[7],[],{theta:.731})
+  ]);
+  const out=simulateScalable(p,1024,7);
+  assert.equal(out.method,"partitioned-statevector");
+  assert.equal(out.exact,true);
+  assert.equal(Object.values(out.counts).reduce((a,b)=>a+b,0),1024);
+  assert.ok(Object.keys(out.counts).every(label=>label.length===100));
+ });
+ it("simulates independent non-Clifford clusters across 1,000 logical qubits",()=>{
+  const p=program(1000,[
+   op("h0","H",[0]),op("cx0","CX",[999],[0]),op("t0","T",[999]),
+   op("h0a","H",[0]),op("h1","H",[10]),op("cz1","CZ",[11],[10]),
+   op("rx","RX",[11],[],{theta:.91}),op("h1a","H",[10])
+  ]);
+  const out=simulateScalable(p,512,66);
+  assert.equal(out.method,"partitioned-statevector");
+  assert.equal(Object.values(out.counts).reduce((a,b)=>a+b,0),512);
+  assert.ok(Object.keys(out.idealProbabilities).every(s=>s.length===1000));
+ });
+ it("supports Toffoli in 1,000-qubit register with finite connected cluster",()=>{
+  const parsed=parseLargeQasm('OPENQASM 2.0; qreg q[1000]; creg c[1000]; h q[1]; h q[2]; ccx q[1],q[2],q[999];');
+  assert.equal(parsed.steps[2].gate,"CCX");
+  assert.equal(parsed.steps[2].targets[0],999);
+  assert.deepEqual(parsed.steps[2].controls,[1,2]);
+  const out=simulateScalable(parsed,256,3);
+  assert.equal(out.method,"partitioned-statevector");
+  assert.equal(Object.values(out.counts).reduce((a,b)=>a+b,0),256);
+ });
+ it("rejects oversized connected clusters instead of claiming general quantum speedup",()=>{
+  const steps=[op("h","H",[0]),op("t","T",[0])];
+  for(let q=1;q<19;q++)steps.push(op("cx"+q,"CX",[q],[q-1]));
+  assert.throws(()=>simulateScalable(program(100,steps),128,7),/19 qubits/);
+ });
+ it("enforces aggregate component memory budget before allocating state arrays",()=>{
+  const steps:Step[]=[];
+  for(let block=0;block<5;block++){
+   const start=block*18;
+   steps.push(op("h"+block,"H",[start]),op("t"+block,"T",[start]));
+   for(let q=start+1;q<start+18;q++)steps.push(op("cx"+q,"CX",[q],[q-1]));
+  }
+  assert.throws(()=>simulateScalable(program(100,steps),64,1),/aggregate.*memory budget/i);
+ });
+ for(let n=2;n<=9;n++)it("crosschecks non-Clifford entanglement against dense statevector at "+n+" qubits",()=>{
+  const steps:Step[]=[
+   op("h","H",[0]),op("cx","CX",[n-1],[0]),op("t","T",[n-1]),
+   op("rx","RX",[0],[],{theta:.713}),op("h2","H",[n-1]),
+   op("ry","RY",[1],[],{theta:-.92})
+  ];
+  if(n>2)steps.push(op("ccx","CCX",[1],[0,n-1]));
+  steps.push(op("rz","RZ",[n-1],[],{theta:1.12}),op("h3","H",[0]));
+  const p=program(n,steps);
+  const oracle=idealState(p).getProbabilities();
+  const out=simulateScalable(p,2048,13);
+  assert.equal(out.method,"partitioned-statevector");
+  for(const [bits,prob] of Object.entries(out.idealProbabilities))
+   near(prob,oracle[parseInt(bits,2)],1e-11);
+  assert.equal(Object.values(out.counts).reduce((a,b)=>a+b,0),2048);
+ });
+ it("computes correct marginal for terminal partial measurements after entanglement",()=>{
+  const n=8;
+  const p=program(n,[
+   op("h","H",[0]),op("cx","CX",[5],[0]),op("t","T",[0]),
+   op("h2","H",[5]),{...op("m0","MEASURE",[0]),classical:7},
+   {...op("m5","MEASURE",[5]),classical:1}
+  ]);
+  const dense=idealState(p).getProbabilities();
+  const out=simulateScalable(p,2048,9);
+  assert.equal(out.method,"partitioned-statevector");
+  for(const [bits,value]of Object.entries(out.idealProbabilities)){
+   let expected=0;
+   for(let i=0;i<256;i++)if((((i&1)<<7)|(((i>>5)&1)<<1))===parseInt(bits,2))expected+=dense[i];
+   near(value,expected,1e-11);
+  }
+  assert.ok(Object.keys(out.counts).every(bits=>bits.length===8));
  });
  it("rejects 1000-qubit noisy trajectories honestly",()=>{
   assert.throws(()=>simulateScalable(program(1000,[]),64,1,{enabled:true}),/Noise models/);
