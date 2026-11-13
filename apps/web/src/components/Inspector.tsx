@@ -175,7 +175,9 @@ export function Inspector({ program }: { program: Program }) {
       </div>
       {snapshot && <p className="text-xs text-neutral-400">
         Displaying {snapshot.info.shownStates} strongest amplitudes from {snapshot.info.nonZeroStates.toLocaleString()} non-zero basis states
-        {snapshot.info.truncated ? " (ranked summary)" : ""}.
+        {snapshot.info.truncated
+          ? ` (ranked summary; ${(100 * snapshot.info.omittedProbabilityMass).toPrecision(4)}% of probability mass omitted)`
+          : ""}.
       </p>}
       <div className="amplitude-grid">
         {snapshot?.amplitudes.map((entry) => {
@@ -193,7 +195,7 @@ export function Inspector({ program }: { program: Program }) {
                 }}
               />
               <code>{entry.state}</code>
-              <b>{(100 * p).toFixed(2)}%</b>
+              <b>{100 * p < 0.01 ? (100 * p).toExponential(2) : (100 * p).toFixed(2)}%</b>
               <small>{phase.toFixed(3)} rad</small>
             </div>
           );
