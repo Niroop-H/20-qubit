@@ -20,6 +20,11 @@ jobs:
       - run: node scripts/verify-20.mjs
       - run: node scripts/extended-validation.mjs
       - run: node scripts/preannouncement_release_gate.mjs
+      - name: Install release browser test tooling
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install chromium
+      - run: node scripts/browser_release_gate.mjs
       - run: python -m unittest discover -s backend -p 'test_*.py'
       - name: Save quantum validation evidence
         if: always()
@@ -30,4 +35,5 @@ jobs:
             artifacts/quantum-20-validation.json
             artifacts/extended-quantum-validation.json
             artifacts/preannouncement-release-gate.json
+            artifacts/browser-release-gate.json
           if-no-files-found: ignore
