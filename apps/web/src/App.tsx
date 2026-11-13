@@ -965,7 +965,7 @@ export const App: React.FC = () => {
                 </p>
                 <h3>Supported scope</h3>
                 <p>
-                  1–100 logical qubits (exact statevector ≤20; exact Clifford/separable backends above 20), 256 expanded operations, up to 8,192 shots. Static
+                  1–100 logical qubits (exact statevector ≤20; exact Clifford/separable/partitioned backends above 20), 256 expanded operations, up to 8,192 shots. Static
                   OpenQASM 2/3, one quantum and one classical register, terminal
                   measurements and the gates listed in Code. Results use
                   c[n−1]…c[0], or q[n−1]…q[0] when no measurements are
