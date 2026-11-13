@@ -95,7 +95,7 @@ export default function LargeQuantum(){
    recordedAtUtc:new Date().toISOString(),
    software:"MAH Quantum logical-qubit classical simulation",
    circuit:{openQasm:source,sha256:digest,logicalQubits:result.backendInfo.qubitCount},
-   execution:{seed,requestedShots:shots,completedShots:Object.values(result.counts).reduce((sum,value)=>sum+value,0),
+   execution:{seed:result.seed,requestedShots:result.backendInfo.shots,completedShots:Object.values(result.counts).reduce((sum,value)=>sum+value,0),
     method:result.method,exactForSupportedCircuit:result.exact,
     simulationTimeMs:result.executionTimeMs,
     finiteSupportRank:result.supportRank??null,
@@ -137,13 +137,13 @@ export default function LargeQuantum(){
       </select>
      </label>
      <label>Measurement shots
-      <select aria-label="Large circuit shots" value={shots} onChange={e=>setShots(Number(e.target.value))} disabled={running}>
+      <select aria-label="Large circuit shots" value={shots} onChange={e=>{setShots(Number(e.target.value));setResult(null);setError("");}} disabled={running}>
        {[32,64,128,256,512,1024].map(v=><option key={v} value={v}>{v.toLocaleString()}</option>)}
       </select>
      </label>
      <label>Seed
       <input type="number" aria-label="Large circuit seed" min="0" max="4294967295" step="1" value={seed}
-       onChange={e=>setSeed(Number(e.target.value))} disabled={running}/>
+       onChange={e=>{setSeed(Number(e.target.value));setResult(null);setError("");}} disabled={running}/>
      </label>
     </div>
     <div className="large-source-header"><strong>Static OpenQASM subset</strong><span>Editable · {source.length.toLocaleString()} characters</span></div>
@@ -184,7 +184,7 @@ export default function LargeQuantum(){
      <div className="large-outcomes">
       {counts.slice(0,24).map(([bits,count])=><div className="large-outcome" key={bits}>
        <code title={bits}>{concise(bits)}</code>
-       <span>{count.toLocaleString()} / {shots.toLocaleString()}</span>
+       <span>{count.toLocaleString()} / {result.backendInfo.shots.toLocaleString()}</span>
        <div className="large-meter"><i style={{width:(100*count/shots)+"%"}}/></div>
       </div>)}
      </div>
