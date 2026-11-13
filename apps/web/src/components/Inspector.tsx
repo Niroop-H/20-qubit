@@ -15,6 +15,12 @@ export function Inspector({ program }: { program: Program }) {
   const [error, setError] = useState("");
   const workerRef = useRef<Worker | null>(null);
   useEffect(() => {
+    if (program.qubits > 20) {
+      setSnapshot(null);
+      setError("");
+      setObservable("Not available for this mathematical representation.");
+      return;
+    }
     const worker = new Worker(new URL("../services/inspector.worker.ts", import.meta.url), {
       type: "module",
     });
@@ -43,6 +49,14 @@ export function Inspector({ program }: { program: Program }) {
     workerRef.current?.postMessage({ kind: "expectation", pauli });
   }, [pauli, program, through]);
   const vectors = snapshot?.vectors ?? [];
+  if (program.qubits > 20) return (
+    <div className="lab-panel inspector">
+      <div className="panel-intro"><div><h3>Exact scalable-state inspector</h3>
+      <p>The current circuit has {program.qubits} logical qubits. No 2^n amplitude array is allocated.</p></div>
+      <span className="lab-tag">SCALABLE EXECUTION</span></div>
+      <p className="text-xs text-neutral-400">Run the circuit to inspect exact measurement probabilities and sampled outcomes. Full amplitude views and Bloch diagnostics remain available for the ≤20-qubit dense backend. Above 20 qubits, supported circuits use stabilizer or separable-state representations, which are not fully displayed as a dense statevector.</p>
+    </div>
+  );
   return (
     <div className="lab-panel inspector">
       <div className="panel-intro">
