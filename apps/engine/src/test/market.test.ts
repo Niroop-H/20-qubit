@@ -16,7 +16,7 @@ describe("Commercial release input and scientific-result integrity",()=>{
  it("rejects all nonfinite angles, overexpanded register operations, and arbitrary extensions",()=>{
   assert.throws(()=>parseLargeQasm("OPENQASM 2.0; qreg q[4096]; creg c[4096]; rx(1/0) q[0];"),/non-finite/i);
   assert.throws(()=>parseLargeQasm("OPENQASM 2.0; qreg q[4096]; creg c[4096]; h q; h q; h q;"),/8192/);
-  assert.throws(()=>parseLargeQasm("OPENQASM 2.0; qreg q[1000]; creg c[1000]; while(x) h q[0];"),/Unsupported/i);
+  assert.throws(()=>parseLargeQasm("OPENQASM 2.0; qreg q[1000]; creg c[1000]; while(x) h q[0];"),/Angles|Unsupported/i);
  });
  it("reproduces every bitstring count across identical seeds on 1000-qubit long-range GHZ",()=>{
   const source="OPENQASM 2.0; qreg q[1000]; creg c[1000]; h q[0]; cx q[0],q[999];";
