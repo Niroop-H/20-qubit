@@ -18,11 +18,14 @@ jobs:
       - run: npm test
       - run: npm run build:web
       - run: node scripts/verify-20.mjs
+      - run: node scripts/extended-validation.mjs
       - run: python -m unittest discover -s backend -p 'test_*.py'
       - name: Save quantum validation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: quantum-20-validation
-          path: artifacts/quantum-20-validation.json
+          path: |
+            artifacts/quantum-20-validation.json
+            artifacts/extended-quantum-validation.json
           if-no-files-found: ignore
