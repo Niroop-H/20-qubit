@@ -68,7 +68,7 @@ function randomProgram(seed) {
  }
  return {qubits:5,bits:5,steps};
 }
-caseRun("baseline","engine declares 20 logical qubits",()=>{assert.equal(MAX_QUBITS,20);return {maxQubits:MAX_QUBITS}});
+caseRun("baseline","engine declares 100 Studio logical qubits while dense tests remain at 20",()=>{assert.equal(MAX_QUBITS,100);return {maxQubits:MAX_QUBITS,denseQubitTestWidth:20}});
 for(let n=1;n<=20;n++)caseRun("registers","OpenQASM 2 register width "+n,()=>{
  const p=qasm("h q[0];",n); assert.equal(p.qubits,n);assert.equal(p.bits,n);return {qubits:n,format:"OpenQASM 2"};});
 for(let n=1;n<=20;n++)caseRun("registers","OpenQASM 3 register width "+n,()=>{
