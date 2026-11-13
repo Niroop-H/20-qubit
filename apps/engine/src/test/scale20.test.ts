@@ -13,7 +13,7 @@ describe("20-qubit statevector and bounded result pipeline", () => {
     assert.throws(() => new QuantumCircuit(20.5));
     assert.throws(() => new QuantumCircuit(21));
     assert.equal(new QuantumCircuit(20).stateSize, 1048576);
-    assert.throws(() => program("h q[0];", 21));
+    assert.throws(() => program("h q[0];", 101));
   });
   it("executes distant two-qubit entanglement at the actual 20-qubit width", () => {
     const p = program("h q[0]; cx q[0],q[19];");

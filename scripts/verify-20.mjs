@@ -42,7 +42,7 @@ const ampNorm = (circuit) => {
     norm += circuit.real[i] ** 2 + circuit.imag[i] ** 2;
   return norm;
 };
-assert.equal(MAX_QUBITS, 20);
+assert.equal(MAX_QUBITS, 100); // Studio width; dense statevector acceptance remains 20
 
 report("independent five-qubit gate-matrix crosscheck", () => {
   const gates = [

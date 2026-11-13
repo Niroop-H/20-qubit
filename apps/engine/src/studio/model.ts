@@ -5,7 +5,7 @@ export interface Program {
   bits: number;
   steps: Step[];
 }
-export const MAX_QUBITS = 20;
+export const MAX_QUBITS = 100;
 export const MAX_STEPS = 256;
 export const gateNames = [
   "I",

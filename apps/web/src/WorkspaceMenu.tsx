@@ -2,7 +2,8 @@ import {useEffect,useLayoutEffect,useRef,useState,useId} from 'react';
 import {createPortal} from 'react-dom';
 import './workspace-menu.css';
 export const workspaces=[
- ['/studio','Quantum Computing','Circuits, code & quantum states'],
+ ['/studio','Quantum Computing','1–100 logical qubits · adaptive exact simulation'],
+ ['/1000-plus','1000+ Qubit','1,000–4,096 logical qubits · exact Clifford / separable'], 
  ['/lab','Quantum Lab Twin','Hardware playground & guided operations'],
  ['/sensing','Sensing & Metrology','Magnetometry, clocks & gravimetry'],
  ['/communication','Communication & Cryptography','BB84, optical links & entanglement'],

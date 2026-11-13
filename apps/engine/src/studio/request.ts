@@ -1,5 +1,6 @@
 import { ExecutionRequestSchema } from "../types/circuit";
 import { simulate } from "./simulate";
+import { simulateScalable } from "./scalable";
 export function simulateRequest(body: unknown) {
   const parsed = ExecutionRequestSchema.safeParse(body);
   if (!parsed.success)
@@ -9,10 +10,8 @@ export function simulateRequest(body: unknown) {
         .join("; "),
     );
   const { qubits, bits, steps, shots, seed, noiseModel } = parsed.data;
-  return simulate(
-    { qubits, bits: bits ?? qubits, steps },
-    shots,
-    seed,
-    noiseModel,
-  );
+  const program = { qubits, bits: bits ?? qubits, steps };
+  return qubits > 20
+    ? simulateScalable(program, shots, seed, noiseModel)
+    : simulate(program, shots, seed, noiseModel);
 }
