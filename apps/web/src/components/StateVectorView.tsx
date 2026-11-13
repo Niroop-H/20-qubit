@@ -13,7 +13,7 @@ export const StateVectorView: React.FC<StateVectorViewProps> = ({
   if (!stateVector || stateVector.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-neutral-600 text-xs">
-        No state vector data
+        Full statevector amplitudes are intentionally not materialized by the scalable exact Clifford or separable-state backend. Use the histogram for exact model probabilities and sampled outcomes.
       </div>
     );
   }
