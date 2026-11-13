@@ -3,21 +3,24 @@
  *
  * - Stabilizer tableau: Clifford gates, entanglement and joint Z-basis sampling.
  * - Separable pure states: arbitrary supported one-qubit gates and SWAP.
+ * - Partitioned statevectors: arbitrary supported gates, including non-Clifford
+ *   entanglement, whenever connected interaction components fit the budget.
  *
- * Neither representation stores 2^n amplitudes; neither simulates arbitrary
+ * These representations avoid a global 2^n amplitude allocation; none simulates arbitrary
  * non-Clifford *entangled* states. Unsupported circuits throw a clear error.
  */
 import type { Step } from "./model";
 import { GATES, createRxGate, createRyGate, createRzGate, createUGate } from "../math/gates";
 import type { ComplexMatrix2x2 } from "../math/complex";
 import type { StudioResult } from "./simulate";
+import { simulatePartitioned } from "./partitioned";
 
 export interface LargeProgram {
   qubits: number;
   bits: number;
   steps: Step[];
 }
-export type ScalableMethod = "stabilizer-tableau" | "separable-state";
+export type ScalableMethod = "stabilizer-tableau" | "separable-state" | "partitioned-statevector";
 
 export const LARGE_MAX_QUBITS = 4096;
 export const LARGE_MAX_STEPS = 8192;
@@ -42,9 +45,9 @@ export function validateLargeProgram(p: LargeProgram, maximumQubits = LARGE_MAX_
     const operands=[...step.targets,...(step.controls||[])];
     if (operands.some(q=>!Number.isInteger(q)||q<0||q>=p.qubits)||new Set(operands).size!==operands.length)
       fail("invalid, duplicate or out-of-range qubit index.");
-    if (!CLIFFORD.has(step.gate) && !SEPARABLE.has(step.gate))
+    if (!CLIFFORD.has(step.gate) && !SEPARABLE.has(step.gate) && step.gate!=="CCX")
       fail("unsupported gate in scalable engine: "+step.gate+".");
-    const nc=step.gate==="CX"||step.gate==="CZ"?1:0;
+    const nc=step.gate==="CCX"?2:step.gate==="CX"||step.gate==="CZ"?1:0;
     const nt=step.gate==="SWAP"?2:step.gate==="BARRIER"?step.targets.length:1;
     if (!nt || step.targets.length!==nt || (step.controls?.length||0)!==nc) fail("wrong number of operands.");
     const keys=step.gate==="U"?["theta","phi","lambda"]:
@@ -63,7 +66,7 @@ export function methodFor(p: LargeProgram):ScalableMethod {
   validateLargeProgram(p);
   if (p.steps.every(s=>CLIFFORD.has(s.gate))) return "stabilizer-tableau";
   if (p.steps.every(s=>SEPARABLE.has(s.gate))) return "separable-state";
-  throw new Error("This circuit combines non-Clifford gates with entangling gates. Exact 100+ qubit simulation for that general circuit is not available; simplify the circuit or use ≤20 qubits in the dense solver.");
+  return "partitioned-statevector";
 }
 
 const word=(q:number)=>q>>>5;
@@ -243,6 +246,7 @@ export function simulateScalable(p:LargeProgram,shots:number,seed:number,noise?:
  if(!Number.isInteger(seed)||seed<0||seed>4294967295)throw new Error("Seed must be a 32-bit unsigned integer.");
  if(noise?.enabled)throw new Error("Noise models beyond the 20-qubit dense engine are not calibrated or supported; disable noise.");
  const started=performance.now(),method=methodFor(p),rng=seedRandom(seed);
+ if(method==="partitioned-statevector")return simulatePartitioned(p,shots,seed);
  const width=p.steps.some(s=>s.gate==="MEASURE")?p.bits:p.qubits;
  const counts:Record<string,number>={},idealProbabilities:Record<string,number>={},probabilities:Record<string,number>={};
  let supportRank:number|undefined,idealProbabilityLog2:number|undefined;
