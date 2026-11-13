@@ -61,7 +61,7 @@ export function CodeEditor({
       <p className="code-note">
         {format === "qiskit"
           ? "Read-only Python export. Run this with Qiskit in your own Python environment; this website does not execute Python."
-          : `${dirty ? "Unapplied code · compiling validates the whole program." : "Circuit and code are synchronized."} Static OpenQASM subset · 1–8 qubits · 256 expanded operations.`}
+          : `${dirty ? "Unapplied code · compiling validates the whole program." : "Circuit and code are synchronized."} Static OpenQASM subset · 1–20 logical qubits · 256 expanded operations.`}
       </p>
       <div className="code-surface">
         <pre aria-hidden="true">
