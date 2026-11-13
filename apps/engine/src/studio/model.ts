@@ -5,7 +5,7 @@ export interface Program {
   bits: number;
   steps: Step[];
 }
-export const MAX_QUBITS = 8;
+export const MAX_QUBITS = 20;
 export const MAX_STEPS = 256;
 export const gateNames = [
   "I",
@@ -34,9 +34,9 @@ export function validateProgram(value: unknown): asserts value is Program {
     p.qubits < 1 ||
     p.qubits > MAX_QUBITS
   )
-    throw new Error("Use between 1 and 8 qubits.");
+    throw new Error("Use between 1 and " + MAX_QUBITS + " qubits.");
   if (!Number.isInteger(p.bits) || p.bits < 1 || p.bits > MAX_QUBITS)
-    throw new Error("Use between 1 and 8 classical bits.");
+    throw new Error("Use between 1 and " + MAX_QUBITS + " classical bits.");
   if (!Array.isArray(p.steps) || p.steps.length > MAX_STEPS)
     throw new Error("A circuit may contain at most 256 operations.");
   let measured = false;

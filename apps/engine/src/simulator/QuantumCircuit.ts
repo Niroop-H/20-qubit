@@ -9,8 +9,8 @@ export class QuantumCircuit {
   public imag: Float64Array;
 
   constructor(numQubits: number) {
-    if (numQubits < 1 || numQubits > 16) {
-      throw new Error("Simulator supports between 1 and 16 qubits.");
+    if (!Number.isInteger(numQubits) || numQubits < 1 || numQubits > 20) {
+      throw new Error("Simulator supports between 1 and 20 qubits.");
     }
     this.numQubits = numQubits;
     this.stateSize = 1 << numQubits;
