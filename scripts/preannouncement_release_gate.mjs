@@ -22,7 +22,8 @@ const near=(a,b,t,msg)=>assert.ok(Number.isFinite(a)&&Math.abs(a-b)<=t,msg+" act
 function check(label,fn){
  const t=performance.now();
  try {
-  const metric={label,status:"PASS",durationMs:+(performance.now()-t).toFixed(3),...(fn()||{})};
+  const facts=fn()||{};
+  const metric={label,status:"PASS",durationMs:+(performance.now()-t).toFixed(3),...facts};
   cases.push(metric);console.log("RELEASE_GATE "+JSON.stringify(metric));
  }catch(e){
   const metric={label,status:"FAIL",durationMs:+(performance.now()-t).toFixed(3),error:String(e?.stack||e)};
