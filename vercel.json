@@ -1,0 +1,27 @@
+{
+  "buildCommand": "npm run build --workspace=apps/web",
+  "outputDirectory": "apps/web/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/studio/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/lab/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/sensing/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/communication/:path*",
+      "destination": "/index.html"
+    }
+  ]
+}

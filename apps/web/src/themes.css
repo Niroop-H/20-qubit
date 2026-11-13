@@ -1,0 +1,89 @@
+:root{--theme-page:#000;--theme-panel:#0a1018;--theme-text:#e5edf5;--theme-muted:#9aaebe;--theme-border:#354454}
+html[data-theme=dark]{color-scheme:dark;background:#000}
+html[data-theme=dark] body,html[data-theme=dark] :is(.landing,.studio-app,.quantum-page){background-color:#000}
+html[data-theme=dark] .landing{background:#000}
+html[data-theme=dark] .studio-app{background:radial-gradient(ellipse at 70% 0%,#111a2255,transparent 40%),#000}
+html[data-theme=dark] .playground.quantum-page{background:#000}
+html[data-theme=light]{color-scheme:light;--theme-page:#f6f8fb;--theme-panel:#fff;--theme-text:#182e42;--theme-muted:#4e657a;--theme-border:#bfcdd8;--gold:#886019;--muted:#516779;--line:#c2cfd9;background:#f6f8fb;color:#182e42}
+html[data-theme=light] body{background:#f6f8fb;color:#182e42}
+html[data-theme=light] :is(.landing,.studio-app,.quantum-page){background:#f6f8fb!important;color:#182e42!important}
+html[data-theme=light] :is(.landing,.studio-app,.quantum-page) :is(h1,h2,h3,h4){color:#142b40!important}
+html[data-theme=light] :is(.landing,.studio-app,.quantum-page) :is(p,li){color:#4b6378}
+html[data-theme=light] :is(.landing h1>span,.land-workflow h2 span){color:#24658e!important}
+html[data-theme=light] .site-header{background:linear-gradient(120deg,#fff,#eef2f6);border-color:#bdc9d2;color:#183046}
+html[data-theme=light] .site-header .site-brand{color:#183046}
+html[data-theme=light] .site-header .site-links a{color:#354f64}
+html[data-theme=light] .site-header .theme-picker{color:#875f19}
+html[data-theme=light] .site-header .theme-picker select{background:#fff;color:#203d55;border-color:#b2c1cd}
+html[data-theme=light] .site-header .workspace-trigger{color:#23394b;background:linear-gradient(135deg,#fffdf6,#ece6d8);border-color:#a58e5c;box-shadow:inset 0 1px #fff,0 4px 12px #243b4d12}
+html[data-theme=light] .workspace-trigger>span{color:#866020}
+html[data-theme=light] .workspace-options{background:linear-gradient(135deg,#fff,#f4f6f8);border-color:#bba678;box-shadow:0 18px 45px #223e5633;color:#19334a}
+html[data-theme=light] .workspace-options>p{color:#80602c}
+html[data-theme=light] .workspace-options>a{color:#19334a;border-bottom-color:#dce3e8}
+html[data-theme=light] .workspace-options>a:is(:hover,:focus-visible,[aria-current=page]){background:#eee7d5;border-color:#aa8d52;color:#152d41}
+html[data-theme=light] .workspace-options small{color:#536b7d}
+html[data-theme=light] .workspace-options :is(.workspace-number,a>span:last-child){color:#8c6724}
+html[data-theme=light] :is(.land-facts,.landing-cryo,.architecture-console,.architecture-panel,.architecture-copy,.bell-lab,.bell-state,.bell-wire,.bell-wire>*,.land-workflow,.land-cta,.discovery-main,.discovery-code,.code-top,.lab-title,.lab-bottom,.console-bottom){background:#eef3f7!important;border-color:#c2d0dc!important;color:#2d4f69}
+html[data-theme=light] :is(.architecture-map,.bell-section){background:radial-gradient(ellipse,#d9e8f3,#f7f9fb)!important}
+html[data-theme=light] :is(.land-eyebrow,.land-facts p,.land-footer p,.hero-note,.hero-note span,.object-heading,.hero-note,.hero-copy>p,.hero-copy>a,.hero-copy .text-link,.hero-copy .land-eyebrow,.section-rule,.architecture-copy li,.architecture-copy p,.architecture-copy>a,.architecture-heading>p,.bell-intro>p,.bell-step-list button,.bell-state p,.bell-chart-column,.lab-title,.lab-bottom>span,.map-caption,.land-footer>a,.land-faq button,.land-faq article p,.workflow-list p,.land-cta p){color:#45657c!important}
+html[data-theme=light] :is(.land-facts b,.bell-state strong,.workflow-list h3,.land-footer .land-brand,.bell-step-list .selected){color:#1c3d57!important}
+html[data-theme=light] :is(.architecture-tabs button,.map-terminal,.architecture-copy li,.bell-wire i,.bell-wire b,.mini-circuit span,.mini-circuit b,.code-top,.object-controls>div,.object-controls .motion-button){background:#e3ecf2!important;border-color:#a9bfd1!important;color:#244f70!important}
+html[data-theme=light] .architecture-tabs button[aria-selected=true]{background:#d2e3ef!important;color:#173d59!important}
+html[data-theme=light] :is(.land-button,.landing .land-button,.lab-bottom button){background:linear-gradient(135deg,#a87927,#745316)!important;color:#fff!important;border-color:#87621f!important;box-shadow:inset 0 1px #ffeab4,0 5px 15px #4a38151f!important}
+html[data-theme=light] .particle-field{opacity:.25}
+html[data-theme=light] .land-hero:before{opacity:.35}
+html[data-theme=light] :is(.hero-object,.hero-visual){background:radial-gradient(ellipse,#d6e3ed99,transparent 70%)!important}
+html[data-theme=light] .landchip-scene :is(.core-readout,.processor-callout,.processor-callout span){color:#31566f!important}
+html[data-theme=light] .landchip-scene .core-readout span{color:#5b7890}
+html[data-theme=light] .landchip-scene :is(.chip-inspect,.processor-expand){color:#fff0c8;background:linear-gradient(#5f5136,#30291d);border-color:#a48a51}
+html[data-theme=light] :is(.cryo-plate span,.hero-note,.object-hint){color:#3f657f!important}
+/* Scientific workbenches and circuit editor. Preserve gate colors as semantic accents. */
+html[data-theme=light] :is(.lab-panel,.composer-shell,.gate-palette,.result-panel,.studio-run-controls,.code-surface,.code-surface pre,.code-note,.compiled-source,.bloch-card,.observable,.saved-list article,.amplitude-grid>div,.lab-plot,.lab-metric,.lab-notes,.lab-live-readouts,.sensing-banner,.network-path,.network-path>div,.operator-card,.noise-dialog,.noise-dialog-content){background:#fff!important;border-color:#becfdd!important;color:#1e3e57!important}
+html[data-theme=light] :is(.lab-panel,.lab-notes) pre{background:#edf3f8!important;color:#254760!important;border-color:#becfdd!important}
+html[data-theme=light] :is(.lab-control>span,.lab-control small,.lab-toggle,.lab-select,.lab-metric>span,.lab-metric strong,.lab-metric strong small,.lab-table td,.lab-table th,.lab-notes summary,.lab-panel summary,.lab-plot figcaption,.lab-muted,.lab-welcome p,.eyebrow,.workspace-label,.select-control,.seed-control,.gate-palette button,.circuit-toolbar,.register-name,.result-panel p,.result-panel strong,.noise-fields label,.operation-inspector label,.lab-tag,.lab-panel h3,.code-surface pre,.code-surface textarea,.compiled-source,.code-note,.lab-notice){color:#274c68!important}
+html[data-theme=light] :is(.lab-metric strong,.network-path strong,.sensing-banner strong){color:#143c5a!important}
+html[data-theme=light] :is(.lab-table td,.lab-table th,.quantum-footer,.land-footer,.lab-tabs,.circuit-toolbar,.palette-heading,.panel-heading,.control-row){border-color:#c5d2dd!important}
+html[data-theme=light] :is(.lab-table-wrap th,.network-path>div,.sensing-banner,.ramsey-path b,.ramsey-path i,.operator-card){background:#eaf2f8!important;color:#315773!important}
+html[data-theme=light] :is(.network-path small,.network-path>span,.ramsey-path,.ramsey-path b,.sensing-banner small,.operator-card ol,.operator-card>p,.quantum-footer){color:#456880!important}
+html[data-theme=light] :is(.lab-plot svg text){fill:#365b77!important}
+html[data-theme=light] :is(.lab-plot svg path){stroke:#b8ccd9}
+html[data-theme=light] .lab-plot svg polyline{stroke:#1c6a9c}
+html[data-theme=light] :is(.select-control,.seed-control input,.operation-inspector input,.operation-inspector select,.examples-bar select,.noise-fields input,.observable input,.quantum-page .lab-control .lab-numeric,.quantum-page .lab-select select){background:#fff!important;color:#24475f!important;border-color:#aabfce!important}
+html[data-theme=light] :is(.select-control option,.lab-select option){background:#fff;color:#23445f}
+html[data-theme=light] :is(.lab-tabs button,.code-formats button){color:#3d5d76!important}
+html[data-theme=light] :is(.lab-tabs button[aria-selected=true],.code-formats button[aria-pressed=true]){background:#e2edf6!important;border-color:#627e92!important}
+html[data-theme=light] :is(.lab-button,.lab-actions button,.lab-panel button,.lab-welcome-actions button,.operation-inspector button,.noise-button,.reset-button,.preset-actions button,.lab-mode-tabs button,.lab-scenarios button){background:#e8eff5!important;border-color:#a8bfce!important;color:#294c66!important}
+html[data-theme=light] :is(.lab-mode-tabs button[aria-selected=true],.lab-scenarios button[aria-selected=true],.gate-palette button[aria-pressed=true]){background:#dfcfa9!important;border-color:#94773c!important;color:#3e321b!important}
+html[data-theme=light] .gate-palette button{background:#e5edf4;border-color:#9bb4c8}
+html[data-theme=light] .circuit-grid{background-image:radial-gradient(#6e879c44 .7px,transparent .7px)}
+html[data-theme=light] .circuit-grid :is(line,path){stroke:#8ba3b8}
+html[data-theme=light] .circuit-grid text{fill:#355771}
+html[data-theme=light] .append-slot{background:#e0eaf3;border-color:#a6bbcc;color:#2c506c}
+html[data-theme=light] :is(.lab-error,.lab-alert){background:#fff0e9!important;color:#883e25!important;border-color:#c5977e!important}
+html[data-theme=light] :is(.lab-warning,.code-note){background:#fff8e8!important;color:#6a5422!important}
+html[data-theme=light] :is(.lab-status,.lab-notice){background:#e4f4ed!important;color:#246249!important}
+/* The hardware viewport retains physical material colors; the surrounding UI follows the theme. */
+html[data-theme=light] :is(.playground-tools,.hardware-library,.instrument-inspector,.viewport-toolbar,.bench-inventory,.measurement-dock,.playground-status){background:#edf2f7!important;color:#28475f!important;border-color:#b8cad8!important}
+html[data-theme=light] .playground button:not(.workspace-trigger){background:linear-gradient(#fff,#e5edf3);color:#294b64;border-color:#adbfcd}
+html[data-theme=light] .playground button[aria-pressed=true]{background:#e8d8b3;color:#493713;border-color:#9d7d3d}
+html[data-theme=light] .playground :is(input:not([type=range]),select){background:#fff!important;color:#294961!important;border-color:#b0c3d1!important}
+html[data-theme=light] :is(.hardware-cards button,.connection-control,.physics-notes code,.playground .lab-metric){background:#fff!important;border-color:#bfd0dc!important;color:#24465e!important}
+html[data-theme=light] :is(.panel-eyebrow,.hardware-cards small,.library-note,.instrument-description,.viewport-toolbar small,.measurement-dock>p,.connection-control label,.instrument-status,.physics-notes p,.physics-notes a,.playground-status,.placement-controls,.inspector-readings .lab-metric>span){color:#446780!important}
+html[data-theme=light] .experiment-guide{background:#f8fbfef2;border-color:#a5b9c9;color:#345571}
+html[data-theme=light] .experiment-guide :is(ol,li){color:#355b77}
+html[data-theme=light] .experiment-guide .objective{color:#7c591e}
+html[data-theme=light] .experiment-guide .objective.complete{color:#176147}
+html[data-theme=light] .playground .experiment-guide .panel-eyebrow{color:#466b83!important}
+html[data-theme=light] ::selection{background:#d7b872;color:#192d3a}
+html[data-theme=light] ::-webkit-scrollbar-track{background:#e9eff5}
+html[data-theme=light] ::-webkit-scrollbar-thumb{background:#a7bacb}
+
+/* Explicit foregrounds for nested controls and utility-colored labels. */
+html[data-theme=light] .studio-app :is(.project-toolbar input,.select-control select,.wire-label,.wire-label small,.circuit-metrics,.circuit-metrics b,.examples-bar,.circuit-toolbar>span:last-child,.workspace-version,.gate-palette button>span,.gate-palette .text-white,.gate-palette .text-neutral-400,.gate-palette .text-neutral-500){color:#35546d!important}
+html[data-theme=light] .studio-app .project-toolbar input{color:#18364f!important}
+html[data-theme=light] .studio-app .circuit-metrics .local-status{color:#24664e!important}
+html[data-theme=light] .studio-app .gate-palette button[aria-pressed=true]>span:first-child{color:#493615!important}
+html[data-theme=light] .studio-app :is(.text-neutral-300,.text-neutral-400,.text-neutral-500){color:#526b7d!important}
+html[data-theme=light] .landchip-scene :is(.core-readout,.processor-callout){background:#edf3f7e8!important;border-color:#a6bccd!important}
+html[data-theme=light] :is(.land-facts a,.object-controls button){color:#345e7d!important}
+html[data-theme=light] .object-controls button.active{color:#102e45!important}

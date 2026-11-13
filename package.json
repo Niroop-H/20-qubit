@@ -1,0 +1,17 @@
+{
+  "name": "mah-quantum-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Devashri S Quantum",
+  "license": "UNLICENSED",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:engine": "npm run dev --workspace=apps/engine",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build:engine": "npm run build --workspace=apps/engine",
+    "build:web": "npm run build --workspace=apps/web",
+    "test": "npm run test --workspace=apps/engine"
+  }
+}

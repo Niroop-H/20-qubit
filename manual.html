@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MAH Quantum™ QPU Studio — User Instruction Manual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 15mm 18mm 15mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 10pt;
+      line-height: 1.55;
+      color: #1a1a1a;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Cover / Title Page Header */
+    .header-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f62fe 100%);
+      color: #ffffff;
+      padding: 32px 28px;
+      border-radius: 10px;
+      margin-bottom: 28px;
+    }
+
+    .header-banner h1 {
+      font-size: 24pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin: 0 0 6px 0;
+      color: #ffffff;
+    }
+
+    .header-banner .subtitle {
+      font-size: 12pt;
+      color: #93c5fd;
+      font-weight: 500;
+      margin: 0 0 12px 0;
+    }
+
+    .header-banner .badge-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      font-size: 8pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .badge.blue {
+      background: #0f62fe;
+      border-color: #0f62fe;
+      color: #ffffff;
+    }
+
+    h2 {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 6px;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 11.5pt;
+      font-weight: 600;
+      color: #1e293b;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin: 0 0 10px 0;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px 0;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: #0f172a;
+      color: #ffffff;
+      font-weight: 600;
+      text-align: left;
+      padding: 7px 10px;
+      border: 1px solid #0f172a;
+    }
+
+    td {
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    /* Code Blocks */
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 8.5pt;
+      line-height: 1.45;
+      overflow-x: auto;
+      margin: 8px 0 14px 0;
+      page-break-inside: avoid;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      color: #0f62fe;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    /* Callout Boxes */
+    .callout {
+      border-left: 4px solid #0f62fe;
+      background: #eff6ff;
+      padding: 10px 14px;
+      margin: 12px 0;
+      border-radius: 0 6px 6px 0;
+      page-break-inside: avoid;
+    }
+
+    .callout.tip {
+      border-left-color: #10b981;
+      background: #ecfdf5;
+    }
+
+    .callout.warning {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      color: #1e293b;
+    }
+
+    /* Diagram / Card boxes */
+    .card {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      background: #f8fafc;
+      page-break-inside: avoid;
+    }
+
+    .card h4 {
+      margin: 0 0 6px 0;
+      color: #0f62fe;
+      font-size: 10pt;
+    }
+
+    /* Step circles */
+    .step-list {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+      page-break-inside: avoid;
+    }
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #0f62fe;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 9pt;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .footer {
+      margin-top: 30px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 8px;
+      font-size: 8pt;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cover Banner -->
+  <div class="header-banner">
+    <h1>MAH Quantum™ QPU Studio</h1>
+    <div class="subtitle">Developed by Devashri S Quantum &bull; User Instruction Manual</div>
+    <div class="badge-bar">
+      <span class="badge blue">Proprietary</span>
+      <span class="badge">MAH Quantum™</span>
+      <span class="badge">Statevector Engine</span>
+      <span class="badge">Noise & Decoherence (T1/T2)</span>
+      <span class="badge">Interactive Composer</span>
+      <span class="badge">TypeScript & React</span>
+    </div>
+  </div>
+
+  <!-- Table of Contents -->
+  <div class="card" style="background:#ffffff; border-color:#e2e8f0; margin-bottom:20px;">
+    <h4 style="color:#0f172a; margin-bottom:8px;">Table of Contents</h4>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; font-size:8.5pt;">
+      <div><strong>1. Overview & Architecture</strong></div>
+      <div><strong>4. Step-by-Step Tutorials</strong></div>
+      <div style="padding-left:10px;">1.1 System Architecture</div>
+      <div style="padding-left:10px;">4.1 Tutorial 1: Bell State Entanglement</div>
+      <div style="padding-left:10px;">1.2 State Representation & Bit Stride</div>
+      <div style="padding-left:10px;">4.2 Tutorial 2: 3-Qubit GHZ State</div>
+      <div><strong>2. Quick Start & Execution</strong></div>
+      <div style="padding-left:10px;">4.3 Tutorial 3: Physical Noise Simulation</div>
+      <div style="padding-left:10px;">2.1 Starting Backend & Frontend</div>
+      <div style="padding-left:10px;">4.4 Tutorial 4: Toffoli Reversible Gate</div>
+      <div style="padding-left:10px;">2.2 Running Test Suites</div>
+      <div><strong>5. REST API Developer Reference</strong></div>
+      <div><strong>3. Visual Interface Tour</strong></div>
+      <div style="padding-left:10px;">5.1 POST /api/circuit/simulate</div>
+      <div style="padding-left:10px;">3.1 Header & System Telemetry</div>
+      <div style="padding-left:10px;">5.2 Programmatic cURL Usage</div>
+      <div style="padding-left:10px;">3.2 Gate Palette & Categorization</div>
+      <div><strong>6. Troubleshooting & FAQ</strong></div>
+      <div style="padding-left:10px;">3.3 Circuit Grid Canvas</div>
+      <div style="padding-left:10px;">6.1 Port Binding & Connectivity</div>
+      <div style="padding-left:10px;">3.4 Physical Hardware Noise Modal</div>
+      <div style="padding-left:10px;">6.2 Measurement Monte Carlo Variance</div>
+    </div>
+  </div>
+
+  <!-- Section 1 -->
+  <h2>1. Overview & System Architecture</h2>
+  <p>
+    <strong>Q-Sim Classical QPU Studio</strong> is an end-to-end full-stack software application that mathematically simulates quantum circuit execution on classical hardware. The platform is decoupled into two independent layers:
+  </p>
+  <ul>
+    <li><strong>Core Simulation Engine (<code>@quantum/engine</code>)</strong>: A high-performance Node.js/TypeScript linear algebra simulator that handles unitary state-vector transformations, multi-qubit entangling gates, hardware noise channels ($T_1, T_2$, depolarizing, SPAM), and Monte Carlo projective measurement sampling.</li>
+    <li><strong>Interactive Circuit Playground (<code>@quantum/web</code>)</strong>: A modern React 18 / Vite front-end that provides an IBM Quantum Composer-style drag-and-drop circuit canvas, gate parameter inspectors, shot-distribution histograms (Recharts), and complex amplitude tables.</li>
+  </ul>
+
+  <h3>1.1 State-Vector Formulation & Cache Optimization</h3>
+  <p>
+    For an $n$-qubit register ($n \in [1, 16]$), the quantum state $|\psi\rangle$ is a complex column vector in $\mathbb{C}^{2^n}$:
+    $$|\psi\rangle = \sum_{i=0}^{2^n-1} (a_i + i b_i) |i\rangle, \quad \sum_{i=0}^{2^n-1} (a_i^2 + b_i^2) = 1.0$$
+    The engine stores real ($a_i$) and imaginary ($b_i$) amplitudes in two contiguous <code>Float64Array</code> typed buffers. This avoids JavaScript object wrapper overhead and ensures optimal CPU L1/L2 cache locality during array traversals.
+  </p>
+
+  <h3>1.2 Bit-Stride In-Place Transformations</h3>
+  <p>
+    To eliminate exponential $\mathcal{O}(2^{2n})$ memory overhead from building dense Kronecker product matrices, single-qubit transformations on target qubit $k$ are computed using a bit-stride algorithm:
+  </p>
+  <pre><code>// For basis index pairs differing only at bit position k (bit = 1 << k):
+const i0 = i + j;
+const i1 = i0 + bit;
+// Complex matrix-vector multiply: [c0', c1']^T = U * [c0, c1]^T
+real[i0] = (uR00 * r0 - uI00 * m0) + (uR01 * r1 - uI01 * m1);
+imag[i0] = (uR00 * m0 + uI00 * r0) + (uR01 * m1 + uI01 * r1);
+real[i1] = (uR10 * r0 - uI10 * m0) + (uR11 * r1 - uI11 * m1);
+imag[i1] = (uR10 * m0 + uI10 * r0) + (uR11 * m1 + uI11 * r1);</code></pre>
+
+  <!-- Section 2 -->
+  <h2>2. Quick Start & Execution</h2>
+
+  <h3>2.1 Launching the Services</h3>
+  <p>To run the application locally, open two PowerShell / terminal windows inside the project root:</p>
+
+  <div class="card">
+    <h4>Terminal 1: Start Backend Engine</h4>
+    <pre><code>cd "C:\Users\Niroop H\.gemini\antigravity\scratch\quantum-simulator"
+npm run dev:engine</code></pre>
+    <p style="font-size:8.5pt; color:#475569; margin:0;">
+      ✓ Runs Express server on <code>http://localhost:4000</code><br>
+      ✓ Health check available at <code>http://localhost:4000/health</code>
+    </p>
+  </div>
+
+  <div class="card">
+    <h4>Terminal 2: Start Frontend Web Studio</h4>
+    <pre><code>cd "C:\Users\Niroop H\.gemini\antigravity\scratch\quantum-simulator"
+npm run dev:web</code></pre>
+    <p style="font-size:8.5pt; color:#475569; margin:0;">
+      ✓ Vite development server starts on <code>http://localhost:3000</code><br>
+      ✓ Open your browser to <code>http://localhost:3000</code> to access the visual composer.
+    </p>
+  </div>
+
+  <h3>2.2 Running Automated Test Suites</h3>
+  <p>Execute the mathematical verification test suite at any time:</p>
+  <pre><code>npm test</code></pre>
+  <div class="callout tip">
+    <div class="callout-title">Verification Results</div>
+    All 10 core mathematical test suites pass with 100% accuracy, verifying Ground State initialization, Pauli-X, Hadamard, Bell State entanglement, 3-qubit GHZ state, Toffoli reversible logic, SWAP, continuous rotations, SPAM error confusion, and CDF sampling normalization.
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- Section 3 -->
+  <h2>3. Visual Interface Tour</h2>
+
+  <h3>3.1 Header Controls</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:25%;">Control</th>
+        <th style="width:20%;">Default</th>
+        <th>Description & Operational Function</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Backend Status</strong></td>
+        <td>Online</td>
+        <td>Real-time telemetry showing virtual QPU status and active qubit register size.</td>
+      </tr>
+      <tr>
+        <td><strong>Qubits Selector</strong></td>
+        <td>3 Qubits</td>
+        <td>Dynamically scales register from 2 up to 8 wires on the visual canvas.</td>
+      </tr>
+      <tr>
+        <td><strong>Shots Selector</strong></td>
+        <td>1024</td>
+        <td>Configures Monte Carlo measurement repetitions ($512, 1024, 2048, 4096, 8192$).</td>
+      </tr>
+      <tr>
+        <td><strong>Noise Toggle</strong></td>
+        <td>Noise OFF</td>
+        <td>Toggles physical decoherence modeling. Button illuminates amber when active.</td>
+      </tr>
+      <tr>
+        <td><strong>Reset (↻)</strong></td>
+        <td>—</td>
+        <td>Clears all gates from wires and resets circuit to ground state $|00\dots0\rangle$.</td>
+      </tr>
+      <tr>
+        <td><strong>Run on QPU (▶)</strong></td>
+        <td>—</td>
+        <td>Transmits circuit payload via JSON to the simulation engine and streams results.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>3.2 Gate Palette Reference</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Gate</th>
+        <th>Label</th>
+        <th>Category</th>
+        <th>Qubits</th>
+        <th>Mathematical Action / Function</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>H</strong></td>
+        <td>H</td>
+        <td>Superposition</td>
+        <td>1</td>
+        <td>$H = \frac{1}{\sqrt{2}}\begin{bmatrix} 1 & 1 \\ 1 & -1 \end{bmatrix}$. Maps $|0\rangle \to \frac{|0\rangle + |1\rangle}{\sqrt{2}}$.</td>
+      </tr>
+      <tr>
+        <td><strong>X</strong></td>
+        <td>X</td>
+        <td>Clifford</td>
+        <td>1</td>
+        <td>Pauli-X (NOT). $X = \begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}$. Flips $|0\rangle \leftrightarrow |1\rangle$.</td>
+      </tr>
+      <tr>
+        <td><strong>Y</strong></td>
+        <td>Y</td>
+        <td>Clifford</td>
+        <td>1</td>
+        <td>Pauli-Y. $Y = \begin{bmatrix} 0 & -i \\ i & 0 \end{bmatrix}$. Bit-flip and phase rotation.</td>
+      </tr>
+      <tr>
+        <td><strong>Z</strong></td>
+        <td>Z</td>
+        <td>Clifford</td>
+        <td>1</td>
+        <td>Pauli-Z. $Z = \begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix}$. Phase flip on $|1\rangle$.</td>
+      </tr>
+      <tr>
+        <td><strong>S</strong></td>
+        <td>S</td>
+        <td>Clifford</td>
+        <td>1</td>
+        <td>Phase Gate ($\pi/2$). $S = \text{diag}(1, i)$. $S^2 = Z$.</td>
+      </tr>
+      <tr>
+        <td><strong>T</strong></td>
+        <td>T</td>
+        <td>Phase</td>
+        <td>1</td>
+        <td>$\pi/4$ Gate. $T = \text{diag}(1, e^{i\pi/4})$. $T^2 = S$.</td>
+      </tr>
+      <tr>
+        <td><strong>Rx</strong></td>
+        <td>Rx</td>
+        <td>Parametric</td>
+        <td>1</td>
+        <td>$R_x(\theta) = \begin{bmatrix} \cos(\theta/2) & -i\sin(\theta/2) \\ -i\sin(\theta/2) & \cos(\theta/2) \end{bmatrix}$. Continuous rotation.</td>
+      </tr>
+      <tr>
+        <td><strong>Ry</strong></td>
+        <td>Ry</td>
+        <td>Parametric</td>
+        <td>1</td>
+        <td>$R_y(\theta) = \begin{bmatrix} \cos(\theta/2) & -\sin(\theta/2) \\ \sin(\theta/2) & \cos(\theta/2) \end{bmatrix}$. Real rotation matrix.</td>
+      </tr>
+      <tr>
+        <td><strong>Rz</strong></td>
+        <td>Rz</td>
+        <td>Parametric</td>
+        <td>1</td>
+        <td>$R_z(\lambda) = \text{diag}(e^{-i\lambda/2}, e^{i\lambda/2})$. Continuous Z phase rotation.</td>
+      </tr>
+      <tr>
+        <td><strong>U</strong></td>
+        <td>U</td>
+        <td>Parametric</td>
+        <td>1</td>
+        <td>Arbitrary unitary rotation $U(\theta, \phi, \lambda)$.</td>
+      </tr>
+      <tr>
+        <td><strong>CX</strong></td>
+        <td>CX</td>
+        <td>Entanglement</td>
+        <td>2</td>
+        <td>Controlled-NOT. Flips target qubit if control bit is $1$.</td>
+      </tr>
+      <tr>
+        <td><strong>CZ</strong></td>
+        <td>CZ</td>
+        <td>Entanglement</td>
+        <td>2</td>
+        <td>Controlled-Z. Applies phase flip if both qubits are in state $|11\rangle$.</td>
+      </tr>
+      <tr>
+        <td><strong>SWAP</strong></td>
+        <td>SWP</td>
+        <td>Entanglement</td>
+        <td>2</td>
+        <td>Exchanges states: $|01\rangle \leftrightarrow |10\rangle$.</td>
+      </tr>
+      <tr>
+        <td><strong>CCX</strong></td>
+        <td>CCX</td>
+        <td>Multi-Qubit</td>
+        <td>3</td>
+        <td>Toffoli Gate. Flips target qubit if both control qubits are $1$.</td>
+      </tr>
+      <tr>
+        <td><strong>M</strong></td>
+        <td>M</td>
+        <td>Operations</td>
+        <td>1</td>
+        <td>Measurement operator on computational basis.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>3.3 Circuit Grid Canvas Interaction</h3>
+  <ul>
+    <li><strong>Adding a Gate</strong>: Select a gate from the palette, then click any empty slot in the wire grid.</li>
+    <li><strong>Multi-Qubit Linking</strong>: Clicking a target wire for <code>CX</code>, <code>CZ</code>, <code>SWAP</code>, or <code>CCX</code> automatically generates the SVG link lines and control nodes on adjacent wires.</li>
+    <li><strong>Deleting a Gate</strong>: Hover the mouse cursor over any placed gate. Click the red trashcan icon that appears in the top-right corner.</li>
+  </ul>
+
+  <h3>3.4 Physical Hardware Noise Modal</h3>
+  <p>Simulates physical quantum processor imperfections rather than an idealized mathematical state:</p>
+  <ul>
+    <li><strong>$T_1$ Thermal Relaxation</strong>: Spontaneous decay rate $|1\rangle \to |0\rangle$ with probability $\gamma = 1 - e^{-t_g / T_1}$.</li>
+    <li><strong>$T_2$ Pure Dephasing</strong>: Loss of quantum phase coherence $\lambda = 1 - e^{-t_g / T_\phi}$.</li>
+    <li><strong>Depolarizing Noise</strong>: Injects random Pauli error $\{X, Y, Z\}$ with rate $p$.</li>
+    <li><strong>Readout Confusion (SPAM)</strong>: Matrix $P(\text{measured} \mid \text{actual})$ modeling detector false positives/negatives.</li>
+  </ul>
+
+  <div class="page-break"></div>
+
+  <!-- Section 4 -->
+  <h2>4. Step-by-Step Circuit Tutorials</h2>
+
+  <div class="step-list">
+    <!-- Tutorial 1 -->
+    <div class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Tutorial 1: Creating a Maximally Entangled Bell State ($|\Phi^+\rangle$)</div>
+        <p>The Bell State produces non-local entanglement between two qubits.</p>
+        <ol style="margin: 4px 0 8px 18px; padding:0;">
+          <li>Set <strong>Qubits</strong> to <code>2</code> in the top header.</li>
+          <li>Select the <strong>H</strong> gate from the palette; click slot 0 on wire <code>q[0]</code>.</li>
+          <li>Select the <strong>CX</strong> gate from the palette; click slot 1 on wire <code>q[1]</code>.</li>
+          <li>Set <strong>Shots</strong> to <code>4096</code> and click <strong>Run on QPU</strong>.</li>
+        </ol>
+        <div class="callout">
+          <strong>Theoretical Expectation</strong>: $|\Phi^+\rangle = \frac{|00\rangle + |11\rangle}{\sqrt{2}}$.<br>
+          Histogram displays $\approx 50\%$ for $|00\rangle$ and $\approx 50\%$ for $|11\rangle$. States $|01\rangle$ and $|10\rangle$ have $0\%$ probability.
+        </div>
+      </div>
+    </div>
+
+    <!-- Tutorial 2 -->
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Tutorial 2: Composing a 3-Qubit GHZ State ($|\text{GHZ}\rangle$)</div>
+        <p>Entangles three distinct quantum wires into a collective superposition.</p>
+        <ol style="margin: 4px 0 8px 18px; padding:0;">
+          <li>Set <strong>Qubits</strong> to <code>3</code>.</li>
+          <li>Place an <strong>H</strong> gate on wire <code>q[0]</code> at column 0.</li>
+          <li>Place a <strong>CX</strong> gate on wire <code>q[1]</code> at column 1 (controlled by $q_0$).</li>
+          <li>Place a <strong>CX</strong> gate on wire <code>q[2]</code> at column 2 (controlled by $q_1$).</li>
+          <li>Click <strong>Run on QPU</strong>.</li>
+        </ol>
+        <div class="callout">
+          <strong>Theoretical Expectation</strong>: $|\text{GHZ}\rangle = \frac{|000\rangle + |111\rangle}{\sqrt{2}}$.<br>
+          Outcomes will be evenly divided between $|000\rangle$ ($\approx 50\%$) and $|111\rangle$ ($\approx 50\%$).
+        </div>
+      </div>
+    </div>
+
+    <!-- Tutorial 3 -->
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Tutorial 3: Testing Decoherence on Superconducting Transmons</div>
+        <p>Demonstrates the difference between mathematical simulation and real hardware physics.</p>
+        <ol style="margin: 4px 0 8px 18px; padding:0;">
+          <li>Load or compose the Bell state circuit ($[H(0), CX(0 \to 1)]$).</li>
+          <li>Click <strong>Noise OFF</strong> in the header bar.</li>
+          <li>Check <strong>Enable QPU Noise Simulation</strong>. Leave default values ($T_1 = 50\,\mu\text{s}$, $T_2 = 70\,\mu\text{s}$, Readout Error $\sim 2\%$).</li>
+          <li>Click <strong>Apply & Close</strong>, then click <strong>Run on QPU</strong>.</li>
+        </ol>
+        <div class="callout warning">
+          <strong>Observed Hardware Jitter</strong>: Primary peaks remain at $|00\rangle$ and $|11\rangle$ ($\sim 47\text{–}48\%$), but small error peaks appear at $|01\rangle$ and $|10\rangle$ ($\sim 1\text{–}2\%$) due to physical SPAM and relaxation channels. Estimated fidelity drops to $\sim 98\%$.
+        </div>
+      </div>
+    </div>
+
+    <!-- Tutorial 4 -->
+    <div class="step-item">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Tutorial 4: Universal Reversible Logic with the Toffoli Gate (CCX)</div>
+        <p>Tests controlled-controlled NOT gate execution.</p>
+        <ol style="margin: 4px 0 8px 18px; padding:0;">
+          <li>Set <strong>Qubits</strong> to <code>3</code>.</li>
+          <li>Place <strong>X</strong> on <code>q[0]</code> and <strong>X</strong> on <code>q[1]</code> (initializes inputs to $|110\rangle$).</li>
+          <li>Place <strong>CCX</strong> on <code>q[2]</code> at column 2.</li>
+          <li>Click <strong>Run on QPU</strong>.</li>
+        </ol>
+        <div class="callout">
+          <strong>Theoretical Expectation</strong>: Target $q_2$ flips from $0 \to 1$ because both controls are active. Result: $100\%$ measured as $|111\rangle$.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- Section 5 -->
+  <h2>5. REST API Developer Reference</h2>
+
+  <h3>5.1 POST <code>/api/circuit/simulate</code></h3>
+  <p>The backend accepts standard JSON payloads for automated simulation workflows.</p>
+
+  <div class="card">
+    <h4>Request JSON Payload Schema</h4>
+    <pre><code>{
+  "qubits": 2,
+  "shots": 2048,
+  "steps": [
+    { "id": "step-1", "gate": "H", "targets": [0] },
+    { "id": "step-2", "gate": "CX", "targets": [1], "controls": [0] }
+  ],
+  "noiseModel": {
+    "enabled": false,
+    "t1": 50.0,
+    "t2": 70.0,
+    "gateTime": 0.02,
+    "readoutError": [0.015, 0.025],
+    "depolarizingRate": 0.001
+  }
+}</code></pre>
+  </div>
+
+  <div class="card">
+    <h4>Programmatic cURL Execution</h4>
+    <pre><code>curl -X POST http://localhost:4000/api/circuit/simulate \
+  -H "Content-Type: application/json" \
+  -d '{"qubits":2,"shots":1024,"steps":[{"id":"1","gate":"H","targets":[0]},{"id":"2","gate":"CX","targets":[1],"controls":[0]}]}'</code></pre>
+  </div>
+
+  <div class="card">
+    <h4>Response JSON Payload</h4>
+    <pre><code>{
+  "counts": { "00": 519, "11": 505 },
+  "probabilities": { "00": 0.506836, "11": 0.493164 },
+  "stateVector": [
+    { "state": "|00>", "real": 0.707107, "imag": 0, "magnitude": 0.707107, "phase": 0 },
+    { "state": "|11>", "real": 0.707107, "imag": 0, "magnitude": 0.707107, "phase": 0 }
+  ],
+  "executionTimeMs": 1.45,
+  "backendInfo": {
+    "qpuSimulated": "Ideal_Statevector_Engine",
+    "qubitCount": 2,
+    "shots": 1024,
+    "fidelityEstimated": 1.0
+  }
+}</code></pre>
+  </div>
+
+  <!-- Section 6 -->
+  <h2>6. Troubleshooting & FAQ</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:30%;">Issue / Symptom</th>
+        <th style="width:30%;">Probable Cause</th>
+        <th>Resolution</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>"Failed to fetch" alert</strong></td>
+        <td>Backend simulation engine is offline.</td>
+        <td>Run <code>npm run dev:engine</code> and confirm <code>http://localhost:4000/health</code> responds with status <code>"healthy"</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Port 4000 or 3000 busy</strong></td>
+        <td>Another process occupies the default port.</td>
+        <td>Terminate orphaned processes using <code>Stop-Process -Id &lt;PID&gt;</code> or specify <code>PORT=4001</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Shot counts vary slightly</strong></td>
+        <td>Monte Carlo projective sampling variance.</td>
+        <td>Quantum measurements follow statistical multinomial distributions. Set shots to 8192 for lower variance ($\sigma \propto 1/\sqrt{N}$).</td>
+      </tr>
+      <tr>
+        <td><strong>Maximum register limit</strong></td>
+        <td>Browser DOM canvas rendering density.</td>
+        <td>Canvas UI supports 2–8 qubits. Programmatic API supports up to 16 qubits ($2^{16} = 65,536$ state components).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <span>MAH Quantum™ QPU Studio — Developed by Devashri S Quantum. All Rights Reserved.</span>
+    <span>Proprietary Software License</span>
+  </div>
+
+</body>
+</html>

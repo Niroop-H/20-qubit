@@ -1,0 +1,32 @@
+/* MAH signature package: ruby solder mask, machined gold and ceramic contacts. */
+.landing .mah-red-assembly{width:345px;height:414px;top:47%;transform-style:preserve-3d}
+.landing .mah-red-assembly .landchip-board{border-radius:19px;border:1px solid #e5bb6c;background:repeating-linear-gradient(4deg,#ffceb508 0 1px,transparent 1px 3px),radial-gradient(ellipse at 23% 17%,#d33339,#951522 48%,#550c19 100%);box-shadow:0 2px #f8ce89,0 5px #a47134,0 8px #53131b,0 11px #d7ac64,0 15px #330b12,0 24px 28px #0009,inset 0 0 35px #3b071c99}
+.landing .red-carrier-detail{filter:drop-shadow(0 2px 1px #210d09aa);transform:translateZ(5px);z-index:3}
+.landing .mah-red-assembly .processor-base{inset:-15px;border-radius:25px;border:2px solid #ffe8a5;background:repeating-linear-gradient(110deg,#fff6d51a 0 1px,transparent 1px 3px),linear-gradient(125deg,#f6d88b,#a77b35 27%,#f7e8b2 48%,#72511e 51%,#ddb56a 78%,#fff0c1);box-shadow:0 3px #f3d993,0 7px #8f652b,0 11px #e5c179,0 15px #694a24,8px 28px 30px #0009}
+.mah-cold-channels{position:absolute;inset:22px;border:1px solid #edcd8a;border-radius:12px;background:repeating-linear-gradient(90deg,transparent 0 17px,#49351f88 18px 20px,#ffedbb 21px 22px);box-shadow:inset 0 0 30px #65421c}
+.landing .mah-red-assembly .processor-interposer{inset:-5px;border-radius:17px;border:2px solid #d1af69;background:repeating-linear-gradient(0deg,#e5cf9b 0 2px,#4f332a 2px 4px,#ad754b 4px 6px);box-shadow:0 3px #efdfb3,0 6px #573623,0 9px #a57b49}
+.mah-interposer-grid{position:absolute;inset:13px;border-radius:10px;background:radial-gradient(circle,#f8df8e 0 1px,#805b2b 2px,transparent 3px) 0 0/10px 10px,#251d1b;border:1px solid #dfc689}
+.landing .mah-red-assembly .landchip-package{inset:28% 12% 28%;padding:0;border:0;border-radius:8px;background:none;box-shadow:0 3px #8c8b76,0 6px #3f423a,3px 12px 12px #24060bd9;transform:translateZ(16px);z-index:6}
+.mah-core-shield{position:relative;width:100%;height:100%;border-radius:8px;border:1px solid #f7f6df;background:linear-gradient(115deg,#eee9d4,#c3c8b7 20%,#fcf9e5 43%,#d6d9cb 65%,#a6b3a9);box-shadow:inset 0 1px #fffef2,inset 0 -2px #929988;transform-style:preserve-3d}
+.mah-shield-grain{position:absolute;inset:0;border-radius:inherit;background:repeating-linear-gradient(7deg,#ffffff20 0 1px,#4d58430a 1px 2px,transparent 2px 4px);pointer-events:none}
+.mah-chip-brand{position:absolute;left:5%;top:15%;width:37%;height:70%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:5px}
+.mah-chip-brand img{width:52px;height:52px;object-fit:cover;border-radius:50%;border:1px solid #8c773f;box-shadow:0 1px #fff9dd,0 3px 7px #2d301d66}
+.mah-chip-brand strong{font:700 12px 'Times New Roman',serif;letter-spacing:1.2px;color:#344139;line-height:1.2;text-shadow:0 1px #ffffed}
+.mah-chip-brand span{font:3.8px Aptos,sans-serif;letter-spacing:.6px;color:#495345}
+.mah-die-window{position:absolute;background:linear-gradient(120deg,#f7daa0,#93712c,#fce8af);padding:3px;border:1px solid #faf3d3;box-shadow:inset 0 0 0 2px #a27b36,1px 3px 4px #39403680;transform:translateZ(3px)}
+.mah-die-window svg{width:100%;height:100%;display:block;background:#203438;box-shadow:inset 0 0 12px #000b}
+.die-window-one{left:46%;top:12%;width:23%;height:76%;border-radius:22px}.die-window-one svg{border-radius:17px}
+.die-window-two{right:4%;top:26%;width:23%;height:48%;border-radius:2px}
+.mah-package-fasteners i{position:absolute;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle,#2d322d 0 25%,#eae8ce 30% 55%,#6c7969 60%);box-shadow:0 1px 1px #4448}
+.mah-package-fasteners i:nth-child(1){top:6px;left:6px}.mah-package-fasteners i:nth-child(2){top:6px;right:6px}.mah-package-fasteners i:nth-child(3){bottom:6px;left:6px}.mah-package-fasteners i:nth-child(4){bottom:6px;right:6px}
+.landing .mah-red-assembly .metal-specular{background:linear-gradient(115deg,transparent 25%,#fff0c41c 43%,#fff9df50 47%,transparent 53%);z-index:5}
+.landing .processor-expanded{height:590px}.landing .processor-expanded .mah-red-assembly{animation:none;top:42%;transform:translate(-50%,-50%) rotateX(48deg) rotateZ(calc(-30deg + var(--tilt)))}
+.landing .processor-expanded .mah-red-assembly .landchip-board{transform:translateZ(32px)}
+.landing .processor-expanded .mah-red-assembly .landchip-package{transform:translateZ(95px)}
+.landing .processor-expanded .mah-red-assembly .processor-interposer{transform:translateZ(-26px)}
+.landing .processor-expanded .mah-red-assembly .processor-base{transform:translateZ(-85px)}
+.mah-layer-key{position:absolute;bottom:60px;left:10px;right:10px;display:grid;grid-template-columns:1fr 1fr;gap:7px 20px;padding:13px 18px;border:1px solid #88704866;border-radius:5px;background:#0a1019e8;color:#c5cfd5;font:10px Aptos,sans-serif;z-index:9;box-shadow:0 8px 25px #0003}.mah-layer-key span{display:flex;gap:9px;align-items:center}.mah-layer-key b{font:9px monospace;color:#e9be72}
+html[data-theme=light] .mah-layer-key{background:#f9f6eeed;color:#31495c;border-color:#b09b72}html[data-theme=light] .mah-layer-key b{color:#885e22}
+@media(max-width:1000px){.landing .mah-red-assembly{width:290px;height:348px}.mah-chip-brand img{width:43px;height:43px}.mah-chip-brand strong{font-size:10px}}
+@media(max-width:640px){.landing .mah-red-assembly{width:258px;height:310px}.landing .processor-expanded{height:540px}.landing .processor-expanded .mah-red-assembly .landchip-package{transform:translateZ(72px)}.mah-chip-brand img{width:36px;height:36px}.mah-chip-brand strong{font-size:8px}.mah-chip-brand span{font-size:3px}.mah-layer-key{font-size:9px;gap:9px;padding:12px;bottom:58px}.landing .chip-macro .mah-red-assembly{scale:1.08}}
+@media(prefers-reduced-motion:reduce){.landing .mah-red-assembly,.landing .mah-red-assembly *{animation:none!important;transition:none!important}}

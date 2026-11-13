@@ -1,0 +1,14 @@
+import {clamp,finite} from './physics';
+export interface CryoControls {pump:boolean;compressor:boolean;valve:number;flowUMol:number;purity:number;lines:number;heatUW:number;leak:number;ramp:number;}
+export interface CryoState {seconds:number;temperatures:number[];pressureTorr:number;faults:string[];}
+export const defaultCryo: CryoControls={pump:false,compressor:false,valve:50,flowUMol:400,purity:99.99,lines:24,heatUW:.2,leak:0,ramp:5};
+export const initialCryo=():CryoState=>({seconds:0,temperatures:[300,300,300,300,300],pressureTorr:760,faults:[]});
+export function heatBalance(c:CryoControls){const conductionUW=c.lines*.008,heatUW=c.heatUW+conductionUW,flow=c.flowUMol*1e-6*c.valve/100,eqK=flow?Math.max(.01,Math.sqrt(heatUW*1e-6/(84*flow)+.008**2)):300;return{conductionUW,heatUW,flowMolS:flow,equilibriumK:eqK,coolingAt20mKUW:84*flow*(.02**2-.008**2)*1e6,condensingBar:c.compressor?.5+c.flowUMol/500:0};}
+export function cryoStep(s:CryoState,c:CryoControls,dt=60):CryoState {finite(dt,'Step seconds',1,300);finite(s.seconds,'Elapsed seconds',0,1e12);finite(s.pressureTorr,'Pressure',0,760);if(!Array.isArray(s.temperatures)||s.temperatures.length!==5)throw Error('Expected five stage temperatures.');s.temperatures.forEach(t=>finite(t,'Stage temperature',.001,400));if(!Array.isArray(s.faults)||s.faults.some(f=>typeof f!=='string'))throw Error('Invalid fault history.');if(typeof c.pump!=='boolean'||typeof c.compressor!=='boolean')throw Error('Invalid plant switches.');finite(c.valve,'Valve',0,100);finite(c.flowUMol,'Flow',0,1000);finite(c.purity,'Purity',90,100);finite(c.lines,'Lines',0,128);finite(c.heatUW,'Heat',0,100);finite(c.leak,'Leak',0,1);finite(c.ramp,'Ramp',1,60);const faults=[...s.faults],add=(x:string)=>{if(!faults.includes(x))faults.push(x);};
+ const load=1e-7+c.leak*.1,rate=c.pump?.1:.001,eq=c.pump?load/100:760,pressureTorr=eq+(s.pressureTorr-eq)*Math.exp(-rate*dt);
+ if(c.compressor&&s.pressureTorr>1e-3)add('Vacuum interlock: evacuate before enabling compressor.');
+ if(c.compressor&&c.purity<99)add('Mixture contamination: reset and restore clean mixture.');
+ if(c.compressor&&c.valve<15&&c.flowUMol>700)add('Vapor lock: excessive flow through a restricted valve.');
+ if(c.compressor&&c.ramp>30&&s.temperatures[1]>100)add('Thermal shock: warm-stage ramp exceeded training limit.');
+ const enabled=c.compressor&&c.pump&&faults.length===0&&pressureTorr<1e-3;const eqCold=heatBalance(c).equilibriumK;const targets=enabled?[300,50, s.temperatures[1]<65?4:Math.max(50,s.temperatures[1]),s.temperatures[2]<6?.8:Math.max(4,s.temperatures[2]),s.temperatures[3]<1?eqCold:Math.max(.8,s.temperatures[3])]:[300,300,300,300,300];
+ const temperatures=s.temperatures.map((t,i)=>i===0?300:t+(targets[i]-t)*(1-Math.exp(-dt/(360*5/c.ramp))));return{seconds:s.seconds+dt,temperatures,pressureTorr:clamp(pressureTorr,1e-12,760),faults};}

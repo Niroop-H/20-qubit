@@ -1,0 +1,30 @@
+/* Machined carrier surfaces: directional grain, layered bevels and contact shadows. */
+.landing .landchip-board{background:repeating-linear-gradient(8deg,#f0f5e703 0 1px,transparent 1px 4px),radial-gradient(ellipse at 23% 17%,#43565c,#17252c 45%,#080e13 85%);border-color:#ac9b75;box-shadow:0 2px #f5e4b6,0 5px #897752,0 8px #2a2925,0 11px #a59b7b,0 15px #0b1117,0 22px 20px #000b,inset 0 0 45px #000c}
+.landing .processor-base{inset:-22px;background:repeating-linear-gradient(105deg,#ffffff08 0 1px,transparent 1px 3px),linear-gradient(130deg,#acb3b1,#343f46 25%,#7e8a8b 49%,#19262e 51%,#48565b 85%,#b9c0b8);border:1px solid #d9d6bf;border-radius:13px;box-shadow:0 3px #9b9d91,0 6px #303b42,0 10px #87928f,0 14px #17252c,8px 30px 35px #000c}
+.landing .processor-interposer{background:repeating-linear-gradient(0deg,#111b23 0 3px,#8b8d76 3px 4px,#24323a 4px 6px);box-shadow:0 2px #c1b890,0 6px #0a1016}
+.precision-fabrication{position:absolute;inset:0;width:100%;height:100%;overflow:visible;transform:translateZ(12px);pointer-events:none;z-index:4}
+.landing .landchip-package{background:repeating-linear-gradient(105deg,#fff7df16 0 1px,transparent 1px 3px),linear-gradient(135deg,#fbebc5,#a18b60 18%,#ead6a3 40%,#504a3b 52%,#b8a275 80%,#fff2d0);box-shadow:0 1px #fff4d3,0 4px #bba16b,0 6px #302a23,0 9px #7c795f,3px 16px 14px #000e;padding:7px;z-index:6}
+.landing .processor-die{background:linear-gradient(120deg,#27424b88,transparent 35%,#b1f9ff12 50%,transparent 58%),repeating-linear-gradient(90deg,#8bc2c608 0 .5px,transparent .5px 3px),#07121c;box-shadow:inset 0 0 18px #000b;border-color:#9fb0a2}
+.landing .qubit-architecture{filter:drop-shadow(0 1px 1px #000)}.landing .transmon-cross{fill:#b5d4d5;stroke:#f0ffff;stroke-width:.5}.landing .resonator-feed{stroke:#b4c3bd}.landing .core-nebula{opacity:.3}.landing .core-rays{opacity:.22}.landing .halo-outer{opacity:.35}.landing .core-underlight{opacity:.4}
+.metal-specular{position:absolute;inset:0;pointer-events:none;border-radius:8px;background:linear-gradient(115deg,transparent 25%,#fff3c519 43%,#fff9df40 47%,transparent 53%);mix-blend-mode:screen;transform:translateZ(13px);z-index:8;opacity:.55;animation:metal-light 12s ease-in-out infinite}
+@keyframes metal-light{0%,100%{opacity:.2;background-position:-80px 0}50%{opacity:.6;background-position:90px 0}}
+.chip-inspect{position:absolute;bottom:18px;left:20px;z-index:10;border:1px solid #84765b;background:linear-gradient(#30373a,#10191f);color:#e0cda4;padding:9px 12px;font:9px Aptos,'Segoe UI',sans-serif;letter-spacing:.5px;border-radius:3px;box-shadow:inset 0 1px #ffffff16;cursor:pointer}
+.chip-inspect:hover,.chip-inspect:focus-visible{outline:2px solid #d9c18b;outline-offset:3px}.landing .processor-expand{left:auto;right:20px;transform:none;background:linear-gradient(#30373a,#10191f);border-color:#84765b;color:#e0cda4}
+.landing .landchip-assembly{transition:scale .7s,transform .5s}.landing .chip-macro .landchip-assembly{scale:1.22}.landing .chip-macro .processor-callout,.landing .chip-macro .core-readout{opacity:0}
+.landing .hero-visual{background:radial-gradient(ellipse at 55% 25%,#283b4933,transparent 65%)}
+.landing .processor-serial{color:#d0bf96;text-shadow:0 1px #000}.landing .land-button{background:linear-gradient(145deg,#42484b,#1c2933 60%,#30363b);border-color:#a99872;box-shadow:inset 0 1px #fff3ca33,0 8px 20px #0006}.landing .land-button:hover{background:linear-gradient(145deg,#535a5d,#243846);border-color:#f1d49b}.landing .land-nav{background:linear-gradient(110deg,#151a1f,#060a10 70%);border-bottom-color:#514c40}
+@media(max-width:640px){.landing .chip-macro .landchip-assembly{scale:1.1}.chip-inspect{left:8px;font-size:8px;padding:8px}.landing .processor-expand{right:8px;font-size:8px}.precision-fabrication{overflow:visible}}
+@media(prefers-reduced-motion:reduce){.metal-specular{animation:none}.landing .landchip-assembly{transition:none}}
+.landchip-paused .metal-specular{animation-play-state:paused}
+/* Polished gold revision: clean specular edges and brighter lithography. */
+.landing .precision-fabrication{filter:brightness(1.22) saturate(1.12) drop-shadow(0 1px 1px #0008)}
+.landing .landchip-board{background:repeating-linear-gradient(8deg,#fff4cf08 0 1px,transparent 1px 4px),radial-gradient(ellipse at 25% 15%,#52666b,#24363d 50%,#11212b 90%);border-color:#ffe3a1;box-shadow:0 2px #fff2c3,0 5px #d3ad56,0 8px #685130,0 11px #d9bf7c,0 15px #14222c,0 22px 20px #000b,inset 0 0 20px #e3b85518}
+.landing .carrier-rim{border-color:#ffe39c;box-shadow:inset 0 0 0 4px #18303c,inset 0 0 0 5px #d0ab54}
+.landing .gold-route{stroke:#eac477;opacity:1;filter:drop-shadow(0 0 1px #f4cf7655)}
+.landing .arched-bond{stroke:#ffe2a1;filter:drop-shadow(0 1px 1px #111)}
+.landing .processor-routing path{stroke:#c6b57a;opacity:.9}.landing .processor-routing circle{fill:#f9df9a}
+.landing .landchip-package{background:repeating-linear-gradient(105deg,#fff5d526 0 1px,transparent 1px 3px),linear-gradient(135deg,#fff3c5,#caa04a 19%,#ffe7a1 42%,#8d6b2d 53%,#e4c471 78%,#fff9d9);border-color:#fff0bd;box-shadow:0 1px #fffbe2,0 4px #e4ba5f,0 6px #655025,0 9px #bea878,3px 16px 14px #000b}
+.landing .processor-die{background:linear-gradient(120deg,#4c748770,transparent 35%,#c6f6ff20 50%,transparent 58%),repeating-linear-gradient(90deg,#b9e9eb10 0 .5px,transparent .5px 3px),#102a3c;border-color:#daf7ef}
+.landing .resonator-feed{stroke:#e5fbf4;stroke-width:1.3;filter:drop-shadow(0 0 1px #a7e4ee77)}
+.landing .transmon-cross{fill:#f2e0a7;stroke:#fff6d7;filter:drop-shadow(0 0 1px #ffe39b77)}
+.landing .coupler-bus{stroke:#bceff5;opacity:1}.landing .metal-specular{opacity:.75;background:linear-gradient(115deg,transparent 25%,#fff3c533 43%,#fff9df70 47%,transparent 53%)}
