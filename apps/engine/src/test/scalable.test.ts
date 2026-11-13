@@ -99,7 +99,7 @@ describe("exact scalable 100-qubit and 1000+ qubit engines",()=>{
  for(let n=1;n<=7;n++)it("cross-checks stabilizer distribution with dense exact statevector at "+n+" qubits",()=>{
   let seed=1234567+n;
   const rand=()=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return (seed>>>0)/4294967296;};
-  const gates=["H","H","S","S","X","Y","Z","CX","CZ","SWAP"];
+  const gates:Step["gate"][]=["H","H","S","S","X","Y","Z","CX","CZ","SWAP"];
   const steps:Step[]=[];
   for(let i=0;i<24;i++){
    let gate:Step["gate"]=gates[Math.floor(rand()*gates.length)];
