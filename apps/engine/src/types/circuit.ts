@@ -55,7 +55,7 @@ export type NoiseConfig = z.infer<typeof NoiseConfigSchema>;
 
 export const ExecutionRequestSchema = z.object({
   qubits: z.number().int().min(1).max(100),
-  bits: z.number().int().min(1).max(20).optional(),
+  bits: z.number().int().min(1).max(100).optional(),
   seed: z.number().int().min(0).max(4294967295).default(42),
   shots: z.number().int().min(1).max(8192).default(1024),
   steps: z.array(CircuitStepSchema).max(256),
