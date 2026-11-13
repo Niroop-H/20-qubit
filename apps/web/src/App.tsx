@@ -144,7 +144,13 @@ export const App: React.FC = () => {
     if (!saveStored(projectsKey, projects)) setStorageWarning(true);
   }, [projects]);
   useEffect(() => {
-    if (!saveStored(jobsKey, jobs)) setStorageWarning(true);
+    // Keep browser storage bounded; large results can be exported during the session.
+    const persistentJobs = jobs.map((job) =>
+      job.result && JSON.stringify(job.result).length > 90000
+        ? { ...job, result: undefined }
+        : job
+    );
+    if (!saveStored(jobsKey, persistentJobs)) setStorageWarning(true);
   }, [jobs]);
   useEffect(() => () => cancelRef.current?.(), []);
   const notice = (text: string) => {
@@ -959,7 +965,7 @@ export const App: React.FC = () => {
                 </p>
                 <h3>Supported scope</h3>
                 <p>
-                  1–8 qubits, 256 expanded operations, up to 8,192 shots. Static
+                  1–20 qubits, 256 expanded operations, up to 8,192 shots. Static
                   OpenQASM 2/3, one quantum and one classical register, terminal
                   measurements and the gates listed in Code. Results use
                   c[n−1]…c[0], or q[n−1]…q[0] when no measurements are
@@ -974,6 +980,9 @@ export const App: React.FC = () => {
                   control or mid-circuit measurement. Unsupported instructions
                   are rejected. Qiskit is an export, not an installed execution
                   environment.
+                </p>
+                <p>
+                  At large registers, only the strongest amplitudes and most significant outcomes are displayed; sampled outcomes remain exportable. Exact ideal simulation uses typed arrays and logarithmic-time measurement sampling. Large noisy trajectories may be rejected by the explicit browser work limit.
                 </p>
                 <p>
                   Noise is a generic model, not calibrated IBM hardware.
