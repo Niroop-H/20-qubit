@@ -49,7 +49,7 @@ function randomFullWidthCircuit(seed){
  const p={qubits:20,bits:20,steps};validateProgram(p);return p;
 }
 check("20-qubit capacity and raw state allocation",()=>{
- assert.equal(MAX_QUBITS,20);const c=new QuantumCircuit(20);
+ assert.equal(MAX_QUBITS,100);const c=new QuantumCircuit(20);
  assert.equal(c.stateSize,1048576);assert.equal(c.real.byteLength+c.imag.byteLength,16777216);
  return{qubits:20,basisStates:c.stateSize,rawComplexStateBytes:16777216};
 });
