@@ -92,7 +92,7 @@ export const HistogramView: React.FC<HistogramViewProps> = ({
           formatter={(value: number, name: string) => {
             if (name === "probability" || name === "Ideal probability")
               return [
-                `${(value * 100).toFixed(2)}%`,
+                `${value * 100 < 0.01 ? (value * 100).toExponential(2) : (value * 100).toFixed(2)}%`,
                 name === "probability"
                   ? "Observed frequency"
                   : "Ideal probability",
