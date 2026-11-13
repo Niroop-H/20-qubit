@@ -135,6 +135,22 @@ async function main(){
   assert.equal(Object.values(evidence.measurement.counts).reduce((a,b)=>a+b,0),256);
   return{sha256Verified:true,qubits:1000,shots:256,method:"stabilizer-tableau"};
  });
+ await test("Changing seed and shots invalidates previous results and preserves exported provenance",async()=>{
+  await page.getByRole("spinbutton",{name:"Large circuit seed"}).fill("123");
+  await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("128");
+  assert.equal(await page.getByRole("button",{name:"Download reproducible JSON"}).isDisabled(),true);
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.locator(".large-telemetry").getByText("Clifford stabilizer tableau").waitFor({timeout:30000});
+  const next=page.waitForEvent("download",{timeout:15000});
+  await page.getByRole("button",{name:"Download reproducible JSON"}).click();
+  const downloaded=await next;
+  const parsed=JSON.parse(readFileSync(await downloaded.path(),"utf8"));
+  assert.equal(parsed.execution.seed,123);
+  assert.equal(parsed.execution.requestedShots,128);
+  assert.equal(parsed.execution.completedShots,128);
+  assert.equal(parsed.circuit.sha256,createHash("sha256").update(parsed.circuit.openQasm).digest("hex"));
+  return{seed:123,shots:128,previousResultInvalidated:true,sha256Verified:true};
+ });
  await test("2048-qubit Hadamard preset executes without statevector",async()=>{
   await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("2048");
   await page.getByRole("combobox",{name:"Large circuit preset"}).selectOption("plus");
