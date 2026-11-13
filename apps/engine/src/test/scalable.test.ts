@@ -42,6 +42,16 @@ describe("exact scalable 100-qubit and 1000+ qubit engines",()=>{
   near(out.idealProbabilities["1".repeat(1000)],.5);
   assert.equal(Object.values(out.counts).reduce((a,b)=>a+b,0),512);
  });
+ it("reaches the full 4096-logical-qubit width with exact GHZ correlation",()=>{
+  const steps=[op("h","H",[0])];
+  for(let q=1;q<4096;q++)steps.push(op("cx"+q,"CX",[q],[q-1]));
+  const out=simulateScalable(program(4096,steps),32,29);
+  assert.equal(out.method,"stabilizer-tableau");
+  assert.equal(out.supportRank,1);
+  near(out.idealProbabilities["0".repeat(4096)],.5);
+  near(out.idealProbabilities["1".repeat(4096)],.5);
+  assert.equal(Object.values(out.counts).reduce((a,b)=>a+b,0),32);
+ });
  it("runs exact 2048-qubit |+> product sampling with no dense statevector",()=>{
   const p=program(2048,Array.from({length:2048},(_,q)=>op("h"+q,"H",[q])));
   const out=simulateScalable(p,32,24);
