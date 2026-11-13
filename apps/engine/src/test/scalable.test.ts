@@ -102,7 +102,7 @@ describe("exact scalable 100-qubit and 1000+ qubit engines",()=>{
   const gates=["H","H","S","S","X","Y","Z","CX","CZ","SWAP"];
   const steps:Step[]=[];
   for(let i=0;i<24;i++){
-   let gate=gates[Math.floor(rand()*gates.length)];
+   let gate:Step["gate"]=gates[Math.floor(rand()*gates.length)];
    if(n===1&&["CX","CZ","SWAP"].includes(gate))gate="H";
    const a=Math.floor(rand()*n),b=(a+1+Math.floor(rand()*Math.max(1,n-1)))%n;
    if(gate==="CX"||gate==="CZ")steps.push(op("t"+i,gate,[b],[a]));
