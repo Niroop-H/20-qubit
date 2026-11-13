@@ -36,6 +36,16 @@ async function main(){
    owner:null,heartbeat:0
   }));
  });
+ await test("Market landing identifies controlled access and links directly to 1000+ computation",async()=>{
+  const response=await page.goto(base+"/",{waitUntil:"domcontentloaded"});
+  assert.equal(response?.status(),200);
+  await page.getByRole("link",{name:/1000\+ Qubit workspace/i}).waitFor({timeout:25000});
+  const copy=await page.locator(".landing").innerText();
+  assert.ok(copy.includes("CONTROLLED WORKSPACE ACCESS"));
+  assert.ok(copy.includes("100 logical qubits"));
+  assert.ok(!copy.includes("NO SIGN-UP REQUIRED"));
+  return{controlledAccessDisclosure:true,largeWorkspaceLinked:true};
+ });
  await test("Studio renders 20-qubit selector in a real Chromium tab",async()=>{
   const response=await page.goto(base+"/studio",{waitUntil:"domcontentloaded"});
   assert.equal(response?.status(),200);
