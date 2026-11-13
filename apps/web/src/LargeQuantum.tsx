@@ -1,9 +1,11 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import {Page} from "./lab/Shared";
+import { download } from "./services/projects";
 import type {ScalableResult} from "../../engine/src/studio/scalable";
 import "./large-quantum.css";
 
 type Preset="ghz"|"cluster"|"plus"|"rotations";
+const MAX_JOB_DURATION_MS = 120_000;
 const sizes=[1000,1024,1536,2048,4096];
 function sourceFor(n:number,preset:Preset):string{
  const lines=["OPENQASM 2.0;",'include "qelib1.inc";',"qreg q["+n+"];","creg c["+n+"];"];
@@ -28,8 +30,12 @@ export default function LargeQuantum(){
  const [result,setResult]=useState<ScalableResult|null>(null),[error,setError]=useState("");
  const [running,setRunning]=useState(false),[elapsed,setElapsed]=useState(0);
  const workerRef=useRef<Worker|null>(null);
+ const deadlineRef=useRef<ReturnType<typeof setTimeout>|null>(null);
  const [testName,setTestName]=useState("GHZ entanglement · 1000 qubits");
- useEffect(()=>()=>{workerRef.current?.terminate();},[]);
+ useEffect(()=>()=>{
+  workerRef.current?.terminate();
+  if(deadlineRef.current!==null)clearTimeout(deadlineRef.current);
+ },[]);
  const changePreset=(next:Preset,width=n)=>{
   setPreset(next);setSource(sourceFor(width,next));
   setResult(null);setError("");
@@ -41,26 +47,66 @@ export default function LargeQuantum(){
   } as Record<Preset,string>)[next]+" · "+width+" qubits");
  };
  const run=useCallback(()=>{
-  if(running)return;
+  if(running||workerRef.current)return;
   setError("");setResult(null);setRunning(true);setElapsed(0);
   const started=performance.now();
-  const worker=new Worker(new URL("./services/large.worker.ts",import.meta.url),{type:"module"});
+  let worker:Worker;
+  try {worker=new Worker(new URL("./services/large.worker.ts",import.meta.url),{type:"module"});}
+  catch {setRunning(false);setError("Unable to start the local computation worker.");return;}
   workerRef.current=worker;
-  worker.onmessage=(event:MessageEvent<{result?:ScalableResult;error?:string}>)=>{
+  const finish=(data:{result?:ScalableResult;error?:string})=>{
+   if(workerRef.current!==worker)return;
+   workerRef.current=null;
+   if(deadlineRef.current!==null)clearTimeout(deadlineRef.current);
+   deadlineRef.current=null;
    setElapsed(performance.now()-started);
-   if(event.data.error)setError(event.data.error);
-   else if(event.data.result)setResult(event.data.result);
+   if(data.error)setError(data.error);
+   else if(data.result)setResult(data.result);
    else setError("The simulator returned no result.");
-   setRunning(false);worker.terminate();workerRef.current=null;
+   setRunning(false);
+   worker.terminate();
   };
-  worker.onerror=()=>{
-   setElapsed(performance.now()-started);
-   setRunning(false);setError("The browser worker could not execute this circuit.");
-   worker.terminate();workerRef.current=null;
-  };
-  worker.postMessage({source,shots,seed});
+  worker.onmessage=(event:MessageEvent<{result?:ScalableResult;error?:string}>)=>finish(event.data);
+  worker.onerror=()=>finish({error:"The browser worker encountered an execution error."});
+  worker.onmessageerror=()=>finish({error:"The browser worker returned an unreadable result."});
+  deadlineRef.current=setTimeout(()=>finish({
+   error:"This computation exceeded the 120-second local execution limit. Reduce gates, shots, or entangled component size."
+  }),MAX_JOB_DURATION_MS);
+  try{worker.postMessage({source,shots,seed});}
+  catch{finish({error:"Unable to transfer the circuit to the computation worker."});}
  },[running,source,shots,seed]);
- const cancel=()=>{workerRef.current?.terminate();workerRef.current=null;setRunning(false);setError("Execution cancelled by operator.");};
+ const cancel=()=>{
+  if(!workerRef.current)return;
+  workerRef.current.terminate();workerRef.current=null;
+  if(deadlineRef.current!==null)clearTimeout(deadlineRef.current);
+  deadlineRef.current=null;
+  setRunning(false);setError("Execution cancelled by operator.");
+ };
+ const exportExperiment=async()=>{
+  if(!result||running)return;
+  const bytes=new TextEncoder().encode(source);
+  const digest=globalThis.crypto?.subtle
+   ? await globalThis.crypto.subtle.digest("SHA-256",bytes).then(value=>
+      Array.from(new Uint8Array(value),b=>b.toString(16).padStart(2,"0")).join("")
+     ).catch(()=>null)
+   : null;
+  const evidence={
+   schema:"MAH-Quantum-Experiment/v1",
+   recordedAtUtc:new Date().toISOString(),
+   software:"MAH Quantum logical-qubit classical simulation",
+   circuit:{openQasm:source,sha256:digest,logicalQubits:result.backendInfo.qubitCount},
+   execution:{seed:result.seed,requestedShots:result.backendInfo.shots,completedShots:Object.values(result.counts).reduce((sum,value)=>sum+value,0),
+    method:result.method,exactForSupportedCircuit:result.exact,
+    simulationTimeMs:result.executionTimeMs,
+    finiteSupportRank:result.supportRank??null,
+    idealProbabilityLog2:result.idealProbabilityLog2??null},
+   measurement:{counts:result.counts,shotFrequencies:result.probabilities,idealProbabilitiesShown:result.idealProbabilities,
+    omittedIdealProbabilityMass:result.distributionInfo.omittedIdealProbabilityMass},
+   limitations:result.detail,
+   notice:"A reproducible classical quantum circuit simulation, not a result measured on physical quantum hardware."
+  };
+  download("MAH-Quantum-"+result.backendInfo.qubitCount+"Q-experiment.json",JSON.stringify(evidence,null,2),"application/json");
+ };
  const counts=result?Object.entries(result.counts).sort((a,b)=>b[1]-a[1]):[];
  const countTotal=counts.reduce((a,[,v])=>a+v,0);
  return <Page eyebrow="MAH QUANTUM / COMPUTATION" title="1000+ Qubit"
@@ -91,13 +137,13 @@ export default function LargeQuantum(){
       </select>
      </label>
      <label>Measurement shots
-      <select aria-label="Large circuit shots" value={shots} onChange={e=>setShots(Number(e.target.value))} disabled={running}>
+      <select aria-label="Large circuit shots" value={shots} onChange={e=>{setShots(Number(e.target.value));setResult(null);setError("");}} disabled={running}>
        {[32,64,128,256,512,1024].map(v=><option key={v} value={v}>{v.toLocaleString()}</option>)}
       </select>
      </label>
      <label>Seed
       <input type="number" aria-label="Large circuit seed" min="0" max="4294967295" step="1" value={seed}
-       onChange={e=>setSeed(Number(e.target.value))} disabled={running}/>
+       onChange={e=>{setSeed(Number(e.target.value));setResult(null);setError("");}} disabled={running}/>
      </label>
     </div>
     <div className="large-source-header"><strong>Static OpenQASM subset</strong><span>Editable · {source.length.toLocaleString()} characters</span></div>
@@ -108,6 +154,7 @@ export default function LargeQuantum(){
      <button className="large-primary" onClick={run} disabled={running}>{running?"Computing…":"Run quantum circuit"}</button>
      {running&&<button onClick={cancel}>Cancel computation</button>}
      <button disabled={running} onClick={()=>changePreset(preset)}>Restore preset</button>
+     <button disabled={!result||running} onClick={()=>{void exportExperiment();}}>Download reproducible JSON</button>
     </div>
     {running&&<p role="status" className="large-status">Executing state evolution and sampling in a dedicated local worker. Large circuits may take longer.</p>}
     {error&&<p role="alert" className="large-error">{error}</p>}
@@ -137,11 +184,12 @@ export default function LargeQuantum(){
      <div className="large-outcomes">
       {counts.slice(0,24).map(([bits,count])=><div className="large-outcome" key={bits}>
        <code title={bits}>{concise(bits)}</code>
-       <span>{count.toLocaleString()} / {shots.toLocaleString()}</span>
+       <span>{count.toLocaleString()} / {result.backendInfo.shots.toLocaleString()}</span>
        <div className="large-meter"><i style={{width:(100*count/shots)+"%"}}/></div>
       </div>)}
      </div>
      <p className="large-footnote">The distribution table is a bounded display of sampled outcomes; it is not a complete enumeration of 2<sup>{result.backendInfo.qubitCount}</sup> states. Histogram frequencies fluctuate with the random seed.</p>
+     <p className="large-footnote">Run results and source are held locally in this browser session. The downloadable JSON records the circuit, method, seed, shots, exactness statement and probabilities for independent review.</p>
     </>}
     {elapsed>0&&<p className="large-footnote">Browser job duration: {elapsed.toFixed(1)} ms, including worker startup and transfer.</p>}
    </section>

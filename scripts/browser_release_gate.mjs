@@ -5,8 +5,9 @@
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {performance} from "node:perf_hooks";
-import {mkdirSync,writeFileSync} from "node:fs";
+import {mkdirSync,writeFileSync,readFileSync} from "node:fs";
 import {chromium} from "playwright";
+import {createHash} from "node:crypto";
 const base="http://127.0.0.1:4173", evidence=[],started=performance.now();
 let server,browser;
 const test=async(name,action)=>{
@@ -34,6 +35,16 @@ async function main(){
    version:1,active:"c0",codes:{"c0":{usedMs:0,cooldownUntil:0}},
    owner:null,heartbeat:0
   }));
+ });
+ await test("Market landing identifies controlled access and links directly to 1000+ computation",async()=>{
+  const response=await page.goto(base+"/",{waitUntil:"domcontentloaded"});
+  assert.equal(response?.status(),200);
+  await page.getByRole("link",{name:/1000\+ Qubit workspace/i}).waitFor({timeout:25000});
+  const copy=await page.locator(".landing").innerText();
+  assert.ok(copy.includes("CONTROLLED WORKSPACE ACCESS"));
+  assert.match(copy,/100\s+logical qubits/i);
+  assert.ok(!copy.includes("NO SIGN-UP REQUIRED"));
+  return{controlledAccessDisclosure:true,largeWorkspaceLinked:true};
  });
  await test("Studio renders 20-qubit selector in a real Chromium tab",async()=>{
   const response=await page.goto(base+"/studio",{waitUntil:"domcontentloaded"});
@@ -116,6 +127,40 @@ async function main(){
   assert.ok(text.includes("1,000"));
   return{qubits:1000,completed:true,exactClifford:true};
  });
+ await test("1000-qubit experiment exports a reproducible signed-input evidence record",async()=>{
+  const downloadReady=page.waitForEvent("download",{timeout:15000});
+  await page.getByRole("button",{name:"Download reproducible JSON"}).click();
+  const downloaded=await downloadReady;
+  assert.match(downloaded.suggestedFilename(),/1000Q-experiment\.json/);
+  const path=await downloaded.path();
+  assert.ok(path,"Download path unavailable");
+  const evidence=JSON.parse(readFileSync(path,"utf8"));
+  assert.equal(evidence.schema,"MAH-Quantum-Experiment/v1");
+  assert.equal(evidence.circuit.logicalQubits,1000);
+  assert.equal(evidence.execution.requestedShots,256);
+  assert.equal(evidence.execution.completedShots,256);
+  assert.equal(evidence.execution.method,"stabilizer-tableau");
+  assert.equal(evidence.execution.exactForSupportedCircuit,true);
+  assert.equal(evidence.circuit.sha256,createHash("sha256").update(evidence.circuit.openQasm).digest("hex"));
+  assert.equal(Object.values(evidence.measurement.counts).reduce((a,b)=>a+b,0),256);
+  return{sha256Verified:true,qubits:1000,shots:256,method:"stabilizer-tableau"};
+ });
+ await test("Changing seed and shots invalidates previous results and preserves exported provenance",async()=>{
+  await page.getByRole("spinbutton",{name:"Large circuit seed"}).fill("123");
+  await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("128");
+  assert.equal(await page.getByRole("button",{name:"Download reproducible JSON"}).isDisabled(),true);
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.locator(".large-telemetry").getByText("Clifford stabilizer tableau").waitFor({timeout:30000});
+  const next=page.waitForEvent("download",{timeout:15000});
+  await page.getByRole("button",{name:"Download reproducible JSON"}).click();
+  const downloaded=await next;
+  const parsed=JSON.parse(readFileSync(await downloaded.path(),"utf8"));
+  assert.equal(parsed.execution.seed,123);
+  assert.equal(parsed.execution.requestedShots,128);
+  assert.equal(parsed.execution.completedShots,128);
+  assert.equal(parsed.circuit.sha256,createHash("sha256").update(parsed.circuit.openQasm).digest("hex"));
+  return{seed:123,shots:128,previousResultInvalidated:true,sha256Verified:true};
+ });
  await test("2048-qubit Hadamard preset executes without statevector",async()=>{
   await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("2048");
   await page.getByRole("combobox",{name:"Large circuit preset"}).selectOption("plus");
@@ -143,6 +188,25 @@ async function main(){
   await page.getByRole("button",{name:"Run quantum circuit"}).click();
   await page.getByRole("alert").filter({hasText:/19 qubits/i}).waitFor({timeout:30000});
   return{rejected:true,maxConnectedQubits:18,misleadingOutput:false};
+ });
+ await test("Mobile-width 1000+ workspace remains usable with no page-level horizontal overflow",async()=>{
+  const mobileContext=await browser.newContext({viewport:{width:390,height:844}});
+  await mobileContext.addInitScript(()=>{
+   localStorage.setItem("mah-workspace-access-v1",JSON.stringify({
+    version:1,active:"c0",codes:{"c0":{usedMs:0,cooldownUntil:0}},owner:null,heartbeat:0
+   }));
+  });
+  const mobile=await mobileContext.newPage();
+  try{
+   await mobile.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+   await mobile.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:25000});
+   const widths=await mobile.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
+   assert.ok(widths.page<=widths.viewport+8,
+    "Mobile page overflows: "+JSON.stringify(widths));
+   await mobile.getByRole("button",{name:"Run quantum circuit"}).click();
+   await mobile.locator(".large-telemetry").getByText("Clifford stabilizer tableau").waitFor({timeout:60000});
+   return{viewportPx:widths.viewport,pagePx:widths.page,executed:true};
+  }finally{await mobileContext.close();}
  });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);

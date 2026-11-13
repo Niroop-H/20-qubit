@@ -215,7 +215,7 @@ export function parseQasm(source: string): Program {
         swap: 0,
         ccx: 0,
       };
-      if (!(name in paramsCount))
+      if (!Object.prototype.hasOwnProperty.call(paramsCount,name))
         throw new Error(`Unsupported instruction '${name}'.`);
       if (args.length !== paramsCount[name])
         throw new Error(`${name} expects ${paramsCount[name]} angle(s).`);
