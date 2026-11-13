@@ -189,6 +189,20 @@ async function main(){
   await page.getByRole("alert").filter({hasText:/19 qubits/i}).waitFor({timeout:30000});
   return{rejected:true,maxConnectedQubits:18,misleadingOutput:false};
  });
+ await test("Mobile-width 1000+ workspace remains usable with no page-level horizontal overflow",async()=>{
+  const mobile=await page.context().newPage();
+  await mobile.setViewportSize({width:390,height:844});
+  try{
+   await mobile.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+   await mobile.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:25000});
+   const widths=await mobile.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
+   assert.ok(widths.page<=widths.viewport+8,
+    "Mobile page overflows: "+JSON.stringify(widths));
+   await mobile.getByRole("button",{name:"Run quantum circuit"}).click();
+   await mobile.locator(".large-telemetry").getByText("Clifford stabilizer tableau").waitFor({timeout:60000});
+   return{viewportPx:widths.viewport,pagePx:widths.page,executed:true};
+  }finally{await mobile.close();}
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
