@@ -1,6 +1,7 @@
 import express from "express";
 import type {ErrorRequestHandler} from "express";
 import {serveIndustryHttp} from "./studio/industry-http";
+import {serveBrowserUsage} from "./studio/usage-http";
 
 const app=express(),port=process.env.PORT||4000;
 // Deliberately no browser CORS; enterprise Bearer credentials remain server-side.
@@ -17,7 +18,7 @@ app.use(handleJsonErrors);
 // Process-local throttle. Deployments must additionally enforce shared
 // edge rate limits and concurrency caps; untrusted X-Forwarded-For is ignored.
 const limits=new Map<string,{start:number;count:number}>();
-app.use("/api/v1",(req,res,next)=>{
+app.use(["/api/v1","/api/usage"],(req,res,next)=>{
  const now=Date.now(),ip=req.ip||req.socket.remoteAddress||"unknown";
  if(limits.size>4000)for(const [key,value] of limits)if(now-value.start>60000)limits.delete(key);
  const previous=limits.get(ip);
@@ -40,6 +41,8 @@ app.get("/health",(_req,res)=>{
   physicalQuantumProcessor:false,physicalInstrumentControl:false,
   timestamp:new Date().toISOString()});
 });
+app.get("/api/usage",(req,res)=>{serveBrowserUsage(req,res);});
+app.post("/api/usage",(req,res)=>{serveBrowserUsage(req,res);});
 app.get("/api/v1/capabilities",(req,res)=>{serveIndustryHttp(req,res,"capabilities");});
 app.post("/api/v1/execute",(req,res)=>{serveIndustryHttp(req,res,"execute");});
 app.post("/api/v1/batch",(req,res)=>{serveIndustryHttp(req,res,"batch");});

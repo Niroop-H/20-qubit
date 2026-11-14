@@ -243,7 +243,7 @@ export function executePreparedIndustryJob(prepared:PreparedJob):IndustryExecuti
    omittedIdealProbabilityMass:result.distributionInfo.omittedIdealProbabilityMass}
  };
 }
-export function executeIndustryBatch(raw:unknown){
+export function prepareIndustryBatch(raw:unknown):PreparedJob[]{
  if(!scalar(raw))throw new IndustryInputError("Batch body must be a JSON object.");
  requireFields(raw,["schema","jobs"]);
  if(raw.schema!=="MAH-Quantum-Industry-Batch/v1")
@@ -257,6 +257,12 @@ export function executeIndustryBatch(raw:unknown){
  const work=prepared.reduce((sum,p)=>sum+estimateIndustryWork(p),0);
  if(!Number.isFinite(work)||work>INDUSTRY_MAX_BATCH_WORK)
   throw new IndustryInputError("Batch exceeds aggregate synchronous solver work budget.");
+ return prepared;
+}
+export function executePreparedIndustryBatch(prepared:PreparedJob[]){
  return{schema:"MAH-Quantum-Industry-Batch-Result/v1",execution:"synchronous",
   items:prepared.map(executePreparedIndustryJob),total:prepared.length};
+}
+export function executeIndustryBatch(raw:unknown){
+ return executePreparedIndustryBatch(prepareIndustryBatch(raw));
 }

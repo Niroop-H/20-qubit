@@ -2,6 +2,7 @@ import {useEffect,useMemo,useRef,useState} from "react";
 import {validateIndustrialGraph,type IndustrialGraph,type IndustrialOptimizationResult} from "../../../engine/src/studio/industrial";
 import {SCENARIOS,type Scenario} from "../services/industrial-research-examples";
 import {download} from "../services/projects";
+import {useExecutionBudget} from "../services/useExecutionBudget";
 type WorkerResponse={result?:IndustrialOptimizationResult;error?:string};
 const fmt=(x:number,d=3)=>Number(x).toLocaleString("en-US",{maximumFractionDigits:d});
 const money=(x:number)=>fmt(x,2);
@@ -39,6 +40,7 @@ function GraphPlot({graph,assignment}:{graph:IndustrialGraph;assignment?:string}
  </svg>;
 }
 export default function IndustrialQaoaWorkbench(){
+ const executionBudget=useExecutionBudget();
  const [scenario,setScenario]=useState<Scenario|"custom">("manufacturing");
  const [source,setSource]=useState(JSON.stringify(SCENARIOS.manufacturing,null,2));
  const [shots,setShots]=useState(512),[seed,setSeed]=useState(2026);
@@ -64,11 +66,14 @@ export default function IndustrialQaoaWorkbench(){
    setSource(JSON.stringify(graph,null,2));setOrigin("User-provided local JSON file");setScenario("custom");clear();
   }catch(e){setError("Graph import rejected: "+(e instanceof Error?e.message:String(e)));}
  };
- const run=()=>{
+ const run=async()=>{
   if(running||worker.current)return;
   if(!validation.graph){setError(validation.error);return;}
+  setRunning(true);
+  const allowance=await executionBudget.reserve();
+  if(!allowance.ok){setRunning(false);setError(allowance.message);return;}
   const graph=validation.graph;
-  setResult(null);setError("");setRunning(true);
+  setResult(null);setError("");
   let w:Worker;
   try{w=new Worker(new URL("../services/industrial-research.worker.ts",import.meta.url),{type:"module"});}
   catch{setRunning(false);setError("Unable to start the local optimization worker.");return;}
@@ -156,10 +161,11 @@ export default function IndustrialQaoaWorkbench(){
      </label>
     </div>
     <div className="rq-opt-buttons rq-opt-run">
-     <button className="rq-opt-primary" disabled={running||!validation.graph} onClick={run}>{running?"Optimizing…":"Run QAOA and classical reference"}</button>
+     <button className="rq-opt-primary" disabled={running||!validation.graph||executionBudget.waiting} onClick={()=>{void run();}}>{running?"Optimizing…":"Run QAOA and classical reference"}</button>
      {running&&<button onClick={cancel}>Cancel</button>}
      <button disabled={!result||running} onClick={()=>{void exportResult();}}>Download evidence JSON</button>
     </div>
+    <p role="status" className="rq-note"><strong>Execution allowance:</strong> {executionBudget.status}</p>
     {running&&<p className="rq-opt-valid" role="status">Computing locally in an isolated worker. Hard limit: 30 seconds.</p>}
     {error&&<p className="rq-opt-invalid" role="alert">{error}</p>}
    </section>

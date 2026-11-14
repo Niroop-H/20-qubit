@@ -184,3 +184,9 @@ The results verify tested input classes, not every future algorithm or external 
 **Do not market as:** universal 4096-qubit quantum computer, commercially certified industrial equipment, physically calibrated quantum digital twin, quantum speedup, safe autonomous machine control, or fully integrated multi-tenant SaaS.
 
 **Appropriate market positioning:** a versioned scientific and industrial research simulation API with bounded exact quantum circuit families, small-variable ideal QAOA comparisons, reproducible evidence and a documented Python interoperability layer.
+
+## Execution credits and five-hour cooldown
+
+Authenticated compute jobs have a process-local anonymous network allowance of **20 execution credits**. A successful circuit execution or MaxCut optimization costs one credit; each batch costs one credit per executing job. Inspect requests do not spend credits. A request that exceeds the remaining credits is rejected with HTTP **429**, `X-Compute-Remaining`, and `Retry-After` while a cooldown is active. Once the last credit is spent, the next execution may start after five elapsed hours; credits then reset to 20.
+
+The API does **not** persist raw IP addresses or another network identifier. It takes Vercel's edge-overwritten client IP when hosted on Vercel or the direct socket peer on Express and stores only an HMAC-SHA256 digest plus counters in transient process memory. This is privacy-preserving but **not globally reliable**: concurrency and multiple serverless instances do not share the quota, redeployment resets it, and shared IPs may share credits. Reliable tenant enforcement requires server-authenticated identities and an atomic shared TTL counter keyed by a pseudonymous identifier. Browser-local execution is separately metered by browser storage and can be reset by clearing site data. Neither limit is a billing-grade quota today.

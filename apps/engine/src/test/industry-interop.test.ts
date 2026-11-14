@@ -20,7 +20,7 @@ const optimize=(options:Record<string,unknown>={})=>({
  graph,shots:256,seed:2026,...options
 });
 function mockHttp(action:"execute"|"batch"|"capabilities",body:unknown,options:{
- method?:string;token?:string;contentType?:string;secret?:string;headers?:Record<string,string>
+ method?:string;token?:string;contentType?:string;secret?:string;ip?:string;headers?:Record<string,string>
 }={}){
  const headers:Record<string,string>={};
  let code=0,payload:unknown;
@@ -31,7 +31,8 @@ function mockHttp(action:"execute"|"batch"|"capabilities",body:unknown,options:{
  };
  serveIndustryHttp({method:options.method??(action==="capabilities"?"GET":"POST"),
   headers:{authorization:options.token===undefined?"Bearer "+secret:options.token,
-   "content-type":options.contentType??"application/json",...options.headers},body
+   "content-type":options.contentType??"application/json",...options.headers},body,
+  socket:{remoteAddress:options.ip??"127.0.0.1"}
  },res,action,options.secret===undefined?secret:options.secret);
  return{code,payload:payload as Record<string,any>,headers};
 }
@@ -123,5 +124,36 @@ describe("Industry v1 authenticated synchronous HTTP",()=>{
   const b=mockHttp("batch",{schema:"MAH-Quantum-Industry-Batch/v1",jobs:[circuit(),circuit()]});
   assert.equal(b.code,422);
   assert.match(b.payload.message,/unique/i);
+ });
+});
+
+describe("Industry HTTP execution credits",()=>{
+ it("charges accepted jobs, skips inspect and returns 429 on five-hour exhaustion",()=>{
+  const tenantSecret="separate-quota-integration-secret-0123456789abcdef";
+  const base={secret:tenantSecret,token:"Bearer "+tenantSecret,ip:"198.51.100.11"};
+  const inspect=circuit(1000,{operation:"inspect",shots:undefined,seed:undefined});
+  assert.equal(mockHttp("execute",inspect,base).code,200);
+  for(let i=0;i<20;i++){
+   const result=mockHttp("execute",circuit(1000,{jobId:"quota-"+i}),base);
+   assert.equal(result.code,200);
+   assert.equal(result.headers["x-compute-remaining"],String(19-i));
+  }
+  const exhausted=mockHttp("execute",circuit(),base);
+  assert.equal(exhausted.code,429);
+  assert.equal(exhausted.payload.error,"execution_quota_exhausted");
+  assert.ok(Number(exhausted.headers["retry-after"])>0);
+  assert.equal(mockHttp("execute",inspect,base).code,200);
+  assert.equal(mockHttp("execute",circuit(),{...base,ip:"198.51.100.12"}).code,200);
+ });
+ it("preflights invalid batches before charging credits, and charges per execute item",()=>{
+  const tenantSecret="batch-quota-integration-secret-0123456789abcdef";
+  const base={secret:tenantSecret,token:"Bearer "+tenantSecret,ip:"198.51.100.13"};
+  const malformed={schema:"MAH-Quantum-Industry-Batch/v1",jobs:[circuit(),circuit()]};
+  assert.equal(mockHttp("batch",malformed,base).code,422);
+  const correct={schema:"MAH-Quantum-Industry-Batch/v1",
+   jobs:[circuit(),circuit(1000,{jobId:"second"})]};
+  const accepted=mockHttp("batch",correct,base);
+  assert.equal(accepted.code,200);
+  assert.equal(accepted.headers["x-compute-remaining"],"18");
  });
 });

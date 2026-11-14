@@ -7,7 +7,7 @@ Developed by **Devashri S Quantum**. A free-to-use, proprietary-source browser-l
 ## Workspace
 
 - **Composer:** edit targets, controls, angles, and measurement destinations; reorder operations; undo/redo. Supports H, X, Y, Z, S, T, I, RX, RY, RZ, U, CX, CZ, SWAP, CCX, barriers, and terminal measurements.
-- **Code:** import, edit, compile, and run the supported static OpenQASM 2/3 subset. Circuit and code share one validated program model. Download QASM or export a Qiskit Python script; Python is not executed in the browser.
+- **Code:** import, edit, compile, and run the supported static OpenQASM 2/3 subset, now including exact lowering for `cp`, `cu1`, `crx`, `cry`, `crz`, `rzz`, `cy`, `ch`, `cswap`, `ccz` and `iswap`. Circuit and code share one validated program model. Download QASM or export a Qiskit Python script; Python is not executed in the browser.
 - **Inspector:** step through ideal evolution, inspect amplitudes and phases, Bloch vectors, reduced-state purity, and Pauli expectation values.
 - **Transpiler:** eliminate adjacent inverse/identity gates, fuse rotations, decompose to U + CX, and optionally route to bidirectional nearest-neighbor connectivity. Routing restores logical ordering; equivalence is up to global phase. Preview before applying.
 - **Results:** reproducible seeded shot sampling, observed versus ideal histograms, statevector tables, and CSV/JSON downloads. Simulations run in a cancellable Web Worker.
@@ -99,3 +99,11 @@ The hosted browser experience may be used without a subscription, but the source
 ## Security and correctness audit
 
 The [November 2026 34-point remediation ledger](docs/SECURITY_CORRECTNESS_AUDIT_2026_11.md) records the fixes, regression tests and residual distributed/hardware deployment limitations. Passing CI is not a physical certification.
+
+## Five-hour execution allowance (first stage)
+
+The **Studio, 1000+ Qubit workspace and industrial QAOA workbench share 20 execution launches**, followed by five hours of cooldown after the last credit. With `MAH_QUANTUM_QUOTA_SECRET` configured server-side, the same-origin `/api/usage` route checks a volatile HMAC-hashed network address; the browser never reads or stores a network identifier. **Clearing browser data does not reset the allowance within the same running server instance**. If the endpoint is unavailable, the UI visibly switches to browser-only fallback credits that can be reset by clearing site data. The separate browser access-code policy remains unchanged.
+
+The server-authenticated industry API separately limits a network address to **20 execute jobs** and then a **five-hour cooldown** (batch operations consume multiple credits; inspect-only jobs do not). Both the browser quota endpoint and industry API use temporary HMAC network digests, not stored raw IPs. Their counters are process-local and cannot guarantee enforcement across serverless instances or restarts. A shared short-lived server-side quota store and genuine user accounts are required to make the limit durable. See [execution credits, privacy, setup and deployment limitations](docs/WORKSPACE_ACCESS.md).
+
+**Remaining roadmap:** durable account/project identity, distributed rate limits and jobs, CPU/GPU backend adapters, expanded QASM dynamic control, third-party mathematical conformance, instrument qualification and commercial service terms. These features are not delivered by the execution quota change.

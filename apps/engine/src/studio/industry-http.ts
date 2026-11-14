@@ -3,15 +3,18 @@
  * The old public compatibility endpoint is intentionally not used here.
  */
 import {createHash,timingSafeEqual} from "node:crypto";
+import {isIP} from "node:net";
+import {NetworkComputeQuota,COMPUTE_CREDITS} from "./execution-quota";
 import {
  IndustryInputError,INDUSTRY_MAX_REQUEST_BYTES,inspectIndustryCapability,
- prepareIndustryJob,executePreparedIndustryJob,executeIndustryBatch
+ prepareIndustryJob,prepareIndustryBatch,executePreparedIndustryJob,executePreparedIndustryBatch
 } from "./enterprise";
 
 export interface IndustryHttpRequest{
  method?:string;
  headers?:Record<string,string|string[]|undefined>;
  body?:unknown;
+ socket?:{remoteAddress?:string};
 }
 export interface IndustryHttpResponse{
  setHeader(name:string,value:string):unknown;
@@ -28,6 +31,24 @@ function bearerValid(raw:unknown,secret:string):boolean{
  return timingSafeEqual(hash(candidate),hash(secret));
 }
 const write=(res:IndustryHttpResponse,status:number,value:unknown)=>res.status(status).json(value);
+let quota:NetworkComputeQuota|null=null,quotaSecret:string|null=null;
+function clientNetwork(req:IndustryHttpRequest):string{
+ // Vercel overwrites X-Forwarded-For on requests arriving through its edge.
+ // Do not trust forwarded values on Express/Render, where clients may spoof them.
+ if(process.env.VERCEL==="1"){
+  const forwarded=req.headers?.["x-forwarded-for"];
+  const candidate=typeof forwarded==="string"?forwarded.split(",")[0].trim():"";
+  return isIP(candidate)?candidate:"unknown";
+ }
+ const socket=req.socket?.remoteAddress?.replace(/^::ffff:/,"")??"";
+ return isIP(socket)?socket:"unknown";
+}
+function localQuota(secret:string){
+ if(!quota||quotaSecret!==secret){
+  quotaSecret=secret;quota=new NetworkComputeQuota(secret);
+ }
+ return quota;
+}
 const incoming=(raw:unknown)=>{
  if(typeof raw==="string"){
   if(Buffer.byteLength(raw,"utf8")>INDUSTRY_MAX_REQUEST_BYTES)
@@ -69,8 +90,26 @@ export function serveIndustryHttp(
   const bytes=Buffer.byteLength(JSON.stringify(body)??"","utf8");
   if(bytes>INDUSTRY_MAX_REQUEST_BYTES)
    throw new IndustryInputError("Request exceeds 128 KiB.",413);
-  const result=action==="batch"?executeIndustryBatch(body):
-   executePreparedIndustryJob(prepareIndustryJob(body));
+  // Validate each job and its real work budget BEFORE spending compute credits.
+  const prepared=action==="batch"?prepareIndustryBatch(body):prepareIndustryJob(body);
+  const credits=Array.isArray(prepared)?
+   prepared.filter(job=>job.job.operation==="execute").length:
+   prepared.job.operation==="execute"?1:0;
+  if(credits){
+   const allowed=localQuota(secret).consume(clientNetwork(req),credits);
+   res.setHeader("X-Compute-Limit",String(COMPUTE_CREDITS));
+   res.setHeader("X-Compute-Remaining",String(allowed.remaining));
+   if(!allowed.ok){
+    if(allowed.retryAfterSeconds)res.setHeader("Retry-After",String(allowed.retryAfterSeconds));
+    return write(res,429,{error:"execution_quota_exhausted",
+     message:allowed.resetAt?
+      "Execution allowance exhausted. Retry after the five-hour cooldown.":
+      "Not enough credits for this batch. Submit fewer execution jobs.",
+     remaining:allowed.remaining,retryAt:allowed.resetAt?new Date(allowed.resetAt).toISOString():null});
+   }
+  }
+  const result=Array.isArray(prepared)?executePreparedIndustryBatch(prepared):
+   executePreparedIndustryJob(prepared);
   return write(res,200,result);
  }catch(error){
   if(error instanceof IndustryInputError)
