@@ -57,6 +57,34 @@ async function main(){
   assert.equal(await select.inputValue(),"20");
   return{qubitOptions:options.length,selected:20};
  });
+ await test("Twenty shared executions impose a five-hour UI cooldown and block large-workspace runs",async()=>{
+  const context=await browser.newContext({viewport:{width:1250,height:900}});
+  await context.addInitScript(()=>{
+   localStorage.setItem("mah-workspace-access-v1",JSON.stringify({
+    version:1,active:"c0",codes:{c0:{usedMs:0,cooldownUntil:0}},owner:null,heartbeat:0
+   }));
+   if(!localStorage.getItem("mah-quantum-execution-budget-v1"))
+    localStorage.setItem("mah-quantum-execution-budget-v1",
+     JSON.stringify({version:1,remaining:1,cooldownUntil:0}));
+  });
+  try{
+   const other=await context.newPage();
+   await other.goto(base+"/studio",{waitUntil:"domcontentloaded"});
+   await other.getByRole("button",{name:"Run circuit"}).click();
+   await other.locator(".lab-notice").filter({hasText:"Completed locally"}).waitFor({timeout:60000});
+   const remaining=JSON.parse(await other.evaluate(()=>
+    localStorage.getItem("mah-quantum-execution-budget-v1")));
+   assert.equal(remaining.remaining,0);
+   assert.ok(remaining.cooldownUntil>Date.now()+4*60*60*1000);
+   assert.match(await other.locator("body").innerText(),/allowance used|renews in/i);
+   await other.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+   await other.getByRole("button",{name:"Run quantum circuit"}).waitFor({timeout:30000});
+   assert.equal(await other.getByRole("button",{name:"Run quantum circuit"}).isDisabled(),true);
+   await other.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+   assert.equal(await other.getByRole("button",{name:"Run QAOA and classical reference"}).isDisabled(),true);
+   return{sharedAllowance:true,remaining:0,cooldownHours:5,otherWorkspacesBlocked:true};
+  }finally{await context.close();}
+ });
  await test("20-qubit circuit runs in browser Web Worker",async()=>{
   await page.getByRole("button",{name:"Run circuit"}).click();
   await page.locator(".lab-notice").filter({hasText:"Completed locally"}).waitFor({timeout:60000});
