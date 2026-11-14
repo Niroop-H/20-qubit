@@ -15,8 +15,12 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Audit production dependencies against npm advisories
+        run: npm audit --registry=https://registry.npmjs.org --omit=dev --audit-level=high
       - run: npm test
       - run: npm run build:web
+      - name: Verify protected industrial API serverless entrypoints
+        run: node scripts/verify_industry_routes.mjs
       - run: node scripts/verify-20.mjs
       - run: node scripts/extended-validation.mjs
       - run: node scripts/preannouncement_release_gate.mjs
@@ -27,6 +31,8 @@ jobs:
           npx playwright install chromium
       - run: node scripts/browser_release_gate.mjs
       - run: python -m unittest discover -s backend -p 'test_*.py'
+      - name: Validate Python industrial customer SDK offline
+        run: python -m unittest discover -s sdk/python -p 'test_*.py'
       - name: Save quantum validation evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -38,6 +44,7 @@ jobs:
             artifacts/preannouncement-release-gate.json
             artifacts/partitioned-independent-validation.json
             artifacts/browser-release-gate.json
+            artifacts/industry-api-release-gate.json
             artifacts/research-*.png
             artifacts/industrial-optimization-desktop.png
           if-no-files-found: ignore

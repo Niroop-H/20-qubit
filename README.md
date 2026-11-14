@@ -2,6 +2,8 @@
 
 Developed by **Devashri S Quantum**. A free, browser-local quantum circuit simulator with a visual composer, executable OpenQASM editor, and circuit transpiler. No API key, paid service, or backend is required for the studio.
 
+**Current research scope (November 2026):** exact dense statevector simulation through **20 qubits**, selected exact Clifford/separable/partitioned calculations in the **100-qubit Studio**, and a **1,000–4,096 logical-qubit research workspace** for mathematically tractable families. These are classical simulations, **not** access to a physical quantum processor or unrestricted universal thousands-of-qubits computation. See [scalability](docs/SCALABLE_QUANTUM_ENGINE.md), [1000+ tools](docs/1000PLUS_SCIENTIFIC_INDUSTRIAL_WORKBENCH.md), and [validation evidence](docs/TECHNICAL_VALIDATION_20_QUBIT.md).
+
 ## Workspace
 
 - **Composer:** edit targets, controls, angles, and measurement destinations; reorder operations; undo/redo. Supports H, X, Y, Z, S, T, I, RX, RY, RZ, U, CX, CZ, SWAP, CCX, barriers, and terminal measurements.
@@ -15,7 +17,7 @@ Developed by **Devashri S Quantum**. A free, browser-local quantum circuit simul
 
 ## Scope and numerical conventions
 
-The studio supports **1–8 qubits**, **256 operations**, and **1–8192 shots** (the UI offers common shot counts). No hardware execution, IBM account integration, Python runtime, mid-circuit measurement, reset, classical control, loops, or user-defined QASM gates are included. Unsupported code produces a diagnostic instead of being silently ignored. This is an independent simulator, not IBM Quantum feature parity.
+The supported **dense statevector** engine executes up to **20 qubits**. The 100-qubit Studio and the separate 1,000–4,096-qubit research workspace switch among exact Clifford stabilizer tableau, exact separable-state, and explicitly bounded partitioned non-Clifford engines as appropriate; unsupported entangled circuits fail visibly. Workload and shot limits vary by workspace/solver. The OpenQASM parser supports a documented static subset of QASM 2/3, not arbitrary QASM 3 control flow. Browser execution has no physical QPU connection, IBM account, mid-circuit measurement, reset, classical branching, loops, pulse scheduling or arbitrary user-defined gates. This is independent classical simulation, not IBM Quantum feature parity.
 
 Bit strings use the highest bit on the left (`q[n-1]…q[0]`, or classical `c[n-1]…c[0]` for explicit measurements). Unmeasured classical bits remain zero. Without explicit measurements, all qubits are sampled. Statevectors and inspector values describe ideal evolution before terminal measurement.
 
@@ -61,3 +63,25 @@ See [the laboratory architecture, equations, operator exercises and deployment g
 ## Full-page hardware playground
 
 `/lab` now opens the configurable Quantum Playground: ten hardware models, connected optical and thermal signals, Explore/Study/Research modes, five guided goals, parameter sweeps, measurement exports and project save/import. The original four transient exercises are at `/lab/operations`. Read the [playground operator and physics guide](docs/PLAYGROUND.md).
+
+
+## Scientific/industrial integration status
+
+The **1,000+ Qubit** console includes reproducible large-circuit research models, computed connectivity and measurement graphs, sampled-run comparisons, a searchable **reference-only** equipment atlas, and a **2–10-variable p=1 QAOA/MaxCut** experimental optimization bench with an exhaustive classical optimum.
+
+**Industry Integration Bridge** (controlled pilot): documented `/api/v1/capabilities`, `/api/v1/execute`, and `/api/v1/batch` APIs; strict server-only Bearer key; bounded supported QASM execution and weighted MaxCut; Python client and SHA-256 evidence. Browser-local work remains free, with no server credentials required. See [interoperability contract](docs/INDUSTRY_INTEROPERABILITY_V1.md), [OpenAPI](docs/openapi-industry-v1.yaml) and [Python SDK](sdk/python/README.md). The server API is disabled until a strong private `MAH_QUANTUM_INDUSTRY_API_KEY` is configured on the host. Never put the key in `VITE_` settings or a browser.
+
+**Physical Hardware Bridge** provides *customer-side* read-only SCPI/TCP and Modbus/TCP telemetry gateways and offline unverified browser previews; SCPI single-sweep operation is locally gated by independently qualified operator and safety checks. This is not a certified production controller or a live machine connection from the browser. OPC UA, VISA/USB, general PLC control, arbitrary lab actuation and real QPUs are **not connected**. See [equipment integration and safety requirements](docs/PHYSICAL_EQUIPMENT_INTEGRATION.md).
+
+To run the local test suite and compile the web/engine:
+
+```bash
+npm ci
+npm test
+npm run build:web
+npm run build:engine
+node scripts/verify_industry_routes.mjs
+python -m unittest discover -s sdk/python -p 'test_*.py'
+```
+
+Passing offline CI does not establish third-party instrument compatibility, production safety certification, hosted API availability, quantum advantage, or commercial SLA readiness. Commissioning requires qualified vendor/site validation.

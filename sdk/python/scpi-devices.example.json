@@ -1,0 +1,30 @@
+{
+  "schema": "MAH-Quantum-Equipment-Config/v1",
+  "devices": [
+    {
+      "device_id": "spectrum-1",
+      "ip": "192.168.10.20",
+      "port": 5025,
+      "expected_idn": "REPLACE_WITH_REAL_VENDOR_MODEL",
+      "device_class": "spectrum_analyzer",
+      "enabled": false,
+      "reads": [
+        "center_frequency_hz",
+        "marker_level"
+      ],
+      "allow_single_sweep": false
+    },
+    {
+      "device_id": "dmm-1",
+      "ip": "192.168.10.21",
+      "port": 5025,
+      "expected_idn": "REPLACE_WITH_REAL_VENDOR_MODEL",
+      "device_class": "dmm",
+      "enabled": false,
+      "reads": [
+        "dc_voltage_v"
+      ],
+      "allow_single_sweep": false
+    }
+  ]
+}
