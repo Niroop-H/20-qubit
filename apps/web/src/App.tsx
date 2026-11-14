@@ -21,6 +21,7 @@ import { parseQasm, toQasm, toQiskit } from "../../engine/src/studio/qasm";
 import { optimize, transpile } from "../../engine/src/studio/transform";
 import type { StudioResult } from "../../engine/src/studio/simulate";
 import { startLocalJob } from "./services/local";
+import {useExecutionBudget} from "./services/useExecutionBudget";
 import { examples, initialProgram } from "./services/examples";
 import {
   Project,
@@ -61,6 +62,7 @@ function restoreDraft() {
 const encode = (p: Program, f: CodeFormat) =>
   f === "qiskit" ? toQiskit(p) : toQasm(p, f === "qasm3" ? 3 : 2);
 export const App: React.FC = () => {
+  const executionBudget=useExecutionBudget();
   const [initial] = useState(restoreDraft);
   const [history, setHistory] = useState<Program[]>([initial.program]),
     [cursor, setCursor] = useState(0);
@@ -217,6 +219,8 @@ export const App: React.FC = () => {
     setResult(null);
     setRunning(true);
     setProgress(0);
+    const allowance=await executionBudget.reserve();
+    if(!allowance.ok){setError(allowance.message);setRunning(false);return;}
     const job: Job = {
       id: newId(),
       name: jobName || "Untitled experiment",
@@ -370,6 +374,9 @@ export const App: React.FC = () => {
         toggleNoiseModal={() => !isRunning && setNoiseOpen(true)}
         noiseEnabled={noise.enabled}
       />
+      <p role="status" className="lab-muted" style={{padding:"0 14px",margin:"8px 0"}}>
+        <strong>Execution allowance:</strong> {executionBudget.status}
+      </p>
         {showHero && (
           <QuantumScene
             qubits={program.qubits}

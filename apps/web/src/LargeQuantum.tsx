@@ -2,6 +2,7 @@ import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import type {ChangeEvent,KeyboardEvent as KeyEvent} from "react";
 import {Page} from "./lab/Shared";
 import {download} from "./services/projects";
+import {useExecutionBudget} from "./services/useExecutionBudget";
 import {analyzeLargeCircuit,measuredHistogramStats,RESEARCH_TEMPLATES,RESEARCH_WIDTHS,templateQasm,type ResearchModel,type CircuitDiagnostic} from "../../engine/src/studio/research";
 import type {ScalableResult} from "../../engine/src/studio/scalable";
 import {compareScientificRuns,type ComparisonSample} from "../../engine/src/studio/research-comparison";
@@ -42,6 +43,7 @@ const methodLabel=(s:string)=>s==="stabilizer-tableau"?"Clifford stabilizer tabl
 const concise=(s:string)=>s.length<=65?s:s.slice(0,24)+" ··· "+s.slice(-24);
 const iso=()=>new Date().toISOString();
 export default function LargeQuantum(){
+ const executionBudget=useExecutionBudget();
  const [initial]=useState(readStored);
  const [draft,setDraft]=useState<Saved>(initial.draft);
  const [saved,setSaved]=useState<Saved[]>(initial.saved);
@@ -126,12 +128,15 @@ export default function LargeQuantum(){
    setTab("workbench");log("Imported "+file.name+"; "+parsed.operations+" expanded operations.","success");
   }catch(ex){setError("QASM import rejected: "+(ex instanceof Error?ex.message:String(ex)));log("QASM import rejected.","error");}
  };
- const run=useCallback(()=>{
+ const run=useCallback(async()=>{
   if(running||workerRef.current)return;
   if(!analysis.data){setError("Scientific preflight: "+analysis.error);return;}
   if(!Number.isInteger(draft.seed)||draft.seed<0||draft.seed>4294967295){setError("Seed must be an unsigned 32-bit integer.");return;}
   if(!Number.isInteger(draft.shots)||draft.shots<1||draft.shots>1024){setError("Shots must be 1–1,024.");return;}
-  setError("");setResult(null);setExecuted(null);setElapsed(0);setStage("Starting worker");setRunning(true);
+  setRunning(true);
+  const allowance=await executionBudget.reserve();
+  if(!allowance.ok){setRunning(false);setError(allowance.message);return;}
+  setError("");setResult(null);setExecuted(null);setElapsed(0);setStage("Starting worker");
   const current={...draft},start=performance.now(),width=analysis.data.qubits;
   log("Executing "+width+"-qubit circuit; "+analysis.data.operations+" parsed operations.");
   let worker:Worker;
@@ -163,7 +168,7 @@ export default function LargeQuantum(){
   deadlineRef.current=setTimeout(()=>finish({error:"120-second computation limit exceeded; reduce workload."}),jobLimitMs);
   try{worker.postMessage({source:current.source,shots:current.shots,seed:current.seed});}
   catch{finish({error:"Unable to transfer circuit to worker."});}
- },[draft,analysis,running,log,result,executed]);
+ },[draft,analysis,running,log,result,executed,executionBudget.reserve]);
  const cancel=()=>{
   if(!workerRef.current)return;
   workerRef.current.terminate();workerRef.current=null;
@@ -332,11 +337,12 @@ export default function LargeQuantum(){
        </div>
        <p className="large-footnote">Select from exact Clifford stabilizers, separable gates and resource-bounded non-Clifford components. Preflight checks solver compatibility and terminal measurement mapping before execution.</p>
        <div className="large-actions">
-        <button className="large-primary" onClick={run} disabled={running||!analysis.data}>{running?"Computing…":"Run quantum circuit"}</button>
+        <button className="large-primary" onClick={()=>{void run();}} disabled={running||!analysis.data||executionBudget.waiting}>{running?"Computing…":"Run quantum circuit"}</button>
         {running&&<button onClick={cancel}>Cancel computation</button>}
         <button disabled={running} onClick={()=>loadModel(draft.model==="custom"?"ghz":draft.model)}>Restore preset</button>
         <button disabled={!result||running} onClick={()=>{void exportExperiment();}}>Download reproducible JSON</button>
        </div>
+       <p className="rq-note" role="status"><strong>Execution allowance:</strong> {executionBudget.status}</p>
        <div className="rq-worker-status" role="status">{running?"Worker: "+stage+" · bounded execution":result?"COMPLETED · "+elapsed.toFixed(1)+" ms browser job":"IDLE · ready for local computation"}</div>
        {error&&<p role="alert" className="large-error">{error}</p>}
       </section>

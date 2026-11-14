@@ -26,6 +26,10 @@ jobs:
           mkdir -p artifacts/access
           npx --no-install esbuild apps/web/src/access/engine.ts --bundle --platform=node --format=cjs --outfile=artifacts/access/engine.js
           ACCESS_TEST_BUILD="$PWD/artifacts/access" node --test apps/web/tests/access.test.cjs
+      - name: Test browser execution allowance and five-hour cooldown
+        run: |
+          npx --no-install esbuild apps/web/src/services/execution-budget-policy.ts --bundle --platform=node --format=cjs --outfile=artifacts/access/budget.js
+          BUDGET_TEST_BUILD="$PWD/artifacts/access" node --test apps/web/tests/budget.test.cjs
       - name: Verify protected industrial API serverless entrypoints
         run: node scripts/verify_industry_routes.mjs
       - run: node scripts/verify-20.mjs
