@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mah-quantum-industry-sdk"
+version = "0.1.0"
+description = "Server-side Python client for MAH Quantum industry research simulation API v1"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Proprietary"}
+authors = [{name = "MAH Quantum"}]
+dependencies = []
+
+[tool.setuptools]
+py-modules = ["mah_quantum", "mah_quantum_adapters"]
