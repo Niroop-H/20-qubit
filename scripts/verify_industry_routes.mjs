@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import {build} from "esbuild";
 import {createRequire} from "node:module";
+import {spawn} from "node:child_process";
 import {mkdirSync,writeFileSync} from "node:fs";
 import {resolve} from "node:path";
 const secret="offline-fail-closed-integration-test-secret-2026";
@@ -111,6 +112,44 @@ try{
 }finally{
  if(before===undefined)delete process.env.MAH_QUANTUM_INDUSTRY_API_KEY;
  else process.env.MAH_QUANTUM_INDUSTRY_API_KEY=before;
+}
+// Exercise the real local Express transport independently of the Vercel shell.
+const port=18471;
+const daemon=spawn(process.execPath,["apps/engine/dist/server.js"],{
+ env:{...process.env,PORT:String(port),MAH_QUANTUM_INDUSTRY_API_KEY:secret},
+ stdio:"ignore"
+});
+try{
+ let online=false;
+ for(let i=0;i<50;i++){
+  if(daemon.exitCode!==null)throw Error("Local Express engine exited before it became healthy.");
+  try{
+   const response=await fetch("http://127.0.0.1:"+port+"/api/v1/capabilities");
+   if(response.ok){online=true;break;}
+  }catch{}
+  await new Promise(resolve=>setTimeout(resolve,100));
+ }
+ if(!online)throw Error("Local Express integration endpoint did not start within the bounded test.");
+ const rejected=await fetch("http://127.0.0.1:"+port+"/api/v1/execute",{
+  method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer incorrect"},body:JSON.stringify(qjob)
+ });
+ assert.equal(rejected.status,401);
+ const response=await fetch("http://127.0.0.1:"+port+"/api/v1/execute",{
+  method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+secret},body:JSON.stringify(qjob)
+ });
+ assert.equal(response.status,200);
+ const data=await response.json();
+ assert.equal(data.samples.completedShots,128);
+ assert.equal(data.analysis.logicalQubits,1000);
+ const legacyHttp=await fetch("http://127.0.0.1:"+port+"/api/circuit/simulate",{
+  method:"POST",headers:{"Content-Type":"application/json"},body:"{}"
+ });
+ assert.equal(legacyHttp.status,410);
+ evidence.push({name:"Real local Express industry HTTP port, authentication, 1000Q engine and retired legacy",
+  status:"PASS",qubits:1000,shots:128,unauthorizedDenied:true,legacyRetired:true});
+ console.log("INDUSTRY_API_GATE "+JSON.stringify(evidence.at(-1)));
+}finally{
+ daemon.kill("SIGTERM");
 }
 mkdirSync("artifacts",{recursive:true});
 writeFileSync("artifacts/industry-api-release-gate.json",JSON.stringify({
