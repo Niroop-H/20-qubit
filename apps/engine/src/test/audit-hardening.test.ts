@@ -110,9 +110,9 @@ describe("2026 quantum simulator audit: fail-closed QASM, numerical and workload
  });
  it("compares valid 8192-shot dense runs and rejects mixed outcome widths",()=>{
   const base={source:"bell test",method:"dense-statevector",qubits:20,shots:8192,seed:7,
-   counts:{"0".repeat(20):8192}};
+   counts:{["0".repeat(20)]:8192}};
   assert.equal(compareScientificRuns(base,base).totalVariationDistance,0);
-  const malformed={...base,counts:{"0".repeat(20):4096,"0".repeat(19):4096}};
+  const malformed={...base,counts:{["0".repeat(20)]:4096,["0".repeat(19)]:4096}};
   assert.throws(()=>compareScientificRuns(malformed,base),/Malformed/);
  });
  it("validates CHSH seed and malformed hardware project objects as domain errors",()=>{
