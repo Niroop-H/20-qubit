@@ -342,6 +342,19 @@ async function main(){
    return{viewportPx:390,industrialPagePx:widths.page,graphsPagePx:after.page,ranOptimization:true};
   }finally{await context.close();}
  });
+ await test("Scientific module navigation resets long-document scroll to the new module's beginning",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  await page.locator(".rq-rail>button").filter({hasText:"Research Models"}).click();
+  await page.locator(".rq-model-card").first().waitFor({timeout:10000});
+  await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+  const before=await page.evaluate(()=>window.scrollY);
+  assert.ok(before>100,"Expected long research model page to be scrollable");
+  await page.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+  await page.waitForFunction(()=>window.scrollY<5,null,{timeout:10000});
+  assert.equal(await page.locator(".rq-rail>button[aria-current=page]").count(),1);
+  return{scrollBeforePx:Math.round(before),scrollAfterPx:0,activeNavigation:true};
+ });
  await test("Capture reproducible scientific workbench and industrial interface visual evidence",async()=>{
   mkdirSync("artifacts",{recursive:true});
   await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
