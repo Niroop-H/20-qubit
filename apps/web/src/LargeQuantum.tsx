@@ -4,7 +4,7 @@ import {Page} from "./lab/Shared";
 import {download} from "./services/projects";
 import {analyzeLargeCircuit,measuredHistogramStats,RESEARCH_TEMPLATES,RESEARCH_WIDTHS,templateQasm,type ResearchModel,type CircuitDiagnostic} from "../../engine/src/studio/research";
 import type {ScalableResult} from "../../engine/src/studio/scalable";
-import QuantumResearchGraphs from "./components/QuantumResearchGraphs";
+import {QuantumResearchGraphs} from "./components/QuantumResearchGraphs";
 import QuantumIndustrialCatalog from "./components/QuantumIndustrialCatalog";
 import "./large-quantum.css";
 
@@ -232,7 +232,7 @@ export default function LargeQuantum(){
       <span>WORKSPACE SAFETY</span><p>Models run locally in browser workers. Saved experiments remain on this device and are not encrypted. Equipment cards are reference information only.</p>
      </div>
     </nav>
-    <main className="rq-content" aria-label={headerText}>
+    <div className="rq-content" role="region" aria-label={headerText}>
      <div className="rq-content-header"><div><span>RESEARCH / {tab.toUpperCase()}</span><h2>{headerText}</h2></div>
       <p>{storage} · not cloud-backed</p></div>
      {tab==="workbench"&&<div className="large-grid">
@@ -390,7 +390,7 @@ export default function LargeQuantum(){
         <time>{new Date(x.date).toLocaleTimeString()}</time>{x.message}</p>)}</div>
       </section>
      </div>}
-    </main>
+    </div>
    </div>
    <section className="large-explain">
     <h2>Research integrity and industrial scope</h2>
