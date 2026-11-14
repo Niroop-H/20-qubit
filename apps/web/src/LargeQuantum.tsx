@@ -78,7 +78,7 @@ export default function LargeQuantum(){
  },[draft.source]);
  const stats=useMemo(()=>result?measuredHistogramStats(result.counts):null,[result]);
  const cleanResult=()=>{setResult(null);setExecuted(null);setError("");setSelectedOutcome(null);};
- const edit=(patch:Partial<Saved>)=>{setDraft(s=>({...s,...patch,updated:iso()}));cleanResult();};
+ const edit=(patch:Partial<Saved>)=>{setStorage("Saving changes…");setDraft(s=>({...s,...patch,updated:iso()}));cleanResult();};
  const loadModel=(id:ResearchModel,width=draft.n)=>{
   const item=RESEARCH_TEMPLATES.find(x=>x.id===id);
   if(!item||running)return;
@@ -89,8 +89,15 @@ export default function LargeQuantum(){
   if(running)return;
   if(draft.source.length>STORAGE_SOURCE_MAX){setError("Source is too large for local experiment storage. Export the QASM file instead.");return;}
   const id=iso(),record={...draft,id,name:draft.name.slice(0,85),updated:id};
-  setSaved(prev=>[record,...prev].slice(0,MAX_EXPERIMENTS));
-  log('Saved local experiment "'+record.name+'".',"success");
+  const next=[record,...saved].slice(0,MAX_EXPERIMENTS);
+  try{
+   localStorage.setItem(LOCAL_KEY,JSON.stringify({version:1,draft,saved:next,history}));
+   setSaved(next);setStorage("Named experiment saved locally");
+   log('Saved local experiment "'+record.name+'".',"success");
+  }catch{
+   setStorage("Local snapshot failed — export QASM");
+   setError("Local browser storage rejected this experiment. Export its QASM file to preserve the work.");
+  }
  };
  const loadSaved=(record:Saved)=>{
   if(running)return;
