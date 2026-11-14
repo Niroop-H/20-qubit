@@ -139,51 +139,83 @@ def optimization_job(job_id: str, graph: Mapping[str, Any], *,
 
 
 def verify_result(request: Mapping[str, Any], response: Mapping[str, Any]) -> bool:
-    """Check exposed SHA and sampled-count invariants; not a signature/attestation.
+    """Verify canonical SHA-256 provenance and shots, not device correctness.
 
-    Input SHA-256 is not an authentication mechanism: the server and caller
-    must still be trusted. This verifies consistency, not independent quantum
-    correctness or a hardware outcome.
+    JS and Python render some JSON numbers differently (for example 1.0).
+    The API therefore provides its exact canonical UTF-8 JSON string; the
+    client independently hashes it and matches its decoded semantics.
     """
     if response.get("schema") != RESULT_SCHEMA or response.get("jobId") != request.get("jobId"):
         raise ValueError("Response schema or job identity mismatch.")
     if response.get("physicalQpu") is not False:
         raise ValueError("Result wrongly asserts physical quantum hardware.")
+    if response.get("calculationFamily") != request.get("kind"):
+        raise ValueError("Result job type does not match request.")
+    canonical = response.get("canonicalInputJson")
+    if not isinstance(canonical, str):
+        raise ValueError("Missing canonical input serialization.")
+    if _sha256(canonical) != response.get("inputSha256"):
+        raise ValueError("Canonical input fingerprint mismatch.")
+    try:
+        fields = json.loads(canonical)
+    except ValueError as exc:
+        raise ValueError("Malformed canonical request proof.") from exc
     if request.get("kind") == "circuit":
         source = request["source"]
         source_digest = _sha256(source)
         if response.get("sourceSha256") != source_digest:
             raise ValueError("Circuit SHA-256 does not match submitted source.")
-        expected_digest_input = {
+        if fields != {
             "kind": "circuit",
             "operation": request["operation"],
             "sourceSha256": source_digest,
             "shots": request.get("shots"),
             "seed": request.get("seed"),
-        }
-        if request["operation"] == "execute":
+        }:
+            raise ValueError("Circuit parameters or input hash identity mismatch.")
+        if request["operation"] == "inspect":
+            if response.get("status") != "inspected":
+                raise ValueError("Inspect request returned incorrect status.")
+        else:
+            if response.get("status") != "completed":
+                raise ValueError("Circuit execution incomplete.")
             samples = response["samples"]
             counts = samples["counts"]
             if sum(counts.values()) != request["shots"] or samples["seed"] != request["seed"]:
                 raise ValueError("Circuit sample counts or seed do not reconcile.")
     elif request.get("kind") == "optimization":
         graph = response["result"]["graph"]
+        input_graph = request["graph"]
+        normalized = {
+            "name": input_graph["name"].strip(),
+            "nodes": [label.strip() for label in input_graph["nodes"]],
+            "edges": [
+                {"source": min(e["source"], e["target"]),
+                 "target": max(e["source"], e["target"]),
+                 "weight": e["weight"]}
+                for e in input_graph["edges"]
+            ],
+        }
+        if "context" in input_graph:
+            normalized["context"] = input_graph["context"]
+        if graph != normalized or fields != {
+            "kind": "optimization", "graph": graph,
+            "shots": request["shots"], "seed": request["seed"],
+        }:
+            raise ValueError("Optimization result graph does not match submitted model.")
+        if response.get("status") != "completed":
+            raise ValueError("Optimization execution incomplete.")
         if response["result"]["settings"]["seed"] != request["seed"]:
             raise ValueError("Optimization seed mismatch.")
         if response["result"]["settings"]["shots"] != request["shots"]:
             raise ValueError("Optimization shot budget mismatch.")
         if sum(row["count"] for row in response["result"]["quantum"]["outcomes"]) != request["shots"]:
             raise ValueError("Optimization shot histogram does not reconcile.")
-        expected_digest_input = {"kind": "optimization", "graph": graph,
-                                 "shots": request["shots"], "seed": request["seed"]}
+        if (response["result"]["quantum"]["expectedScore"] >
+                response["result"]["classical"]["optimum"] + 1e-8):
+            raise ValueError("Quantum expected score cannot exceed independently reported optimum.")
     else:
         raise ValueError("Unknown industry job kind.")
-    # JavaScript's JSON.stringify canonical form is required for the server SHA.
-    # For interoperable portable ASCII/integer workflows, the serializer below
-    # deliberately uses compact JSON and matching key order.
-    digest = _sha256(_json(expected_digest_input).decode("utf-8"))
-    if digest != response.get("inputSha256"):
-        raise ValueError("Input model fingerprint mismatch.")
     return True
 
 
