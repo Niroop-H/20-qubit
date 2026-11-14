@@ -85,7 +85,7 @@ export function QuantumResearchGraphs({diagnostic,result}:{diagnostic:CircuitDia
      <div className="rq-mini-metrics">
       <div><span>Expanded ops</span><strong>{fmt(diagnostic.operations,0)} / 8,192</strong></div>
       <div><span>Measurement ops</span><strong>{fmt(diagnostic.measurements,0)}</strong></div>
-      <div><span>Solver</span><strong className="rq-small-value">{diagnostic.method.replaceAll("-"," ")}</strong></div>
+      <div><span>Solver</span><strong className="rq-small-value">{diagnostic.method.replace(/-/g," ")}</strong></div>
      </div>
      <p className="rq-note">Greedy depth and counts describe the logical circuit. No device gate durations, physical connectivity, clock rates or pulse errors are assumed.</p>
     </>}
