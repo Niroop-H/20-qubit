@@ -32,7 +32,7 @@ Each model generates a real bounded QASM circuit, is parsed with the existing va
 
 ## Continuous research workflow
 
-The 1,000+ Qubit page has five modules: Circuit Workbench, Research Models, Scientific Graphs, Equipment Atlas, and Experiment Library. The editor provides line numbers, direct line jump, Ctrl+Enter execution, Ctrl+S snapshot, QASM import/export, worker cancellation, execution status, active backend and scientific preflight.
+The 1,000+ Qubit page has six modules: Circuit Workbench, Research Models, Scientific Graphs, Equipment Atlas, Industrial Optimization, and Experiment Library. The editor provides line numbers, direct line jump, Ctrl+Enter execution, Ctrl+S snapshot, QASM import/export, worker cancellation, execution status, active backend and scientific preflight.
 
 A local draft is autosaved where browser storage permits; up to 12 named snapshots and 24 recent *metadata-only* run records are retained locally. Running results can be exported as versioned JSON, including input QASM SHA-256 when cryptography is available, shot count, seed, execution method, measurement counts and limitation disclosures. Shot-distribution CSV exports also include all observed outcomes.
 
@@ -46,6 +46,12 @@ Every equipment reference is labeled **Reference only**. No cryogenic machines, 
 
 An industry modeling matrix describes 10 domains: chemistry/materials, manufacturing, energy, logistics, finance, cryptography, networking, sensing, error-correction research and quantum control. A domain is only marked executable where the existing ideal circuit simulator supports a relevant circuit primitive; no complete domain-specific industrial solver is implied.
 
+## Bounded industrial optimization companion
+
+A sixth module provides genuine **ideal p=1 QAOA** simulation for weighted graph bipartition (MaxCut) with **2–10 decision variables**, independent exhaustive classical global optimum, classical greedy and random baselines, and full sampled histogram. Built-in synthetic manufacturing, energy and compute-conflict graphs demonstrate a precise mathematical optimization objective. Operators can import/edit validated graph JSON and export complete SHA-256 evidence.
+
+**Do not confuse these computational domains:** this is a small-variable optimization experiment running on a conventional CPU, not a general 1,000–4,096-qubit QAOA solver. It does not solve constrained scheduling, facility capacity, realistic AC power-flow, robotics, chemical simulation or other fully formulated industrial workloads. It does not prove quantum speedup; the exact classical optimum serves as an explicit comparison.
+
 ## Scientific acceptance criteria and future development
 
 Release gates must include:
@@ -57,8 +63,8 @@ Release gates must include:
 - Chromium browser runs of the models, graphs, catalog filtering, QASM export, local persistence and responsive layout;
 - checks that unsupported entangled quantum circuits reject clearly, and all CSV/JSON outputs match actual executed seeds and shots.
 
-Potential subsequent stages (not included here) are validated pulse Hamiltonians with actual calibration, noise and error-correction models, external simulator interoperability, QUBO/QAOA constrained optimization, chemistry Hamiltonians, secure customer accounts, real instrument drivers, and industry-specific workflows. Those cannot be honestly advertised as already connected.
+Potential subsequent stages (not included here) are validated pulse Hamiltonians with actual calibration, noise and error-correction models, external simulator interoperability, larger and constrained QUBO/QAOA optimization, chemistry Hamiltonians, secure customer accounts, real instrument drivers, and industry-specific operational workflows. Those cannot be honestly advertised as already connected.
 
-**Commercial claim supported by this work:** “MAH Quantum provides an exact, bounded, classical software platform for selected 1,000–4,096-logical-qubit circuit families with scientific analytics, reproducible experimentation and quantum industrial equipment reference tools.”
+**Commercial claim supported by this work:** “MAH Quantum provides an exact, bounded, classical software platform for selected 1,000–4,096-logical-qubit circuit families with scientific analytics, reproducible experimentation, a bounded QAOA/MaxCut research companion, and quantum industrial equipment reference tools.”
 
 **Claims not supported:** a physical QPU, universal 4,096-qubit simulation, complete industrial machine simulation, automatic quantum advantage, validated laboratory equipment control, industry certification, or guaranteed real-time industrial service.
