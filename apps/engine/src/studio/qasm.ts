@@ -1,4 +1,5 @@
 import { readQuantumOperation } from "./qasm-syntax";
+import {COMPOSITE_GATES,lowerCompositeGate} from "./standard-gates";
 import { Program, Step, validateProgram, MAX_STEPS, MAX_QUBITS } from "./model";
 
 /** Recursive-descent arithmetic only; never evaluates JavaScript or Python. */
@@ -178,6 +179,7 @@ export function parseQasm(source: string): Program {
         args=operation.angles.map(expression),
         qs=operation.operands.split(",").map(x=>operand(x,"q"));
       const paramsCount: Record<string, number> = {
+        ...Object.fromEntries(Object.entries(COMPOSITE_GATES).map(([gate,spec])=>[gate,spec.angles])),
         id: 0,
         i: 0,
         h: 0,
@@ -208,7 +210,7 @@ export function parseQasm(source: string): Program {
       if (args.length !== paramsCount[name])
         throw new Error(`${name} expects ${paramsCount[name]} angle(s).`);
       const count =
-        name === "ccx" ? 3 : ["cx", "cz", "swap"].includes(name) ? 2 : 1;
+        COMPOSITE_GATES[name]?.arity ?? (name === "ccx" ? 3 : ["cx", "cz", "swap"].includes(name) ? 2 : 1);
       if (qs.length !== count)
         throw new Error(`${name} expects ${count} operand(s).`);
       const width = Math.max(...qs.map((x) => x.length));
@@ -216,6 +218,7 @@ export function parseQasm(source: string): Program {
         throw new Error("Incompatible register sizes.");
       for (let i = 0; i < width; i++) {
         const q = qs.map((x) => (x.length === 1 ? x[0] : x[i]));
+        if (COMPOSITE_GATES[name]) { lowerCompositeGate(name,q,args,add); continue; }
         if (["p", "u1", "sdg", "tdg"].includes(name)) {
           add("U", [q[0]], [], {
             theta: 0,

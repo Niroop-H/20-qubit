@@ -1,4 +1,5 @@
 import { readQuantumOperation } from "./qasm-syntax";
+import {COMPOSITE_GATES,lowerCompositeGate} from "./standard-gates";
 /** Strict bounded OpenQASM 2/3 subset for 101–4096 logical qubits. */
 import type { LargeProgram } from "./scalable";
 import { validateLargeProgram, LARGE_MAX_QUBITS, LARGE_MAX_STEPS } from "./scalable";
@@ -80,16 +81,17 @@ export function parseLargeQasm(source:string):LargeProgram{
     if(targets.length)add("BARRIER",targets);continue;
    }
    const name=parsed.name,args=parsed.angles.map(expression);
-   const nargs:{[gate:string]:number}={id:0,i:0,h:0,x:0,y:0,z:0,s:0,t:0,sdg:0,tdg:0,sx:0,sxdg:0,rx:1,ry:1,rz:1,p:1,u1:1,u2:2,u:3,u3:3,cx:0,cz:0,swap:0,ccx:0};
+   const nargs:{[gate:string]:number}={...Object.fromEntries(Object.entries(COMPOSITE_GATES).map(([gate,spec])=>[gate,spec.angles])),id:0,i:0,h:0,x:0,y:0,z:0,s:0,t:0,sdg:0,tdg:0,sx:0,sxdg:0,rx:1,ry:1,rz:1,p:1,u1:1,u2:2,u:3,u3:3,cx:0,cz:0,swap:0,ccx:0};
    if(!Object.prototype.hasOwnProperty.call(nargs,name))throw new Error("Unsupported scalable instruction "+name);
    if(args.length!==nargs[name])throw new Error(name+" expects "+nargs[name]+" angle parameters.");
    const operands=parsed.operands.split(",").map(s=>address(s,"q"));
-   const arity=name==="ccx"?3:["cx","cz","swap"].includes(name)?2:1;
+   const arity=COMPOSITE_GATES[name]?.arity??(name==="ccx"?3:["cx","cz","swap"].includes(name)?2:1);
    if(operands.length!==arity)throw new Error(name+" requires "+arity+" operand(s).");
    const width=Math.max(...operands.map(a=>a.length));
    if(operands.some(a=>a.length!==1&&a.length!==width))throw new Error("Registers must be compatible.");
    for(let i=0;i<width;i++){
     const q=operands.map(a=>a.length===1?a[0]:a[i]);
+    if(COMPOSITE_GATES[name]){lowerCompositeGate(name,q,args,add);continue;}
     if(["sdg","tdg","p","u1"].includes(name))
      add("U",[q[0]],[],{theta:0,phi:0,lambda:name==="sdg"?-Math.PI/2:name==="tdg"?-Math.PI/4:args[0]});
     else if(name==="sx"||name==="sxdg"){
