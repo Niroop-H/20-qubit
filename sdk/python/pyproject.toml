@@ -13,4 +13,4 @@ authors = [{name = "MAH Quantum"}]
 dependencies = []
 
 [tool.setuptools]
-py-modules = ["mah_quantum", "mah_quantum_adapters"]
+py-modules = ["mah_quantum", "mah_quantum_adapters", "mah_quantum_hardware", "mah_quantum_modbus", "hardware_cli"]
