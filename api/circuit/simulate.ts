@@ -1,25 +1,13 @@
-import { simulateRequest } from "../../apps/engine/src/studio/request";
-/** Optional compatibility endpoint. The studio runs in a local Web Worker. */
-export default function handler(req: any, res: any) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") {
-    res.status(204).end();
-    return;
-  }
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Use POST." });
-    return;
-  }
-  try {
-    res.status(200).json(simulateRequest(req.body));
-  } catch (error) {
-    res
-      .status(400)
-      .json({
-        error: "Invalid simulation request",
-        message: error instanceof Error ? error.message : "Simulation failed.",
-      });
-  }
+/**
+ * Deprecated anonymous compatibility API. Scientific execution is now served
+ * by authenticated, bounded /api/v1/execute and /api/v1/batch.
+ * The UI's browser Workers do not depend on this endpoint.
+ */
+export default function handler(req:any,res:any){
+ res.setHeader("Cache-Control","no-store");
+ res.setHeader("X-Content-Type-Options","nosniff");
+ res.setHeader("Allow","POST");
+ if(req.method!=="POST")return res.status(405).json({error:"method_not_allowed"});
+ return res.status(410).json({error:"legacy_route_retired",
+  message:"Anonymous simulation is disabled. Use the authenticated /api/v1/execute contract."});
 }
