@@ -378,6 +378,25 @@ async function main(){
    "research-graphs-desktop.png","industrial-optimization-desktop.png"],
    source:"actual production-build Chromium"};
  });
+ await test("Scientific research console compares repeated sampled quantum runs using actual finite-shot counts",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("1000");
+  await page.getByRole("combobox",{name:"Large circuit preset"}).selectOption("ghz");
+  await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("128");
+  await page.getByRole("spinbutton",{name:"Large circuit seed"}).fill("21");
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.locator(".large-telemetry").getByText("Clifford stabilizer tableau").waitFor({timeout:45000});
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.locator(".large-telemetry").getByText("Clifford stabilizer tableau").waitFor({timeout:45000});
+  await page.locator(".rq-rail>button").filter({hasText:"Scientific Graphs"}).click();
+  await page.getByRole("heading",{name:"Sampled run comparison"}).waitFor({timeout:10000});
+  const text=await page.locator(".rq-comparison").innerText();
+  assert.ok(text.includes("Empirical total-variation distance"));
+  assert.ok(text.includes("0.00000"));
+  assert.ok(text.includes("Sampled"));
+  return{repeatedSeed:21,sameInput:true,sampleTvd:0,visualComparison:true};
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
