@@ -117,7 +117,7 @@ export function parseQasm(source: string): Program {
         throw new Error("Start with OPENQASM 2.0; or OPENQASM 3.0;");
       if ((m = /^include\s+"([^"]+)"$/.exec(text))) {
         if (m[1] !== (version === "2.0" ? "qelib1.inc" : "stdgates.inc"))
-          throw new Error("Only qelib1.inc and stdgates.inc are supported.");
+          throw new Error("Include must match the OpenQASM version (qelib1.inc for 2.0, stdgates.inc for 3.0).");
         continue;
       }
       if ((m = /^(qreg|creg)\s+([a-zA-Z_]\w*)\[(\d+)\]$/.exec(text))) {
