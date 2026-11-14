@@ -118,7 +118,9 @@ export function prepareIndustryJob(raw:unknown):PreparedJob{
    ...(raw.operation==="execute"?{shots:raw.shots as number,seed:raw.seed as number}:{})};
   const canonical=JSON.stringify({kind:job.kind,operation:job.operation,
    sourceSha256:sourceDigest(job.source),shots:job.shots??null,seed:job.seed??null});
-  return{job,program,method,canonical,digest:createHash("sha256").update(canonical).digest("hex")};
+  const prepared:PreparedCircuit={job,program,method,canonical,digest:createHash("sha256").update(canonical).digest("hex")};
+  if(job.operation==="execute")enforceIndustryBudget(prepared);
+  return prepared;
  }
  if(raw.kind==="optimization"){
   if(raw.operation!=="execute")throw new IndustryInputError("Optimization jobs require execute.");
@@ -130,10 +132,62 @@ export function prepareIndustryJob(raw:unknown):PreparedJob{
   catch(e){throw new IndustryInputError("Invalid weighted MaxCut model: "+(e as Error).message);}
   const job:IndustryOptimizationJob={schema:INDUSTRY_SCHEMA,jobId,kind:"optimization",operation:"execute",graph,shots,seed};
   const canonical=JSON.stringify({kind:job.kind,graph,shots,seed});
-  return{job,graph,canonical,digest:createHash("sha256").update(canonical).digest("hex")};
+  const prepared:PreparedOptimization={job,graph,canonical,digest:createHash("sha256").update(canonical).digest("hex")};
+  enforceIndustryBudget(prepared);
+  return prepared;
  }
  throw new IndustryInputError("Job kind must be circuit or optimization.");
 }
+
+/** Conservative synchronous cost estimate for real numerical algorithms, not
+ * qubits × shots × gate-count. No user-supplied number is trusted as a quota.
+ * Inspect mode is parsing only. Partitioned modes use 2^component-size per
+ * gate and fail before expensive statevector allocation or evolution.
+ */
+export const INDUSTRY_MAX_JOB_WORK=80_000_000;
+export const INDUSTRY_MAX_BATCH_WORK=160_000_000;
+export function estimateIndustryWork(p:PreparedJob):number{
+ if("graph" in p){
+  const n=p.graph.nodes.length;
+  return 2**n*(180*n+200);
+ }
+ if(p.job.operation==="inspect")return 50000+p.program.steps.length*24;
+ const {program,method}=p,n=program.qubits,shots=p.job.shots!;
+ const gates=program.steps.filter(s=>s.gate!=="MEASURE"&&s.gate!=="BARRIER");
+ if(method==="stabilizer-tableau")
+  return 8*n*n+8*n*gates.length+8*n*shots;
+ if(method==="separable-state")
+  return n*40+gates.length*96+shots*n*12;
+ const parent=new Int32Array(n);
+ for(let i=0;i<n;i++)parent[i]=i;
+ const root=(q:number):number=>{while(parent[q]!==q){parent[q]=parent[parent[q]];q=parent[q];}return q;};
+ for(const step of gates){
+  const operands=[...step.targets,...(step.controls||[])];
+  for(let k=1;k<operands.length;k++){const a=root(operands[0]),b=root(operands[k]);if(a!==b)parent[b]=a;}
+ }
+ const sizes=new Map<number,number>(),gateCounts=new Map<number,number>();
+ const active=new Set<number>();
+ for(const step of gates)for(const q of [...step.targets,...(step.controls||[])])active.add(q);
+ for(const q of active){const id=root(q);sizes.set(id,(sizes.get(id)||0)+1);}
+ for(const step of gates){
+  const id=root(step.targets[0]);gateCounts.set(id,(gateCounts.get(id)||0)+1);
+ }
+ let cost=shots*n*12+gates.length*32,aggregate=0;
+ for(const [id,width] of sizes){
+  if(width>18)throw new IndustryInputError("Partitioned circuit needs "+width+" connected qubits; maximum is 18.");
+  const states=2**width;
+  aggregate+=states;
+  if(aggregate>2**20)throw new IndustryInputError("Partitioned circuit exceeds the aggregate amplitude allocation limit.");
+  cost+=states*(8*(gateCounts.get(id)||0)+width*2+1);
+ }
+ return cost;
+}
+function enforceIndustryBudget(p:PreparedJob):void{
+ const work=estimateIndustryWork(p);
+ if(!Number.isFinite(work)||work>INDUSTRY_MAX_JOB_WORK)
+  throw new IndustryInputError("Synchronous job exceeds real solver work budget; simplify the circuit or use a separately qualified compute backend.",422);
+}
+
 const provenance=(prepared:PreparedJob)=>({
  jobId:prepared.job.jobId,inputSha256:prepared.digest,canonicalInputJson:prepared.canonical,physicalQpu:false as const,runEnvironment:"classical-software",
  calculationFamily:prepared.job.kind
@@ -199,13 +253,10 @@ export function executeIndustryBatch(raw:unknown){
  const prepared=raw.jobs.map(prepareIndustryJob);
  const ids=new Set(prepared.map(p=>p.job.jobId));
  if(ids.size!==prepared.length)throw new IndustryInputError("Batch job IDs must be unique.");
- // Conservative workload budget protects synchronous serverless functions.
- const work=prepared.reduce((sum,p)=>{
-  if("graph" in p)return sum+1000000;
-  if(p.job.operation==="inspect")return sum+50000;
-  return sum+p.program.qubits*Math.max(1,p.program.steps.length)*p.job.shots!;
- },0);
- if(work>180000000)throw new IndustryInputError("Batch exceeds aggregate synchronous processing budget.");
+ // Reuse exactly the real-solver budget enforced for single execute.
+ const work=prepared.reduce((sum,p)=>sum+estimateIndustryWork(p),0);
+ if(!Number.isFinite(work)||work>INDUSTRY_MAX_BATCH_WORK)
+  throw new IndustryInputError("Batch exceeds aggregate synchronous solver work budget.");
  return{schema:"MAH-Quantum-Industry-Batch-Result/v1",execution:"synchronous",
   items:prepared.map(executePreparedIndustryJob),total:prepared.length};
 }
