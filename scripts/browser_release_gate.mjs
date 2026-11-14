@@ -208,6 +208,176 @@ async function main(){
    return{viewportPx:widths.viewport,pagePx:widths.page,executed:true};
   }finally{await mobileContext.close();}
  });
+ await test("Research console exposes eight executable large-qubit models and selects exact Ramsey circuit",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:25000});
+  await page.locator(".rq-rail>button").filter({hasText:"Research Models"}).click();
+  assert.equal(await page.locator(".rq-model-card").count(),8);
+  await page.locator(".rq-model-card").filter({hasText:"Ideal Ramsey interference array"}).getByRole("button",{name:"Load executable model"}).click();
+  assert.equal(await page.getByRole("combobox",{name:"Large circuit preset"}).inputValue(),"ramsey");
+  const qasm=await page.getByRole("textbox",{name:"Large quantum QASM code"}).inputValue();
+  assert.ok(qasm.includes("rz(pi/3) q[0];"));
+  assert.ok(qasm.includes("qreg q[1000];"));
+  return{modelCount:8,selected:"ramsey",generatedQasm:true};
+ });
+ await test("Real scientific Ramsey run produces separable-state backend and sampled Z observables",async()=>{
+  await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("1024");
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.locator(".large-telemetry").getByText("Separable pure-state").waitFor({timeout:60000});
+  await page.locator(".rq-rail>button").filter({hasText:"Scientific Graphs"}).click();
+  await page.getByRole("heading",{name:"Bit marginals & ZZ correlation"}).waitFor({timeout:10000});
+  const numeric=await page.locator(".rq-graph-grid").innerText();
+  assert.match(numeric,/Sample Shannon entropy/);
+  assert.match(numeric,/Gate population/);
+  const marginal=await page.locator(".rq-panel").filter({hasText:"Bit marginals & ZZ correlation"}).innerText();
+  assert.match(marginal,/P\(c0=1\)/);
+  assert.match(marginal,/Sample/);
+  const csv=page.waitForEvent("download",{timeout:15000});
+  await page.getByRole("button",{name:"Export CSV"}).click();
+  const file=await csv,rows=readFileSync(await file.path(),"utf8").trim().split("\n");
+  assert.equal(rows[0],"bitstring,shots,relative_frequency");
+  assert.ok(rows.length>=2);
+  assert.equal(rows.slice(1).reduce((sum,line)=>sum+Number(line.split(",")[1]),0),1024);
+  return{backend:"separable-state",shots:1024,graphComputed:true,completeCsvDistribution:true};
+ });
+ await test("Quantum industrial atlas filters real reference categories without claiming hardware connection",async()=>{
+  await page.locator(".rq-rail>button").filter({hasText:"Equipment Atlas"}).click();
+  assert.ok(await page.locator(".rq-equipment-card").count()>=30);
+  await page.getByRole("combobox",{name:"Equipment technology platform"}).selectOption("Superconducting");
+  const platformCount=await page.locator(".rq-equipment-card").count();
+  assert.ok(platformCount>=6&&platformCount<30);
+  await page.getByRole("searchbox",{name:"Search quantum equipment"}).fill("refrigerator");
+  assert.equal(await page.locator(".rq-equipment-card").count(),1);
+  await page.locator(".rq-equipment-card summary").first().click();
+  const detail=await page.locator(".rq-equipment-card").first().innerText();
+  assert.match(detail,/No live instrument API|Not connected/i);
+  await page.getByRole("button",{name:/Industrial models/}).click();
+  assert.equal(await page.locator(".rq-app-card").count(),10);
+  return{instrumentReferenceMinimum:30,platformFiltered:platformCount,models:10,hardwareConnected:false};
+ });
+ await test("Research QASM snapshots are autosaved and recovered after browser reload",async()=>{
+  await page.locator(".rq-rail>button").filter({hasText:"Circuit Workbench"}).click();
+  await page.getByRole("textbox",{name:"Research experiment name"}).fill("Research validation session");
+  await page.getByRole("button",{name:"Save experiment"}).click();
+  await page.waitForFunction(()=>{
+   const raw=localStorage.getItem("mah-quantum-1000-research-v1");
+   if(!raw)return false;
+   try{
+    const doc=JSON.parse(raw);
+    return doc.draft.name==="Research validation session"&&
+      doc.saved.some(x=>x.name==="Research validation session");
+   }catch{return false;}
+  },null,{timeout:12000});
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  assert.equal(await page.getByRole("textbox",{name:"Research experiment name"}).inputValue(),"Research validation session");
+  await page.locator(".rq-rail>button").filter({hasText:"Experiment Library"}).click();
+  await page.getByRole("searchbox",{name:"Search saved quantum experiments"}).fill("Research validation session");
+  await page.getByText("Research validation session").waitFor({timeout:10000});
+  assert.ok((await page.locator(".rq-run-log").innerText()).includes("completed"));
+  return{draftRestored:true,namedSnapshot:true,runMetadataPersisted:true};
+ });
+ await test("Industrial QAOA module executes synthetic manufacturing optimization with verifiable classical optimum",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:30000});
+  await page.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+  await page.getByRole("heading",{name:"Weighted graph optimization · quantum versus classical"}).waitFor({timeout:20000});
+  assert.ok((await page.locator(".rq-opt").innerText()).includes("2–10 qubits"));
+  await page.getByRole("button",{name:"Run QAOA and classical reference"}).click();
+  await page.getByRole("heading",{name:"Quantum/classical benchmark and reproducibility"}).waitFor({timeout:35000});
+  await page.locator(".rq-opt-metrics").getByText("QAOA expectation / exact optimum").waitFor({timeout:35000});
+  const metrics=await page.locator(".rq-opt-results").innerText();
+  assert.match(metrics,/Classical global optimum/);
+  assert.match(metrics,/Classical greedy/);
+  assert.match(metrics,/QAOA exact expectation/);
+  assert.match(metrics,/Best QAOA sample/);
+  assert.equal(await page.getByRole("button",{name:"Download evidence JSON"}).isDisabled(),false);
+  return{completed:true,quantumAlgorithm:"p=1 QAOA",classicalExhaustive:true};
+ });
+ await test("Industrial QAOA evidence export reconciles every shot and graph SHA-256 digest",async()=>{
+  const next=page.waitForEvent("download",{timeout:20000});
+  await page.getByRole("button",{name:"Download evidence JSON"}).click();
+  const file=await next;
+  const evidence=JSON.parse(readFileSync(await file.path(),"utf8"));
+  assert.equal(evidence.schema,"MAH-Quantum-Industrial-Optimization-Evidence/v1");
+  assert.equal(evidence.report.schema,"MAH-Quantum-Industrial-QAOA-MaxCut/v1");
+  assert.equal(evidence.report.execution.physicalHardware,false);
+  assert.equal(evidence.report.execution.completedShots,512);
+  assert.equal(evidence.report.settings.seed,2026);
+  assert.equal(evidence.report.settings.shots,512);
+  const digest=createHash("sha256").update(JSON.stringify(evidence.report.graph)).digest("hex");
+  assert.equal(evidence.inputSha256,digest);
+  assert.equal(evidence.report.quantum.outcomes.reduce((a,o)=>a+o.count,0),512);
+  assert.ok(evidence.report.quantum.expectedScore<=evidence.report.classical.optimum+1e-9);
+  assert.ok(evidence.report.quantum.bestSampleScore<=evidence.report.classical.optimum+1e-9);
+  return{shotCount:512,sourceHashVerified:true,optimalityVerified:true};
+ });
+ await test("Industrial QAOA rejects invalid customer graph and invalidates stale output",async()=>{
+  const editor=page.getByRole("textbox",{name:"Industrial optimization graph JSON"});
+  await editor.fill(JSON.stringify({name:"Invalid",nodes:["A","B"],edges:[{source:0,target:1,weight:-2}]}));
+  assert.equal(await page.getByRole("button",{name:"Download evidence JSON"}).isDisabled(),true);
+  assert.equal(await page.getByRole("button",{name:"Run QAOA and classical reference"}).isDisabled(),true);
+  await page.getByText(/weight must be a finite positive/i).waitFor({timeout:15000});
+  return{unsafeModelRejected:true,previousResultInvalidated:true};
+ });
+ await test("Industrial QAOA and scientific graphs render and remain usable at mobile viewport width",async()=>{
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  await context.addInitScript(()=>{
+   localStorage.setItem("mah-workspace-access-v1",JSON.stringify({
+    version:1,active:"c0",codes:{"c0":{usedMs:0,cooldownUntil:0}},owner:null,heartbeat:0
+   }));
+  });
+  const mobile=await context.newPage();
+  try{
+   await mobile.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+   await mobile.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+   await mobile.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+   const widths=await mobile.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
+   assert.ok(widths.page<=widths.viewport+8,"Industrial mobile overflow: "+JSON.stringify(widths));
+   await mobile.getByRole("button",{name:"Run QAOA and classical reference"}).click();
+   await mobile.locator(".rq-opt-metrics").getByText("QAOA expectation / exact optimum").waitFor({timeout:40000});
+   await mobile.locator(".rq-rail>button").filter({hasText:"Scientific Graphs"}).click();
+   const after=await mobile.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
+   assert.ok(after.page<=after.viewport+8,"Scientific graphs mobile overflow: "+JSON.stringify(after));
+   return{viewportPx:390,industrialPagePx:widths.page,graphsPagePx:after.page,ranOptimization:true};
+  }finally{await context.close();}
+ });
+ await test("Scientific module navigation resets long-document scroll to the new module's beginning",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  await page.locator(".rq-rail>button").filter({hasText:"Research Models"}).click();
+  await page.locator(".rq-model-card").first().waitFor({timeout:10000});
+  await page.evaluate(()=>{
+   document.documentElement.style.scrollBehavior="auto";
+   document.body.style.scrollBehavior="auto";
+   window.scrollTo({top:document.documentElement.scrollHeight,behavior:"instant"});
+  });
+  await page.waitForFunction(()=>window.scrollY>100,null,{timeout:10000});
+  const before=await page.evaluate(()=>window.scrollY);
+  await page.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+  await page.waitForFunction(()=>window.scrollY<5,null,{timeout:10000});
+  assert.equal(await page.locator(".rq-rail>button[aria-current=page]").count(),1);
+  return{scrollBeforePx:Math.round(before),scrollAfterPx:0,activeNavigation:true};
+ });
+ await test("Capture reproducible scientific workbench and industrial interface visual evidence",async()=>{
+  mkdirSync("artifacts",{recursive:true});
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  await page.screenshot({path:"artifacts/research-console-desktop.png",fullPage:true});
+  await page.locator(".rq-rail>button").filter({hasText:"Research Models"}).click();
+  await page.locator(".rq-model-card").first().waitFor({timeout:12000});
+  await page.screenshot({path:"artifacts/research-models-desktop.png",fullPage:true});
+  await page.locator(".rq-rail>button").filter({hasText:"Scientific Graphs"}).click();
+  await page.locator(".rq-graph-grid").waitFor({timeout:12000});
+  await page.screenshot({path:"artifacts/research-graphs-desktop.png",fullPage:true});
+  await page.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+  await page.getByRole("button",{name:"Run QAOA and classical reference"}).click();
+  await page.locator(".rq-opt-metrics").waitFor({timeout:30000});
+  await page.screenshot({path:"artifacts/industrial-optimization-desktop.png",fullPage:true});
+  return{visuals:["research-console-desktop.png","research-models-desktop.png",
+   "research-graphs-desktop.png","industrial-optimization-desktop.png"],
+   source:"actual production-build Chromium"};
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
@@ -222,7 +392,7 @@ finally{
  const result={schema:"MQ-DSQ-BROWSER-RELEASE/v1",dateUtc:new Date().toISOString(),
   sha:process.env.GITHUB_SHA||"local",
   environment:"GitHub Actions Chromium, locally hosted production build; no cloud deployment",
-  scope:"20/100/1000+/2048 quantum UIs and worker smoke; access control not evaluated",
+  scope:"20/100/1000+/2048 quantum UI, 8 scientific models, equipment atlas and bounded industrial QAOA; access control not evaluated",
   durationMs:+(performance.now()-started).toFixed(2),
   counts:{total:evidence.length,passed:evidence.length-fails.length,failed:fails.length},cases:evidence};
  mkdirSync("artifacts",{recursive:true});
