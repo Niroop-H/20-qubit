@@ -472,3 +472,19 @@
 @media(max-width:500px){.rq-science-telemetry>div{padding:10px}.rq-science-telemetry strong{font-size:10px}.rq-ham-status-row,.rq-ham-metrics{grid-template-columns:1fr 1fr}.rq-ham-status-row strong{font-size:11px}.rq-ham-metrics strong{font-size:13px}.rq-ham-status-row>div,.rq-ham-metrics>div{padding:9px}.rq-hamiltonian .rq-panel{padding:12px}.rq-ham-plot-head{font-size:10px}.rq-ham-plot-head small{font-size:9px}.rq-ham-shot-plan strong{font-size:11px}.rq-ham-label textarea{font-size:10px}.rq-ham-matrix{min-width:330px}}
 @media(max-width:360px){.rq-ham-metrics,.rq-ham-status-row{grid-template-columns:1fr}.rq-science-telemetry{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){.rq-ham-bar-track i{transition:none}}
+
+
+/* Executed (not hypothetical) p=1 QAOA beta/gamma response landscape. */
+.rq-opt-landscape{grid-column:1/-1;min-width:0;border:1px solid #3d6579;background:#0d2333;border-radius:8px;padding:16px}
+.rq-opt-landscape-head{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:13px}
+.rq-opt-landscape-head>div{min-width:0}
+.rq-opt-landscape-head span{font:700 9px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:#a2dfe9}
+.rq-opt-landscape-head h3{font:600 15px Inter,'Segoe UI',sans-serif!important;margin:5px 0!important;color:#ecf6ff!important}
+.rq-opt-landscape-head p{color:#a6c0ce!important;font-size:10px!important;line-height:1.7!important;margin:0!important}
+.rq-opt-landscape-head button{flex-shrink:0;border:1px solid #628aa1;background:#194255;border-radius:6px;color:#e4f7ff;padding:10px 12px;font:700 10px Inter,'Segoe UI',sans-serif}
+.rq-opt-landscape-head button:hover{background:#24556b;border-color:#9ddfe7}
+.rq-opt-heatmap-scroll{max-width:100%;overflow-x:auto;background:#071926;padding:12px;border:1px solid #385c73;border-radius:7px}
+.rq-opt-heatmap{display:grid;gap:4px;min-width:320px}
+.rq-opt-heatmap>span{aspect-ratio:1.7;border:1px solid #5279873b;border-radius:3px;min-height:11px}
+.rq-opt-heatmap-legend{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:11px 0;color:#b8d0d9;font:9px ui-monospace,Consolas,monospace}
+@media(max-width:650px){.rq-opt-landscape-head{flex-direction:column}.rq-opt-landscape-head button{width:100%}.rq-opt-landscape{padding:10px}}
