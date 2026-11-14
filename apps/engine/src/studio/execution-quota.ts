@@ -16,13 +16,24 @@ export class NetworkComputeQuota{
   if(secret.length<32)throw Error("Quota signing secret must be at least 32 characters.");
  }
  get activeBuckets(){return this.entries.size;}
+ private digest(rawAddress:string){
+  const address=isIP(rawAddress)?rawAddress:"unknown";
+  return createHmac("sha256",this.secret).update("mah-quantum-network-v1:"+address).digest("hex");
+ }
+ inspect(rawAddress:string):QuotaResult{
+  const bucket=this.entries.get(this.digest(rawAddress)),now=this.now();
+  if(!bucket||(bucket.cooldownUntil>0&&now>=bucket.cooldownUntil))
+   return{ok:true,remaining:COMPUTE_CREDITS,resetAt:0,retryAfterSeconds:0};
+  return{ok:bucket.cooldownUntil===0,remaining:bucket.remaining,
+   resetAt:bucket.cooldownUntil,
+   retryAfterSeconds:bucket.cooldownUntil>now?Math.ceil((bucket.cooldownUntil-now)/1000):0};
+ }
  consume(rawAddress:string,credits=1):QuotaResult{
   if(!Number.isInteger(credits)||credits<1||credits>COMPUTE_CREDITS)
    throw Error("Execution credits must be a positive integer within the plan.");
   // Vercel rewrites its trusted X-Forwarded-For; ignore user supplied headers elsewhere.
   // A missing/malformed address shares the same conservative 'unknown' bucket.
-  const address=isIP(rawAddress)?rawAddress:"unknown";
-  const digest=createHmac("sha256",this.secret).update("mah-quantum-network-v1\0"+address).digest("hex");
+  const digest=this.digest(rawAddress);
   const now=this.now();
   // Discard expired counters and bound memory growth; never persist identifiers.
   if(this.entries.size>=4096){
