@@ -20,6 +20,7 @@ import os
 import re
 import secrets
 import socket
+import sqlite3
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -296,17 +297,24 @@ def authorize_single_sweep(profile: DeviceProfile, *,
 def run_approved_sweep(profile: DeviceProfile, approval: ApprovedAction, *,
                        secret: str,
                        independent_interlock: Callable[[DeviceProfile], bool] | None = None,
+                       operator_identity_authorized: Callable[[ApprovedAction], bool] | None = None,
                        audit_path: Path,
                        now: int | None = None) -> dict[str, Any]:
-    """Execute precisely one SCPI INIT:IMM sweep on an *approved analyzer*.
+    """Issue one configured analyzer sweep, with multiple independent gates.
 
-    The interlock must be obtained from a separately qualified physical safety
-    system. Default is fail-closed. An operator-issued approval may be used
-    exactly once within the same edge process; audit every denial and success.
+    This is NOT a substitute for a hardware-enforced safety interlock, local
+    certified interlocks or an identity provider. Neither a user-entered name
+    nor the signed record independently proves that two humans approved.
+    Default operator identity and physical interlock checks are FAIL CLOSED.
+
+    A persistent SQLite nonce journal atomically reserves every authorization
+    BEFORE a device command so a process restart cannot replay an old token.
     """
     timestamp = int(time.time() if now is None else now)
     if not profile.enabled or not profile.allow_single_sweep or profile.device_class not in CONTROL_COMMANDS["single_sweep"][1]:
         raise HardwareError("Physical action not enabled for this instrument profile.")
+    if not isinstance(secret, str) or len(secret) < 32:
+        raise HardwareError("Strong server-only hardware authorization secret is required.")
     fields = {k: getattr(approval, k) for k in ("schema","device_id","action",
              "operator","supervisor","reason","issued_at","expires_at","nonce")}
     computed = hmac.new(secret.encode(), _signed_message(fields), hashlib.sha256).hexdigest()
@@ -316,15 +324,38 @@ def run_approved_sweep(profile: DeviceProfile, approval: ApprovedAction, *,
         raise HardwareError("Authorization does not match requested physical command.")
     if not approval.issued_at <= timestamp <= approval.expires_at or approval.expires_at - approval.issued_at > 60:
         raise HardwareError("Physical command authorization has expired.")
+    if operator_identity_authorized is None or operator_identity_authorized(approval) is not True:
+        raise HardwareError("External operator and supervisor identity approval was not verified.")
     if independent_interlock is None or independent_interlock(profile) is not True:
         raise HardwareError("Independent physical equipment safety interlock was not confirmed.")
     if approval.nonce in _USED_ACTION_NONCES:
         raise HardwareError("Physical authorization cannot be replayed.")
+
+    nonce_hash = hashlib.sha256(approval.nonce.encode()).hexdigest()
+    audit_path.parent.mkdir(parents=True, exist_ok=True)
+    db_path = audit_path.with_name(audit_path.name+".sqlite3")
+    try:
+        with sqlite3.connect(db_path, timeout=5.0) as db:
+            db.execute("CREATE TABLE IF NOT EXISTS used_actions("
+                       "nonce_sha256 TEXT PRIMARY KEY, device_id TEXT NOT NULL,"
+                       "created_at INTEGER NOT NULL, status TEXT NOT NULL)")
+            # Unique constraint serializes concurrent processes, not just threads.
+            db.execute("INSERT INTO used_actions(nonce_sha256,device_id,created_at,status)"
+                       " VALUES (?,?,?,?)",
+                       (nonce_hash,profile.device_id,timestamp,"reserved"))
+            db.commit()
+    except sqlite3.IntegrityError as exc:
+        raise HardwareError("Physical command authorization cannot be replayed.") from exc
+    except (sqlite3.Error, OSError) as exc:
+        raise HardwareError("Persistent edge audit authorization journal is unavailable.") from exc
+
     _USED_ACTION_NONCES.add(approval.nonce)
     status = "failed"
     try:
         with SCPISession(profile) as scpi:
             identity = scpi.identify()
+            # Strict static command, never an arbitrary cloud or model-provided
+            # SCPI command string. Device acts only after independent checks.
             scpi._send("INIT:IMM")
         status = "dispatched"
         return {"schema": ACTION_SCHEMA, "deviceId": profile.device_id,
@@ -333,13 +364,19 @@ def run_approved_sweep(profile: DeviceProfile, approval: ApprovedAction, *,
                 "identityVerified": identity,
                 "recordedAtUtc": datetime.now(timezone.utc).isoformat()}
     finally:
+        # Persistent status is updated even if network command send raises.
+        try:
+            with sqlite3.connect(db_path, timeout=5.0) as db:
+                db.execute("UPDATE used_actions SET status=? WHERE nonce_sha256=?",
+                           (status,nonce_hash))
+                db.commit()
+        except sqlite3.Error:
+            pass  # Reserved nonce still blocks replay; report JSONL best effort.
         record = {"schema": "MAH-Quantum-Hardware-Audit/v1", "at": timestamp,
                   "deviceId": profile.device_id, "action": "single_sweep",
                   "operator": approval.operator, "supervisor": approval.supervisor,
-                  "nonceSha256": hashlib.sha256(approval.nonce.encode()).hexdigest(),
-                  "status": status}
+                  "nonceSha256": nonce_hash, "status": status}
         line = json.dumps(record, separators=(",", ":"))+"\n"
-        audit_path.parent.mkdir(parents=True, exist_ok=True)
         flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT
         if hasattr(os, "O_NOFOLLOW"):
             flags |= os.O_NOFOLLOW
