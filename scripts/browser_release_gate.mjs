@@ -269,6 +269,71 @@ async function main(){
   assert.ok((await page.locator(".rq-run-log").innerText()).includes("completed"));
   return{draftRestored:true,namedSnapshot:true,runMetadataPersisted:true};
  });
+ await test("Industrial QAOA module executes synthetic manufacturing optimization with verifiable classical optimum",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:30000});
+  await page.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+  await page.getByRole("heading",{name:"Weighted graph optimization · quantum versus classical"}).waitFor({timeout:20000});
+  assert.ok((await page.locator(".rq-opt").innerText()).includes("2–10 qubits"));
+  await page.getByRole("button",{name:"Run QAOA and classical reference"}).click();
+  await page.getByRole("heading",{name:"Quantum/classical benchmark and reproducibility"}).waitFor({timeout:35000});
+  await page.locator(".rq-opt-metrics").getByText("QAOA expectation / exact optimum").waitFor({timeout:35000});
+  const metrics=await page.locator(".rq-opt-results").innerText();
+  assert.match(metrics,/Classical global optimum/);
+  assert.match(metrics,/Classical greedy/);
+  assert.match(metrics,/QAOA exact expectation/);
+  assert.match(metrics,/Best QAOA sample/);
+  assert.equal(await page.getByRole("button",{name:"Download evidence JSON"}).isDisabled(),false);
+  return{completed:true,quantumAlgorithm:"p=1 QAOA",classicalExhaustive:true};
+ });
+ await test("Industrial QAOA evidence export reconciles every shot and graph SHA-256 digest",async()=>{
+  const next=page.waitForEvent("download",{timeout:20000});
+  await page.getByRole("button",{name:"Download evidence JSON"}).click();
+  const file=await next;
+  const evidence=JSON.parse(readFileSync(await file.path(),"utf8"));
+  assert.equal(evidence.schema,"MAH-Quantum-Industrial-Optimization-Evidence/v1");
+  assert.equal(evidence.report.schema,"MAH-Quantum-Industrial-QAOA-MaxCut/v1");
+  assert.equal(evidence.report.execution.physicalHardware,false);
+  assert.equal(evidence.report.execution.completedShots,512);
+  assert.equal(evidence.report.settings.seed,2026);
+  assert.equal(evidence.report.settings.shots,512);
+  const digest=createHash("sha256").update(JSON.stringify(evidence.report.graph)).digest("hex");
+  assert.equal(evidence.inputSha256,digest);
+  assert.equal(evidence.report.quantum.outcomes.reduce((a,o)=>a+o.count,0),512);
+  assert.ok(evidence.report.quantum.expectedScore<=evidence.report.classical.optimum+1e-9);
+  assert.ok(evidence.report.quantum.bestSampleScore<=evidence.report.classical.optimum+1e-9);
+  return{shotCount:512,sourceHashVerified:true,optimalityVerified:true};
+ });
+ await test("Industrial QAOA rejects invalid customer graph and invalidates stale output",async()=>{
+  const editor=page.getByRole("textbox",{name:"Industrial optimization graph JSON"});
+  await editor.fill(JSON.stringify({name:"Invalid",nodes:["A","B"],edges:[{source:0,target:1,weight:-2}]}));
+  assert.equal(await page.getByRole("button",{name:"Download evidence JSON"}).isDisabled(),true);
+  assert.equal(await page.getByRole("button",{name:"Run QAOA and classical reference"}).isDisabled(),true);
+  await page.getByText(/weight must be a finite positive/i).waitFor({timeout:15000});
+  return{unsafeModelRejected:true,previousResultInvalidated:true};
+ });
+ await test("Industrial QAOA and scientific graphs render and remain usable at mobile viewport width",async()=>{
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  await context.addInitScript(()=>{
+   localStorage.setItem("mah-workspace-access-v1",JSON.stringify({
+    version:1,active:"c0",codes:{"c0":{usedMs:0,cooldownUntil:0}},owner:null,heartbeat:0
+   }));
+  });
+  const mobile=await context.newPage();
+  try{
+   await mobile.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+   await mobile.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+   await mobile.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+   const widths=await mobile.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
+   assert.ok(widths.page<=widths.viewport+8,"Industrial mobile overflow: "+JSON.stringify(widths));
+   await mobile.getByRole("button",{name:"Run QAOA and classical reference"}).click();
+   await mobile.locator(".rq-opt-metrics").getByText("QAOA expectation / exact optimum").waitFor({timeout:40000});
+   await mobile.locator(".rq-rail>button").filter({hasText:"Scientific Graphs"}).click();
+   const after=await mobile.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
+   assert.ok(after.page<=after.viewport+8,"Scientific graphs mobile overflow: "+JSON.stringify(after));
+   return{viewportPx:390,industrialPagePx:widths.page,graphsPagePx:after.page,ranOptimization:true};
+  }finally{await context.close();}
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
@@ -283,7 +348,7 @@ finally{
  const result={schema:"MQ-DSQ-BROWSER-RELEASE/v1",dateUtc:new Date().toISOString(),
   sha:process.env.GITHUB_SHA||"local",
   environment:"GitHub Actions Chromium, locally hosted production build; no cloud deployment",
-  scope:"20/100/1000+/2048 quantum UIs and worker smoke; access control not evaluated",
+  scope:"20/100/1000+/2048 quantum UI, 8 scientific models, equipment atlas and bounded industrial QAOA; access control not evaluated",
   durationMs:+(performance.now()-started).toFixed(2),
   counts:{total:evidence.length,passed:evidence.length-fails.length,failed:fails.length},cases:evidence};
  mkdirSync("artifacts",{recursive:true});
