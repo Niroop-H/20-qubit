@@ -341,3 +341,43 @@
 .rq-integration-boundary p{font-size:11px!important;line-height:1.8!important;color:#a7bfce!important}
 @media(max-width:1120px){.rq-integration-grid{grid-template-columns:1fr}.rq-integration-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:610px){.rq-integration{padding:13px}.rq-integration-stats>div{padding:11px}.rq-integration-stats strong{font-size:11px}.rq-integration-stats span{font-size:9px}.rq-integration-buttons button{flex:1}}
+
+
+/* Physical-equipment research gateway: industrial scope, observed data, no fake live telemetry. */
+.rq-hardware{min-width:0;background:linear-gradient(155deg,#10283a,#0a1927);border:1px solid #37566c;border-radius:10px;padding:22px}
+.rq-hardware-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:15px}
+.rq-hardware-flow>div{min-width:0;background:#112b3b;border:1px solid #3b5d70;border-radius:8px;padding:15px;display:flex;flex-direction:column;gap:8px}
+.rq-hardware-flow strong{font:600 11px ui-monospace,Consolas,monospace;color:#eedaaa}
+.rq-hardware-flow small{font:10px/1.7 Inter,'Segoe UI',sans-serif;color:#adc7d4}
+.rq-hardware>section.rq-panel{margin-bottom:14px}
+.rq-hardware-safety{border-color:#6a6756;background:linear-gradient(140deg,#292b2d,#142532)}
+.rq-hardware-safety p{color:#d3d0c0!important;font-size:11px!important;line-height:1.85!important;margin:0!important}
+.rq-hardware-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-bottom:14px}
+.rq-hardware-cols>.rq-panel{min-width:0}
+.rq-hardware-drivers{display:flex;flex-direction:column;gap:8px}
+.rq-hardware-drivers>details{background:#152e42;border:1px solid #3c5a6f;border-radius:7px;padding:13px}
+.rq-hardware-drivers summary{display:flex;justify-content:space-between;gap:10px;align-items:center;cursor:pointer;list-style:none}
+.rq-hardware-drivers summary::-webkit-details-marker{display:none}
+.rq-hardware-drivers strong{font-size:12px;color:#e7f3fd}
+.rq-hardware-drivers summary small{font:600 10px ui-monospace,monospace;color:#c9d3ba}
+.rq-hardware-drivers p{font-size:11px!important;line-height:1.75!important;color:#a8c2d1!important;margin:12px 0 2px!important}
+.rq-hardware-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:15px 0}
+.rq-hardware-summary>div{min-width:0;display:flex;flex-direction:column;gap:7px;background:#132b3c;border:1px solid #36556b;border-radius:7px;padding:12px}
+.rq-hardware-summary span{font-size:10px;color:#9ebccd}
+.rq-hardware-summary strong{font:600 11px/1.6 ui-monospace,monospace;color:#e9f3fc;overflow-wrap:anywhere}
+.rq-hardware-caution{background:#272a2b;border:1px solid #847149;border-radius:6px;padding:14px;font-size:11px!important;line-height:1.8!important;color:#f0dcb4!important}
+.rq-hardware-measurements{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:15px 0}
+.rq-hardware-measurements>div{background:#102b3c;border:1px solid #37576d;border-radius:7px;padding:15px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.rq-hardware-measurements span{font-size:11px;color:#a5c2d2;overflow-wrap:anywhere}
+.rq-hardware-measurements strong{font:600 15px/1.4 ui-monospace,Consolas,monospace;color:#f1dfa9;overflow-wrap:anywhere}
+.rq-hardware-measurements small{font-size:9px;color:#91afbf;overflow-wrap:anywhere}
+.rq-hardware-map{border-top:1px solid #365169;margin-top:17px;padding-top:15px}
+.rq-hardware-map h3{font:600 16px Inter,'Segoe UI',sans-serif!important;color:#eaf4fd!important;margin:5px 0 10px!important}
+.rq-hardware-fields{display:grid;grid-template-columns:1.3fr .75fr .75fr;gap:10px;margin:14px 0}
+.rq-hardware-fields label{font-size:11px;color:#acc8d8;display:flex;flex-direction:column;gap:7px}
+.rq-hardware-fields input,.rq-hardware-fields select{width:100%;min-width:0;background:#102637;color:#e9f6fd;border:1px solid #44677d;border-radius:6px;padding:9px;font-size:11px}
+.rq-hardware-map button{background:#ddc591;color:#1b2b33;border:1px solid #e9d7aa;border-radius:6px;padding:11px 14px;font:600 11px Inter,'Segoe UI',sans-serif}
+.rq-hardware-map button:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:1170px){.rq-hardware-flow{grid-template-columns:repeat(2,minmax(0,1fr))}.rq-hardware-cols{grid-template-columns:1fr}.rq-hardware-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.rq-hardware{padding:12px}.rq-hardware-measurements{grid-template-columns:1fr 1fr}.rq-hardware-fields{grid-template-columns:1fr}.rq-hardware-flow>div{padding:10px}}
+@media(max-width:400px){.rq-hardware-measurements,.rq-hardware-summary{grid-template-columns:1fr}}
