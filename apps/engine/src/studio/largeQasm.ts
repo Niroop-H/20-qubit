@@ -1,3 +1,4 @@
+import { readQuantumOperation } from "./qasm-syntax";
 /** Strict bounded OpenQASM 2/3 subset for 101–4096 logical qubits. */
 import type { LargeProgram } from "./scalable";
 import { validateLargeProgram, LARGE_MAX_QUBITS, LARGE_MAX_STEPS } from "./scalable";
@@ -7,8 +8,17 @@ import { expression } from "./qasm";
 export function parseLargeQasm(source:string):LargeProgram{
  if(typeof source!=="string"||source.length>750000)throw new Error("Source is limited to 750 KB.");
  const clean=source.replace(/\/\*[\s\S]*?\*\//g,match=>match.replace(/[^\n]/g," ")).replace(/\/\/[^\n]*/g,"");
- const chunks=clean.split(";");
- if(chunks.pop()?.trim())throw new Error("Each statement must end in a semicolon.");
+ const chunks:{text:string;line:number}[]=[];
+ let start=0,line=1,segmentLine=1;
+ for(let i=0;i<clean.length;i++){
+  if(clean[i]===";"){
+   const raw=clean.slice(start,i),leading=raw.search(/\S/);
+   if(leading>=0)chunks.push({text:raw.trim(),line:segmentLine+(raw.slice(0,leading).match(/\n/g)?.length||0)});
+   start=i+1;segmentLine=line;
+  }
+  if(clean[i]==="\n")line++;
+ }
+ if(clean.slice(start).trim())throw Error("Line "+segmentLine+": each statement must end in a semicolon.");
  let version="",qName="",cName="",n=0,m=0,operation=false;
  const steps:Step[]=[];
  function add(gate:Step["gate"],targets:number[],controls:number[]=[],params?:Record<string,number>,classical?:number){
@@ -24,7 +34,7 @@ export function parseLargeQasm(source:string):LargeProgram{
   return [q];
  }
  for(let k=0;k<chunks.length;k++){
-  const statement=chunks[k].trim();
+  const statement=chunks[k].text;
   if(!statement)continue;
   try{
    let hit:RegExpExecArray|null;
@@ -34,7 +44,7 @@ export function parseLargeQasm(source:string):LargeProgram{
    }
    if(!version)throw new Error("Declare OPENQASM version first.");
    if((hit=/^include\s+"([^"]+)"$/.exec(statement))){
-    if(!["qelib1.inc","stdgates.inc"].includes(hit[1]))throw new Error("Unsupported include.");
+    if(hit[1] !== (version==="2.0"?"qelib1.inc":"stdgates.inc"))throw new Error("Unsupported include.");
     continue;
    }
    if((hit=/^(qreg|creg)\s+([a-zA-Z_]\w*)\[(\d+)\]$/.exec(statement))){
@@ -53,43 +63,48 @@ export function parseLargeQasm(source:string):LargeProgram{
    }
    if(!qName)throw new Error("Declare quantum register before operations.");
    operation=true;
-   if((hit=/^measure\s+(.+?)\s*->\s*(.+)$/i.exec(statement))){
-    const a=address(hit[1],"q"),b=address(hit[2],"c");
-    if(a.length!==b.length)throw new Error("Measurement registers must match.");
+   const operation=readQuantumOperation(statement);
+   if(operation.kind==="arrow"){
+    const a=address(operation.quantum,"q"),b=address(operation.classical,"c");
+    if(a.length!==b.length)throw Error("Measurement registers must match.");
     a.forEach((q,i)=>add("MEASURE",[q],[],undefined,b[i]));continue;
    }
-   if((hit=/^(.+?)\s*=\s*measure\s+(.+)$/i.exec(statement))){
-    if(version==="2.0")throw new Error("Assignment measurement requires QASM3.");
-    const a=address(hit[2],"q"),b=address(hit[1],"c");
-    if(a.length!==b.length)throw new Error("Measurement registers must match.");
+   if(operation.kind==="assignment"){
+    if(version==="2.0")throw Error("Assignment measurement requires QASM3.");
+    const a=address(operation.quantum,"q"),b=address(operation.classical,"c");
+    if(a.length!==b.length)throw Error("Measurement registers must match.");
     a.forEach((q,i)=>add("MEASURE",[q],[],undefined,b[i]));continue;
    }
-   if((hit=/^barrier\s+(.+)$/i.exec(statement))){
-    const targets=hit[1].split(",").flatMap(s=>address(s,"q"));
-    if(targets.length>0)add("BARRIER",targets);continue;
+   if(operation.kind==="barrier"){
+    const targets=operation.operands.split(",").flatMap(s=>address(s,"q"));
+    if(targets.length)add("BARRIER",targets);continue;
    }
-   hit=/^([a-zA-Z][a-zA-Z0-9]*)(?:\((.*)\))?\s+(.+)$/.exec(statement);
-   if(!hit)throw new Error("Unsupported syntax (loops and custom gates are unavailable).");
-   const name=hit[1].toLowerCase(),args=hit[2]===undefined?[]:hit[2].split(",").map(expression);
-   const nargs:{[gate:string]:number}={id:0,h:0,x:0,y:0,z:0,s:0,t:0,sdg:0,tdg:0,rx:1,ry:1,rz:1,u:3,u3:3,cx:0,cz:0,swap:0,ccx:0};
+   const name=operation.name,args=operation.angles.map(expression);
+   const nargs:{[gate:string]:number}={id:0,i:0,h:0,x:0,y:0,z:0,s:0,t:0,sdg:0,tdg:0,sx:0,sxdg:0,rx:1,ry:1,rz:1,p:1,u1:1,u2:2,u:3,u3:3,cx:0,cz:0,swap:0,ccx:0};
    if(!Object.prototype.hasOwnProperty.call(nargs,name))throw new Error("Unsupported scalable instruction "+name);
    if(args.length!==nargs[name])throw new Error(name+" expects "+nargs[name]+" angle parameters.");
-   const operands=hit[3].split(",").map(s=>address(s,"q"));
+   const operands=operation.operands.split(",").map(s=>address(s,"q"));
    const arity=name==="ccx"?3:["cx","cz","swap"].includes(name)?2:1;
    if(operands.length!==arity)throw new Error(name+" requires "+arity+" operand(s).");
    const width=Math.max(...operands.map(a=>a.length));
    if(operands.some(a=>a.length!==1&&a.length!==width))throw new Error("Registers must be compatible.");
    for(let i=0;i<width;i++){
     const q=operands.map(a=>a.length===1?a[0]:a[i]);
-    if(["sdg","tdg"].includes(name))add("U",[q[0]],[],{theta:0,phi:0,lambda:name==="sdg"?-Math.PI/2:-Math.PI/4});
+    if(["sdg","tdg","p","u1"].includes(name))
+     add("U",[q[0]],[],{theta:0,phi:0,lambda:name==="sdg"?-Math.PI/2:name==="tdg"?-Math.PI/4:args[0]});
+    else if(name==="sx"||name==="sxdg"){
+     const sign=name==="sx"?1:-1;
+     add("U",[q[0]],[],{theta:Math.PI/2,phi:-sign*Math.PI/2,lambda:sign*Math.PI/2});
+    }
+    else if(name==="u2")add("U",[q[0]],[],{theta:Math.PI/2,phi:args[0],lambda:args[1]});
     else if(name==="u"||name==="u3")add("U",[q[0]],[],{theta:args[0],phi:args[1],lambda:args[2]});
     else if(["rx","ry","rz"].includes(name))add(name.toUpperCase() as Step["gate"],[q[0]],[],{theta:args[0]});
     else if(name==="cx"||name==="cz")add(name.toUpperCase() as Step["gate"],[q[1]],[q[0]]);
     else if(name==="ccx")add("CCX",[q[2]],[q[0],q[1]]);
-    else add(name==="id"?"I":name.toUpperCase() as Step["gate"],q);
+    else add(name==="id"||name==="i"?"I":name.toUpperCase() as Step["gate"],q);
    }
   }catch(e){
-   throw new Error("Statement "+(k+1)+": "+(e as Error).message);
+   throw new Error("Line "+chunks[k].line+": "+(e as Error).message);
   }
  }
  if(!version||!n)throw new Error("QASM source must declare version and quantum register.");

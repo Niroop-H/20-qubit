@@ -1,3 +1,4 @@
+import { readQuantumOperation } from "./qasm-syntax";
 import { Program, Step, validateProgram, MAX_STEPS, MAX_QUBITS } from "./model";
 
 /** Recursive-descent arithmetic only; never evaluates JavaScript or Python. */
@@ -51,21 +52,20 @@ export function parseQasm(source: string): Program {
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
     .replace(/\/\/[^\n]*/g, "");
   const statements: { text: string; line: number }[] = [];
-  let start = 0;
-  for (let i = 0; i < clean.length; i++)
-    if (clean[i] === ";") {
-      const raw = clean.slice(start, i);
-      if (raw.trim())
-        statements.push({
-          text: raw.trim(),
-          line: clean.slice(0, start + raw.search(/\S/)).split("\n").length,
-        });
-      start = i + 1;
+  let start=0,line=1,segmentLine=1;
+  for(let i=0;i<clean.length;i++){
+    if(clean[i]===";"){
+      const raw=clean.slice(start,i),leading=raw.search(/\S/);
+      if(leading>=0){
+        const newlines=raw.slice(0,leading).match(/\n/g)?.length??0;
+        statements.push({text:raw.trim(),line:segmentLine+newlines});
+      }
+      start=i+1;segmentLine=line;
     }
-  if (clean.slice(start).trim())
-    throw new Error(
-      `Line ${clean.slice(0, start).split("\n").length}: statements must end with a semicolon.`,
-    );
+    if(clean[i]==="\n")line++;
+  }
+  if(clean.slice(start).trim())
+    throw new Error("Line "+segmentLine+": statements must end with a semicolon.");
   const p: Program = { qubits: 0, bits: 0, steps: [] };
   let qname = "",
     cname = "",
@@ -107,7 +107,7 @@ export function parseQasm(source: string): Program {
   for (const { text, line } of statements)
     try {
       let m: RegExpExecArray | null;
-      if ((m = /^OPENQASM\s+(2\.0|3(?:\.0)?)$/.exec(text))) {
+      if ((m = /^OPENQASM\s+(2\.0|3(?:\.0)?)$/i.exec(text))) {
         if (version || qname || operations)
           throw new Error("Place one OPENQASM version header first.");
         version = m[1];
@@ -116,7 +116,7 @@ export function parseQasm(source: string): Program {
       if (!version)
         throw new Error("Start with OPENQASM 2.0; or OPENQASM 3.0;");
       if ((m = /^include\s+"([^"]+)"$/.exec(text))) {
-        if (!["qelib1.inc", "stdgates.inc"].includes(m[1]))
+        if (m[1] !== (version === "2.0" ? "qelib1.inc" : "stdgates.inc"))
           throw new Error("Only qelib1.inc and stdgates.inc are supported.");
         continue;
       }
@@ -156,39 +156,27 @@ export function parseQasm(source: string): Program {
       }
       if (!qname) throw new Error("Declare a quantum register first.");
       operations = true;
-      if ((m = /^measure\s+(.+?)\s*->\s*(.+)$/.exec(text))) {
-        const qs = operand(m[1], "q"),
-          cs = operand(m[2], "c");
-        if (qs.length !== cs.length)
-          throw new Error("Measurement register sizes differ.");
-        qs.forEach((q, i) => add("MEASURE", [q], [], undefined, cs[i]));
+      const operation=readQuantumOperation(text);
+      if(operation.kind==="arrow"){
+        const qs=operand(operation.quantum,"q"),cs=operand(operation.classical,"c");
+        if(qs.length!==cs.length)throw Error("Measurement register sizes differ.");
+        qs.forEach((q,i)=>add("MEASURE",[q],[],undefined,cs[i]));
         continue;
       }
-      if ((m = /^(.+?)\s*=\s*measure\s+(.+)$/.exec(text))) {
-        if (version === "2.0")
-          throw new Error("Assignment measurement requires OpenQASM 3.");
-        const qs = operand(m[2], "q"),
-          cs = operand(m[1], "c");
-        if (qs.length !== cs.length)
-          throw new Error("Measurement register sizes differ.");
-        qs.forEach((q, i) => add("MEASURE", [q], [], undefined, cs[i]));
+      if(operation.kind==="assignment"){
+        if(version==="2.0")throw Error("Assignment measurement requires OpenQASM 3.");
+        const qs=operand(operation.quantum,"q"),cs=operand(operation.classical,"c");
+        if(qs.length!==cs.length)throw Error("Measurement register sizes differ.");
+        qs.forEach((q,i)=>add("MEASURE",[q],[],undefined,cs[i]));
         continue;
       }
-      if ((m = /^barrier\s+(.+)$/.exec(text))) {
-        add(
-          "BARRIER",
-          m[1].split(",").flatMap((x) => operand(x, "q")),
-        );
+      if(operation.kind==="barrier"){
+        add("BARRIER",operation.operands.split(",").flatMap(x=>operand(x,"q")));
         continue;
       }
-      m = /^([a-zA-Z][a-zA-Z0-9]*)(?:\((.*)\))?\s+(.+)$/.exec(text);
-      if (!m)
-        throw new Error(
-          "Unsupported syntax. Custom gates, loops, reset and classical control are not supported.",
-        );
-      const name = m[1].toLowerCase(),
-        args = m[2] === undefined ? [] : m[2].split(",").map(expression),
-        qs = m[3].split(",").map((x) => operand(x, "q"));
+      const name=operation.name,
+        args=operation.angles.map(expression),
+        qs=operation.operands.split(",").map(x=>operand(x,"q"));
       const paramsCount: Record<string, number> = {
         id: 0,
         i: 0,
