@@ -211,6 +211,7 @@ async function main(){
  await test("Research console exposes eight executable large-qubit models and selects exact Ramsey circuit",async()=>{
   await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
   await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:25000});
+  await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("1000");
   await page.locator(".rq-rail>button").filter({hasText:"Research Models"}).click();
   assert.equal(await page.locator(".rq-model-card").count(),8);
   await page.locator(".rq-model-card").filter({hasText:"Ideal Ramsey interference array"}).getByRole("button",{name:"Load executable model"}).click();
