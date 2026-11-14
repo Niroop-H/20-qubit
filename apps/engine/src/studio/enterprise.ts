@@ -184,7 +184,7 @@ export function executePreparedIndustryJob(prepared:PreparedJob):IndustryExecuti
   analysis:{...summary,method:result.method,exactForSupportedCircuit:result.exact,
    limitations:result.detail,finiteSupportRank:result.supportRank??null,
    idealProbabilityLog2:result.idealProbabilityLog2??null},
-  samples:{seed:job.seed,requestedShots:job.shots,completedShots:observed,
+  samples:{seed:job.seed!,requestedShots:job.shots!,completedShots:observed,
    counts:result.counts,frequencies:result.probabilities,
    idealProbabilitiesReported:result.idealProbabilities,
    omittedIdealProbabilityMass:result.distributionInfo.omittedIdealProbabilityMass}
