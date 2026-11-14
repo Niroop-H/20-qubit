@@ -98,6 +98,20 @@ def run(argv:list[str]|None=None)->int:
     prepare.add_argument("--seed",type=int,default=42)
     prepare.add_argument("--logical-qubits",type=int,default=1000)
     prepare.add_argument("--output",type=Path,required=True)
+    pipeline=subs.add_parser("run-research-pipeline",
+        help="One-shot real sensor acquisition, integrity verification and authenticated quantum execution")
+    pipeline.add_argument("--protocol",choices=["scpi","modbus"],required=True)
+    pipeline.add_argument("--config",type=Path,required=True)
+    pipeline.add_argument("--device",required=True)
+    pipeline.add_argument("--channel",required=True)
+    pipeline.add_argument("--scale",type=float,required=True)
+    pipeline.add_argument("--offset",type=float,required=True)
+    pipeline.add_argument("--job-id",required=True)
+    pipeline.add_argument("--shots",type=int,default=128)
+    pipeline.add_argument("--seed",type=int,default=42)
+    pipeline.add_argument("--logical-qubits",type=int,default=1000)
+    pipeline.add_argument("--base-url",required=True)
+    pipeline.add_argument("--output",type=Path,required=True)
     submit=subs.add_parser("submit",help="Send a prepared research job via HTTPS API from edge server")
     submit.add_argument("--job",type=Path,required=True)
     submit.add_argument("--base-url",required=True)
@@ -128,6 +142,37 @@ def run(argv:list[str]|None=None)->int:
             logical_qubits=args.logical_qubits,attestation_key=key)
         _save_new(args.output,job)
         print("Bounded quantum research job generated: "+str(args.output))
+    elif args.command=="run-research-pipeline":
+        edge_key=os.environ.get("MAH_QUANTUM_EDGE_HMAC_KEY","")
+        api_key=os.environ.get("MAH_QUANTUM_INDUSTRY_API_KEY","")
+        if len(edge_key)<32 or len(api_key)<32 or edge_key==api_key:
+            raise RuntimeError("Two independent strong edge-HMAC and research-API credentials are required.")
+        if args.output.exists():
+            raise FileExistsError("Refusing to overwrite an existing industrial research record.")
+        # No physical actuation: approved protocol acquisition is read-only.
+        if args.protocol=="scpi":
+            acquired=snapshot(_device(load_profiles(args.config),args.device))
+        else:
+            acquired=read_modbus_snapshot(_device(_modbus_profiles(args.config),args.device))
+        signed=sign_hardware_snapshot(acquired,edge_key)
+        job=telemetry_to_parameter_job(
+            signed,channel=args.channel,scale=args.scale,offset=args.offset,
+            job_id=args.job_id,shots=args.shots,seed=args.seed,
+            logical_qubits=args.logical_qubits,attestation_key=edge_key)
+        client=IndustryClient(args.base_url,api_key)
+        answer=client.execute(job)
+        if not verify_result(job,answer):
+            raise RuntimeError("Quantum simulation output cannot be independently reconciled.")
+        _save_new(args.output,{
+            "schema":"MAH-Quantum-Hardware-Research-Run/v1",
+            "hardwareSnapshot":signed,
+            "mapping":{"channel":args.channel,"scale":args.scale,"offset":args.offset,
+                       "mode":"explicit-linear-research-pilot-not-physical-control"},
+            "job":job,"researchResult":answer,
+            "physicalActuation":False,
+            "notice":"Real telemetry to ideal classical quantum simulation; no control signal returned to equipment."
+        })
+        print("Physical acquisition and quantum research completed: "+str(args.output))
     elif args.command=="submit":
         key=os.environ.get("MAH_QUANTUM_INDUSTRY_API_KEY","")
         if len(key)<32:
