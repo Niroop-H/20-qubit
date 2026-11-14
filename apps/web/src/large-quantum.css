@@ -484,7 +484,7 @@
 .rq-opt-landscape-head button{flex-shrink:0;border:1px solid #628aa1;background:#194255;border-radius:6px;color:#e4f7ff;padding:10px 12px;font:700 10px Inter,'Segoe UI',sans-serif}
 .rq-opt-landscape-head button:hover{background:#24556b;border-color:#9ddfe7}
 .rq-opt-heatmap-scroll{max-width:100%;overflow-x:auto;background:#071926;padding:12px;border:1px solid #385c73;border-radius:7px}
-.rq-opt-heatmap{display:grid;gap:4px;min-width:320px}
+.rq-opt-heatmap{display:grid;gap:4px;min-width:660px}
 .rq-opt-heatmap>span{aspect-ratio:1.7;border:1px solid #5279873b;border-radius:3px;min-height:11px}
 .rq-opt-heatmap-legend{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:11px 0;color:#b8d0d9;font:9px ui-monospace,Consolas,monospace}
 @media(max-width:650px){.rq-opt-landscape-head{flex-direction:column}.rq-opt-landscape-head button{width:100%}.rq-opt-landscape{padding:10px}}

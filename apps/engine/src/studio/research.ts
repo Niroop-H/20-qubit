@@ -58,7 +58,8 @@ export function templateQasm(n:number,id:ResearchModel):string {
 export interface CircuitDiagnostic{
  qubits:number;bits:number;operations:number;gateCounts:{gate:string;count:number}[];
  activeQubits:number;multiQubitGates:number;measurements:number;
- logicalDepthUpperBound:number;method:ScalableMethod;
+ /** Unit-cost gate depth, exact for the parsed operations (not a hardware timing bound). */
+ logicalDepth:number;method:ScalableMethod;
  bucketTouches:number[];bucketEdges:{from:number;to:number;count:number}[];
  estimatedDenseBytes:string;observedMaxComponent:number;
 }
@@ -99,13 +100,13 @@ export function analyzeLargeCircuit(source:string):CircuitDiagnostic{
   qubits:p.qubits,bits:p.bits,operations:p.steps.length,
   gateCounts:[...counts].map(([gate,count])=>({gate,count})).sort((a,b)=>b.count-a.count||a.gate.localeCompare(b.gate)),
   activeQubits:active.reduce((a,b)=>a+b,0),multiQubitGates:multi,measurements,
-  logicalDepthUpperBound:depth,method,bucketTouches:touches,
+  logicalDepth:depth,method,bucketTouches:touches,
   bucketEdges:[...edges].map(([key,count])=>{const [from,to]=key.split(":").map(Number);return{from,to,count};}).sort((a,b)=>b.count-a.count).slice(0,256),
   estimatedDenseBytes:"2^"+p.qubits+" × 16 bytes (dense representation not allocated)",
   observedMaxComponent:Math.max(0,...group.values())
  };
 }
-export interface MeasuredBit{index:number;ones:number;shots:number;pOne:number;zMean:number;normal95:[number,number]}
+export interface MeasuredBit{index:number;ones:number;shots:number;pOne:number;zMean:number;wilson95:[number,number]}
 export interface PairCorrelation{a:number;b:number;shots:number;zz:number;connected:number}
 export function measuredBit(counts:Record<string,number>,index:number):MeasuredBit{
  const entries=Object.entries(counts);
@@ -123,7 +124,7 @@ export function measuredBit(counts:Record<string,number>,index:number):MeasuredB
  const center=(p+zz/(2*shots))/denominator;
  const halfWidth=z*Math.sqrt((p*(1-p)+zz/(4*shots))/shots)/denominator;
  return{index,ones,shots,pOne:p,zMean:1-2*p,
-  normal95:[Math.max(0,center-halfWidth),Math.min(1,center+halfWidth)]};
+  wilson95:[Math.max(0,center-halfWidth),Math.min(1,center+halfWidth)]};
 }
 export function pairCorrelation(counts:Record<string,number>,a:number,b:number):PairCorrelation{
  const pa=measuredBit(counts,a),pb=measuredBit(counts,b);

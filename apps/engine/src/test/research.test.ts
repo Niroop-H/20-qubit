@@ -26,7 +26,7 @@ describe("1000+ scientific research workbench",()=>{
     assert.ok(diag.operations<=8192,x.id+" exceeded gate budget");
     assert.equal(diag.gateCounts.reduce((s,v)=>s+v.count,0),diag.operations);
     assert.equal(diag.bucketTouches.length,32);
-    assert.ok(diag.logicalDepthUpperBound>=1);
+    assert.ok(diag.logicalDepth>=1);
     assert.ok(diag.activeQubits<=n);
     assert.equal(parseLargeQasm(src).qubits,n);
    }
@@ -38,7 +38,7 @@ describe("1000+ scientific research workbench",()=>{
   );
   assert.equal(diag.operations,3);
   assert.equal(diag.method,"partitioned-statevector");
-  assert.equal(diag.logicalDepthUpperBound,3);
+  assert.equal(diag.logicalDepth,3);
   assert.equal(diag.activeQubits,2);
   assert.equal(diag.multiQubitGates,1);
   assert.equal(diag.observedMaxComponent,2);
@@ -51,7 +51,7 @@ describe("1000+ scientific research workbench",()=>{
   assert.equal(result.method,"separable-state");
   const marginal=measuredBit(result.counts,0);
   assert.ok(Math.abs(marginal.pOne-.25)<.09,"Empirical Ramsey bit probability deviated too far");
-  assert.ok(marginal.normal95[0]<=marginal.pOne&&marginal.normal95[1]>=marginal.pOne);
+  assert.ok(marginal.wilson95[0]<=marginal.pOne&&marginal.wilson95[1]>=marginal.pOne);
  });
  it("Bell-pair outcomes have exact sampled Z0Z1 parity",()=>{
   const result=simulateScalable(parseLargeQasm(templateQasm(1000,"bell")),256,55);
@@ -92,7 +92,7 @@ describe("1000+ scientific research workbench",()=>{
   assert.throws(()=>measuredBit({"a1":3},0),/Malformed/);
   assert.throws(()=>measuredBit({"10":-1},0),/Malformed/);
   const boundary=measuredBit({"0":100},0);
-  assert.ok(boundary.normal95[1]>0,"Wilson interval must not claim zero uncertainty after 100 zeros");
+  assert.ok(boundary.wilson95[1]>0,"Wilson interval must not claim zero uncertainty after 100 zeros");
   assert.throws(()=>templateQasm(999,"plus"),/1,000/);
   assert.throws(()=>templateQasm(4097,"plus"),/4,096/);
  });

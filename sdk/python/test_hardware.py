@@ -6,6 +6,7 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from dataclasses import replace
 
 from mah_quantum_hardware import (
     ApprovedAction, DeviceProfile, HardwareError, SCPISession,
@@ -119,6 +120,25 @@ class TestRealHardwareGateway(unittest.TestCase):
             port=self.instrument.port, expected_idn="ACME-LAB")
         with self.assertRaisesRegex(HardwareError, "not enabled"):
             snapshot(disabled)
+
+    def test_non_ascii_hmac_signatures_fail_cleanly_without_type_error(self):
+        secret = "edge-regression-test-secret-with-ample-entropy"
+        reading = snapshot(self.profile)
+        signed = sign_hardware_snapshot(reading, secret)
+        corrupted = {**signed, "attestation": {**signed["attestation"], "digest": "é"*64}}
+        with self.assertRaisesRegex(ValueError,"integrity"):
+            verify_hardware_snapshot(corrupted, secret)
+        approval = authorize_single_sweep(self.profile, operator="Alice Operator",
+                                          supervisor="Bob Supervisor", reason="Isolated analyzer sweep",
+                                          secret=secret)
+        invalid = replace(approval, signature="é"*64)
+        with tempfile.TemporaryDirectory() as root:
+            with self.assertRaisesRegex(HardwareError,"signature"):
+                run_approved_sweep(self.profile, invalid, secret=secret,
+                                   independent_interlock=lambda _: True,
+                                   operator_identity_authorized=lambda _: True,
+                                   audit_path=Path(root)/"audit.jsonl")
+        self.assertNotIn("INIT:IMM", self.instrument.commands)
 
     def test_real_hardware_control_is_fail_closed_without_interlock_and_approval(self):
         secret = "test-hardware-only-local-secret-32-bytes-minimum"

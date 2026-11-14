@@ -22,7 +22,14 @@ export interface Job {
 export function readStored<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
+    if(!raw)return fallback;
+    const value:unknown=JSON.parse(raw);
+    if(value===null||value===undefined)return fallback;
+    if(Array.isArray(fallback))return (Array.isArray(value)?value:fallback) as T;
+    if(typeof fallback==="object"&&fallback!==null)
+      return (typeof value==="object"&&!Array.isArray(value)?value:fallback) as T;
+    if(fallback!==null&&typeof value!==typeof fallback)return fallback;
+    return value as T;
   } catch {
     return fallback;
   }
@@ -47,13 +54,16 @@ export function importProject(text: string): {
   name: string;
   program: Program;
 } {
-  const file = JSON.parse(text);
-  const program = file.program ?? file;
+  const file:unknown = JSON.parse(text);
+  if(!file||typeof file!=="object"||Array.isArray(file))
+    throw new Error("Imported project must be a JSON object.");
+  const obj=file as Record<string,unknown>;
+  const program = obj.program ?? obj;
   validateProgram(program);
   return {
     name:
-      typeof file.name === "string"
-        ? file.name.slice(0, 80)
+      typeof obj.name === "string"
+        ? obj.name.slice(0, 80)
         : "Imported project",
     program,
   };

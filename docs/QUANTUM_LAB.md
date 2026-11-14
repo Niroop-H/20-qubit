@@ -98,3 +98,7 @@ There are no paid runtime API dependencies. Hosting remains subject to provider 
 - BB84: https://quantum.cloud.ibm.com/learning/en/modules/computer-science/quantum-key-distribution
 - Three.js: https://threejs.org/docs/
 - Hosting: https://render.com/docs/free and https://vercel.com/docs/plans/hobby
+
+### Cryogenic model lower bound
+
+The reduced-order steady-state heat balance assumes a numerical model output floor of **0.010 K (10 mK)** while its helium-3 inlet reference term is **0.008 K (8 mK)**. These are different quantities: the model floor is an artificial lower bound, not a physical minimum base temperature, guaranteed cooling limit, or sensor calibration. Real applications require equipment/vendor curves, thermal loads, measured sensor behavior and independent interlocks.

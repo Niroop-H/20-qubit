@@ -8,7 +8,7 @@ export default function handler(req:any,res:any){
   denseStatevectorMaxQubits:20,
   selectedLargeCircuitFamiliesMaxQubits:4096,
   authenticatedRemoteExecuteMaxQubits:2048,
-  publicApiAuthenticated:true,
+  apiAuthenticationRequired:true,
   capabilityUrl:"/api/v1/capabilities",
   physicalQuantumProcessor:false,physicalInstrumentControl:false,
   timestamp:new Date().toISOString()

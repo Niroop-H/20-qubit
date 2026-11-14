@@ -66,7 +66,7 @@ A hash is an integrity checksum, not a signed hardware attestation. Do not uploa
 
 ## Actual QAOA γ–β parameter landscape
 
-The weighted-graph p=1 QAOA solver already evaluates a fixed coarse grid of **12 gamma × 9 beta = 108** candidate angles using a real bounded ideal statevector computation. The interface now records and renders **the actual computed expectation at each of those pairs**, and exports all 108 exact tuples as CSV. The displayed grid is not an interpolation, synthetic heatmap, empirical hardware calibration, or objective-value extrapolation.
+The weighted-graph p=1 QAOA solver already evaluates a fixed coarse grid of **three 12 gamma × 9 beta scales = 324** candidate angles using a real bounded ideal statevector computation. The interface now records and renders **the actual computed expectation at each of those pairs**, and exports all 324 exact tuples as CSV. The displayed grid is not an interpolation, synthetic heatmap, empirical hardware calibration, or objective-value extrapolation.
 
 The solver also performs two local refinement passes; final reported angles may differ from the grid samples. The independently enumerated classical MaxCut optimum remains the ground-truth reference for 2–10-variable weighted problems. The grid visualizes a numerical research objective, not a physically optimized industrial machine schedule.
 
@@ -83,8 +83,12 @@ node scripts/extended-validation.mjs
 node scripts/browser_release_gate.mjs
 ~~~
 
-For the Chromium release gate, first install the Playwright development toolchain as in .github/workflows/quantum-ci.yml. The tests execute 1000-qubit supported GHZ circuits in real browser workers; independently recalculate exported Ising mean and term sums from counts, verify shot count and model rejection, check the scientific interface at 390px, and assert that the QAOA grid exports all 108 numerical points.
+For the Chromium release gate, first install the Playwright development toolchain as in .github/workflows/quantum-ci.yml. The tests execute 1000-qubit supported GHZ circuits in real browser workers; independently recalculate exported Ising mean and term sums from counts, verify shot count and model rejection, check the scientific interface at 390px, and assert that the QAOA grid exports all 324 numerical points.
 
 ### Not implemented
 
 The platform does **not** implement non-diagonal Hamiltonian measurement-grouping circuits, full VQE or QPE for arbitrary molecular systems, real hardware SDK-backed quantum jobs, certified instrument-control interlocks, device-calibrated noisy quantum sensing, customer tenant accounts, or live high-availability HPC job scheduling. These require separate modeling, specialized infrastructure and customer/site acceptance.
+
+
+### Why gamma uses multiple scales
+For non-integer and incommensurate weighted MaxCut edges, gamma generally lacks a simple common period. Scanning only 2π/maxWeight can miss structure from smaller edge weights. The bounded optimizer therefore samples three 12-point gamma windows proportional to inverse maximum, median and minimum positive edge weights, capped at a dynamic range of 1024 relative to the maximum-weight scale. All 324 evaluated (gamma,beta,score) triples are retained; two subsequent local refinements use the scale of the best grid candidate. This is not a proof of globally optimal variational parameters.

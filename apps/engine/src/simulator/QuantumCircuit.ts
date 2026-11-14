@@ -30,7 +30,40 @@ export class QuantumCircuit {
    * Execute a single circuit step (gate application).
    * Routes to the appropriate low-level transform based on gate type.
    */
+  private checkQubit(q:number):void {
+    if(!Number.isInteger(q)||q<0||q>=this.numQubits)
+      throw new RangeError("Qubit index "+q+" is outside the "+this.numQubits+"-qubit register.");
+  }
+  public normSquared():number {
+    let total=0;
+    for(let i=0;i<this.stateSize;i++){
+      const p=this.real[i]*this.real[i]+this.imag[i]*this.imag[i];
+      if(!Number.isFinite(p))throw Error("Quantum state contains non-finite amplitudes.");
+      total+=p;
+    }
+    return total;
+  }
   public applyStep(step: CircuitStep): void {
+    if(!step||!Array.isArray(step.targets)||!Array.isArray(step.controls??[])||
+       !["I","H","X","Y","Z","S","T","RX","RY","RZ","U","CX","CZ","SWAP","CCX","BARRIER","MEASURE"].includes(step.gate))
+      throw Error("Invalid or unsupported quantum circuit step.");
+    const controls=step.controls??[],operands=[...step.targets,...controls];
+    for(const q of operands)this.checkQubit(q);
+    if(!operands.length||new Set(operands).size!==operands.length)
+      throw Error("Circuit gate requires nonempty, distinct control and target qubits.");
+    const arity=step.gate==="CCX"?3:["CX","CZ","SWAP"].includes(step.gate)?2:
+      step.gate==="BARRIER"?operands.length:1;
+    if(operands.length!==arity||(["CX","CZ"].includes(step.gate)&&
+       !(step.targets.length===2&&controls.length===0||step.targets.length===1&&controls.length===1))||
+       (step.gate==="CCX"&&!(step.targets.length===3&&controls.length===0||
+         step.targets.length===1&&controls.length===2))||
+       (step.gate==="SWAP"&&(step.targets.length!==2||controls.length!==0)))
+      throw Error("Circuit gate has incorrect operand arity.");
+    const parameters=step.gate==="U"?["theta","phi","lambda"]:
+      ["RX","RY","RZ"].includes(step.gate)?["theta"]:[];
+    if(parameters.some(k=>!Number.isFinite(step.params?.[k]))||
+       Object.values(step.params??{}).some(v=>!Number.isFinite(v)))
+      throw Error("Circuit gate requires finite parameters.");
     switch (step.gate) {
       case "H":
       case "X":
@@ -139,6 +172,7 @@ export class QuantumCircuit {
    *   [c_{i1}'] = [u10 u11] [c_{i1}]
    */
   public applySingleQubitGate(target: number, u: ComplexMatrix2x2): void {
+    this.checkQubit(target);
     const bit = 1 << target;
     const uR = u.real;
     const uI = u.imag;
@@ -168,6 +202,8 @@ export class QuantumCircuit {
    * `control` qubit is |1⟩. Iterates only over states where control bit is set.
    */
   public applyControlledGate(control: number, target: number, u: ComplexMatrix2x2): void {
+    this.checkQubit(control);this.checkQubit(target);
+    if(control===target)throw Error("Controlled gate requires distinct qubits.");
     const cBit = 1 << control;
     const tBit = 1 << target;
     const uR = u.real;
@@ -203,6 +239,8 @@ export class QuantumCircuit {
     target: number,
     u: ComplexMatrix2x2
   ): void {
+    this.checkQubit(c1);this.checkQubit(c2);this.checkQubit(target);
+    if(new Set([c1,c2,target]).size!==3)throw Error("Toffoli requires three distinct qubits.");
     const c1Bit = 1 << c1;
     const c2Bit = 1 << c2;
     const tBit = 1 << target;
@@ -233,6 +271,8 @@ export class QuantumCircuit {
    * For each state where q0 and q1 differ, swap the amplitudes.
    */
   public applySwap(q0: number, q1: number): void {
+    this.checkQubit(q0);this.checkQubit(q1);
+    if(q0===q1)throw Error("SWAP requires distinct qubits.");
     const b0 = 1 << q0;
     const b1 = 1 << q1;
 
@@ -251,24 +291,15 @@ export class QuantumCircuit {
     }
   }
 
-  /**
-   * Compute measurement probabilities P(i) = |c_i|² for all basis states.
-   * Re-normalizes if floating-point drift causes sum to deviate from 1.0.
-   */
+  /** Return probabilities only for numerically normalized finite states. */
   public getProbabilities(): Float64Array {
-    const probs = new Float64Array(this.stateSize);
-    let total = 0.0;
-    for (let i = 0; i < this.stateSize; i++) {
-      const p = this.real[i] * this.real[i] + this.imag[i] * this.imag[i];
-      probs[i] = p;
-      total += p;
-    }
-    // Re-normalize to counteract floating-point drift
-    if (total > 0 && Math.abs(total - 1.0) > 1e-9) {
-      for (let i = 0; i < this.stateSize; i++) {
-        probs[i] /= total;
-      }
-    }
+    const norm=this.normSquared();
+    if(!Number.isFinite(norm)||Math.abs(norm-1)>1e-8)
+      throw new Error("Quantum state normalization failed ("+norm+").");
+    const probs=new Float64Array(this.stateSize);
+    for(let i=0;i<this.stateSize;i++)
+      probs[i]=this.real[i]*this.real[i]+this.imag[i]*this.imag[i];
     return probs;
   }
+
 }

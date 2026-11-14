@@ -33,3 +33,6 @@ Thumbs.db
 # Python cache
 __pycache__/
 *.pyc
+
+# Generated test and browser evidence
+artifacts/

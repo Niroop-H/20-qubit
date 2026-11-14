@@ -21,6 +21,7 @@ import re
 import secrets
 import socket
 import sqlite3
+from contextlib import closing
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -318,7 +319,7 @@ def run_approved_sweep(profile: DeviceProfile, approval: ApprovedAction, *,
     fields = {k: getattr(approval, k) for k in ("schema","device_id","action",
              "operator","supervisor","reason","issued_at","expires_at","nonce")}
     computed = hmac.new(secret.encode(), _signed_message(fields), hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(computed, approval.signature):
+    if not isinstance(approval.signature, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", approval.signature) or not hmac.compare_digest(computed, approval.signature):
         raise HardwareError("Physical command authorization signature is invalid.")
     if approval.schema != ACTION_SCHEMA or approval.device_id != profile.device_id or approval.action != "single_sweep":
         raise HardwareError("Authorization does not match requested physical command.")
@@ -335,7 +336,7 @@ def run_approved_sweep(profile: DeviceProfile, approval: ApprovedAction, *,
     audit_path.parent.mkdir(parents=True, exist_ok=True)
     db_path = audit_path.with_name(audit_path.name+".sqlite3")
     try:
-        with sqlite3.connect(db_path, timeout=5.0) as db:
+        with closing(sqlite3.connect(db_path, timeout=5.0)) as db, db:
             db.execute("CREATE TABLE IF NOT EXISTS used_actions("
                        "nonce_sha256 TEXT PRIMARY KEY, device_id TEXT NOT NULL,"
                        "created_at INTEGER NOT NULL, status TEXT NOT NULL)")
@@ -366,7 +367,7 @@ def run_approved_sweep(profile: DeviceProfile, approval: ApprovedAction, *,
     finally:
         # Persistent status is updated even if network command send raises.
         try:
-            with sqlite3.connect(db_path, timeout=5.0) as db:
+            with closing(sqlite3.connect(db_path, timeout=5.0)) as db, db:
                 db.execute("UPDATE used_actions SET status=? WHERE nonce_sha256=?",
                            (status,nonce_hash))
                 db.commit()
@@ -436,7 +437,7 @@ def verify_hardware_snapshot(reading: dict[str, Any], secret: str,
         raise ValueError("Missing or invalid edge HMAC attestation.")
     unsigned = {k:v for k,v in reading.items() if k != "attestation"}
     signature = hmac.new(secret.encode("utf-8"), _signed_message(unsigned), hashlib.sha256).hexdigest()
-    if not isinstance(auth.get("digest"),str) or not hmac.compare_digest(auth["digest"],signature):
+    if not isinstance(auth.get("digest"),str) or not re.fullmatch(r"[0-9a-fA-F]{64}", auth["digest"]) or not hmac.compare_digest(auth["digest"],signature):
         raise ValueError("Hardware snapshot integrity verification failed.")
     if not isinstance(reading.get("device"),dict) or not isinstance(reading.get("measurements"),list):
         raise ValueError("Hardware snapshot structure is invalid.")

@@ -206,7 +206,7 @@ export default function IndustrialQaoaWorkbench(){
        }}>Export landscape CSV</button>
       </div>
       <div className="rq-opt-heatmap-scroll"><div className="rq-opt-heatmap"
-       role="img" aria-label="Exact calculated QAOA expectation heatmap over 12 gamma values and 9 beta values"
+       role="img" aria-label="Exact calculated QAOA expectation heatmap over 36 gamma values across three scales and 9 beta values"
        style={{gridTemplateColumns:"repeat("+result.landscape.gammaPoints+",minmax(0,1fr))"}}>
        {Array.from({length:result.landscape.betaPoints},(_,j)=>Array.from({length:result.landscape.gammaPoints},(_,i)=>{
         const point=result.landscape.samples[i*result.landscape.betaPoints+j];
@@ -215,9 +215,9 @@ export default function IndustrialQaoaWorkbench(){
          style={{background:"rgba(109,216,225,"+(.12+.86*ratio)+")"}}/>;
        }))}
       </div></div>
-      <div className="rq-opt-heatmap-legend"><span>β: 0 → π/2 (vertical)</span><span>γ: 0 → {fmt(result.landscape.gammaMax,4)} rad (horizontal)</span>
+      <div className="rq-opt-heatmap-legend"><span>β: 0 → π/2 (vertical)</span><span>γ: three scales up to {fmt(result.landscape.gammaMax,4)} rad (horizontal)</span>
        <span>{result.landscape.samples.length} exact sampled parameter pairs</span></div>
-      <p className="rq-note">This displays the coarse 12 × 9 search grid actually evaluated by the solver. The final reported angles may improve after local refinement and need not coincide with the best heatmap cell. Parameter performance is not a benchmark against real quantum hardware.</p>
+      <p className="rq-note">This displays three coarse 12 × 9 gamma-scale grids (324 actual evaluations) used by the solver. The final reported angles may improve after local refinement and need not coincide with the best heatmap cell. Parameter performance is not a benchmark against real quantum hardware.</p>
      </section>
      <details className="rq-opt-outcomes"><summary>Inspect complete sampled outcomes ({result.quantum.outcomes.length} observed)</summary>
       <div role="table" aria-label="QAOA sampled assignment statistics"><div className="rq-opt-outcome-header"><span>Assignment</span><span>Shots</span><span>Cut score</span><span>Ideal probability</span></div>

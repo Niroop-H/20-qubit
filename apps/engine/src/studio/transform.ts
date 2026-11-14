@@ -7,8 +7,11 @@ export function optimize(p: Program): Program {
     const prev = out[out.length - 1];
     const same =
       prev &&
-      JSON.stringify(prev.targets) === JSON.stringify(s.targets) &&
-      JSON.stringify(prev.controls ?? []) === JSON.stringify(s.controls ?? []);
+      (["SWAP","CZ"].includes(s.gate)&&prev.gate===s.gate
+       ? [...prev.targets,...(prev.controls??[])].sort((a,b)=>a-b).join(",")===
+         [...s.targets,...(s.controls??[])].sort((a,b)=>a-b).join(",")
+       : JSON.stringify(prev.targets) === JSON.stringify(s.targets) &&
+         JSON.stringify(prev.controls ?? []) === JSON.stringify(s.controls ?? []));
     if (same && prev.gate === s.gate) {
       if (["H", "X", "Y", "Z", "CX", "CZ", "SWAP", "CCX"].includes(s.gate)) {
         out.pop();
