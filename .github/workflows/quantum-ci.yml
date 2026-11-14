@@ -18,6 +18,8 @@ jobs:
       - name: Audit production dependencies against npm advisories
         run: npm audit --registry=https://registry.npmjs.org --omit=dev --audit-level=high
       - run: npm test
+      - name: Check independent Python/TypeScript physics model parity
+        run: node scripts/verify_physics_parity.mjs
       - run: npm run build:web
       - name: Validate all workspace access policy regression tests
         run: |
