@@ -39,8 +39,8 @@ export type IndustryOptimizationJob={
  seed:number;
 };
 export type IndustryJob=IndustryCircuitJob|IndustryOptimizationJob;
-export type PreparedCircuit={job:IndustryCircuitJob;program:LargeProgram;method:ScalableMethod;digest:string};
-export type PreparedOptimization={job:IndustryOptimizationJob;graph:IndustrialGraph;digest:string};
+export type PreparedCircuit={job:IndustryCircuitJob;program:LargeProgram;method:ScalableMethod;digest:string;canonical:string};
+export type PreparedOptimization={job:IndustryOptimizationJob;graph:IndustrialGraph;digest:string;canonical:string};
 export type PreparedJob=PreparedCircuit|PreparedOptimization;
 export class IndustryInputError extends Error{
  constructor(message:string,public readonly status=422){super(message);this.name="IndustryInputError";}
@@ -117,8 +117,9 @@ export function prepareIndustryJob(raw:unknown):PreparedJob{
   const job:IndustryCircuitJob={schema:INDUSTRY_SCHEMA,jobId,kind:"circuit",
    operation:raw.operation,source:raw.source,
    ...(raw.operation==="execute"?{shots:raw.shots as number,seed:raw.seed as number}:{})};
-  return{job,program,method,digest:digest({kind:job.kind,operation:job.operation,
-   sourceSha256:sourceDigest(job.source),shots:job.shots??null,seed:job.seed??null})};
+  const canonical=JSON.stringify({kind:job.kind,operation:job.operation,
+   sourceSha256:sourceDigest(job.source),shots:job.shots??null,seed:job.seed??null});
+  return{job,program,method,canonical,digest:createHash("sha256").update(canonical).digest("hex")};
  }
  if(raw.kind==="optimization"){
   if(raw.operation!=="execute")throw new IndustryInputError("Optimization jobs require execute.");
@@ -129,17 +130,39 @@ export function prepareIndustryJob(raw:unknown):PreparedJob{
   try{graph=validateIndustrialGraph(raw.graph);}
   catch(e){throw new IndustryInputError("Invalid weighted MaxCut model: "+(e as Error).message);}
   const job:IndustryOptimizationJob={schema:INDUSTRY_SCHEMA,jobId,kind:"optimization",operation:"execute",graph,shots,seed};
-  return{job,graph,digest:digest({kind:job.kind,graph,shots,seed})};
+  const canonical=JSON.stringify({kind:job.kind,graph,shots,seed});
+  return{job,graph,canonical,digest:createHash("sha256").update(canonical).digest("hex")};
  }
  throw new IndustryInputError("Job kind must be circuit or optimization.");
 }
 const provenance=(prepared:PreparedJob)=>({
- jobId:prepared.job.jobId,inputSha256:prepared.digest,physicalQpu:false,runEnvironment:"classical-software",
+ jobId:prepared.job.jobId,inputSha256:prepared.digest,canonicalInputJson:prepared.canonical,physicalQpu:false as const,runEnvironment:"classical-software",
  calculationFamily:prepared.job.kind
 });
-export function executePreparedIndustryJob(prepared:PreparedJob){
+export interface IndustryExecutionResponse {
+ schema:typeof INDUSTRY_RESULT_SCHEMA;
+ status:"completed"|"inspected";
+ jobId:string;
+ inputSha256:string;
+ canonicalInputJson:string;
+ physicalQpu:false;
+ runEnvironment:string;
+ calculationFamily:"circuit"|"optimization";
+ elapsedMs:number;
+ sourceSha256?:string;
+ result?:ReturnType<typeof runIndustrialOptimization>;
+ analysis?:{
+  logicalQubits:number;classicalBits:number;expandedGates:number;method:ScalableMethod;
+  statevectorAllocatedGlobally:boolean;noiseCalibrated:boolean;hardwareDevice:boolean;note:string;
+  exactForSupportedCircuit?:boolean;limitations?:string;finiteSupportRank?:number|null;idealProbabilityLog2?:number|null;
+ };
+ samples?:{seed:number;requestedShots:number;completedShots:number;
+  counts:Record<string,number>;frequencies:Record<string,number>;
+  idealProbabilitiesReported:Record<string,number>;omittedIdealProbabilityMass:number};
+}
+export function executePreparedIndustryJob(prepared:PreparedJob):IndustryExecutionResponse{
  const start=performance.now();
- if(prepared.job.kind==="optimization"){
+ if("graph" in prepared){
   const job=prepared.job;
   const result=runIndustrialOptimization(prepared.graph,job.shots,job.seed);
   return{schema:INDUSTRY_RESULT_SCHEMA,status:"completed",...provenance(prepared),
@@ -178,9 +201,11 @@ export function executeIndustryBatch(raw:unknown){
  const ids=new Set(prepared.map(p=>p.job.jobId));
  if(ids.size!==prepared.length)throw new IndustryInputError("Batch job IDs must be unique.");
  // Conservative workload budget protects synchronous serverless functions.
- const work=prepared.reduce((sum,p)=>sum+(p.job.kind==="circuit"&&p.job.operation==="execute"?
-  p.program.qubits*Math.max(1,p.program.steps.length)*p.job.shots!: 
-  p.job.kind==="optimization"?1000000:50000),0);
+ const work=prepared.reduce((sum,p)=>{
+  if("graph" in p)return sum+1000000;
+  if(p.job.operation==="inspect")return sum+50000;
+  return sum+p.program.qubits*Math.max(1,p.program.steps.length)*p.job.shots!;
+ },0);
  if(work>180000000)throw new IndustryInputError("Batch exceeds aggregate synchronous processing budget.");
  return{schema:"MAH-Quantum-Industry-Batch-Result/v1",execution:"synchronous",
   items:prepared.map(executePreparedIndustryJob),total:prepared.length};
