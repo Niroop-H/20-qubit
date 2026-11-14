@@ -121,7 +121,7 @@ export function QuantumResearchGraphs({diagnostic,result}:{diagnostic:CircuitDia
      {marg&&<div className="rq-mini-metrics">
       <div><span>P(c{a}=1)</span><strong>{fmt(100*marg.pOne,2)}%</strong></div>
       <div><span>Sample &lt;Z{a}&gt;</span><strong>{fmt(marg.zMean,4)}</strong></div>
-      <div><span>Normal 95% P(1) CI</span><strong>{fmt(100*marg.normal95[0],1)}–{fmt(100*marg.normal95[1],1)}%</strong></div>
+      <div><span>Wilson 95% P(1) CI</span><strong>{fmt(100*marg.normal95[0],1)}–{fmt(100*marg.normal95[1],1)}%</strong></div>
       <div><span>Sample &lt;Z{a}Z{b}&gt;</span><strong>{corr?fmt(corr.zz,4):"Select distinct bits"}</strong></div>
       <div><span>Connected ZZ statistic</span><strong>{corr?fmt(corr.connected,4):"—"}</strong></div>
      </div>}
@@ -136,7 +136,7 @@ export function QuantumResearchGraphs({diagnostic,result}:{diagnostic:CircuitDia
         <span style={{height:Math.max(2,p*100)+"%"}}/><small>{i}</small></button>;
       })}
      </div>
-     <p className="rq-note">Observed Z=+1 for output 0 and −1 for output 1. ZZ and connected correlation use finite-shot counts only; they are not entanglement witnesses. Normal intervals are approximations and may be poor near 0/1 or for small samples.</p>
+     <p className="rq-note">Observed Z=+1 for output 0 and −1 for output 1. ZZ and connected correlation use finite-shot counts only; they are not entanglement witnesses. Wilson score intervals approximate binomial uncertainty and remain nonzero at observed 0/1 boundaries. They do not quantify physical calibration errors.</p>
     </>}
    </section>
   </div>
