@@ -99,18 +99,20 @@ export function validateProgram(value: unknown): asserts value is Program {
 }
 export function circuitStats(p: Program) {
   const levels = Array(p.qubits).fill(0) as number[];
-  let twoQubit = 0;
+  let twoQubit = 0, threeQubit = 0;
   for (const s of p.steps) {
     const qs = [...s.targets, ...(s.controls ?? [])];
     const level =
       Math.max(...qs.map((q) => levels[q])) + (s.gate === "BARRIER" ? 0 : 1);
     qs.forEach((q) => (levels[q] = level));
-    if (qs.length > 1 && s.gate !== "BARRIER") twoQubit++;
+    if (qs.length === 2 && s.gate !== "BARRIER" && s.gate !== "MEASURE") twoQubit++;
+    if (qs.length === 3 && s.gate === "CCX") threeQubit++;
   }
   return {
     depth: Math.max(0, ...levels),
     gates: p.steps.filter((s) => !["MEASURE", "BARRIER"].includes(s.gate))
       .length,
     twoQubit,
+    threeQubit,
   };
 }

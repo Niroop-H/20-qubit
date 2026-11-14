@@ -25,15 +25,16 @@ export interface ScientificRunComparison{
 function validate(run:ComparisonSample){
  if(!run||typeof run.source!=="string"||!run.source||
   !Number.isInteger(run.qubits)||run.qubits<1||run.qubits>4096||
-  !Number.isInteger(run.shots)||run.shots<1||run.shots>1024||
+  !Number.isInteger(run.shots)||run.shots<1||run.shots>(run.qubits>100?1024:8192)||
   !Number.isInteger(run.seed)||run.seed<0||run.seed>4294967295||
   !run.counts||typeof run.counts!=="object"||Array.isArray(run.counts))
   throw Error("Invalid measured run supplied for comparison.");
  const entries=Object.entries(run.counts);
- if(!entries.length||entries.length>1024)throw Error("Measured histogram is empty or exceeds the shot budget.");
+ if(!entries.length||entries.length>run.shots)throw Error("Measured histogram is empty or exceeds the shot budget.");
  let total=0;
+ const width=entries[0][0].length;
  for(const [bits,count] of entries){
-  if(!/^[01]+$/.test(bits)||bits.length>4096||!Number.isInteger(count)||count<=0)
+  if(!/^[01]+$/.test(bits)||bits.length!==width||bits.length>4096||!Number.isInteger(count)||count<=0)
    throw Error("Malformed measured bitstring/count.");
   total+=count;
  }

@@ -3,6 +3,7 @@ import assert from "node:assert";
 import { QuantumCircuit } from "../simulator/QuantumCircuit";
 import { Sampler } from "../simulator/Sampler";
 import { NoiseEngine } from "../simulator/NoiseEngine";
+import { seededRandom } from "../studio/simulate";
 import { GATES } from "../math/gates";
 import { CircuitStep, NoiseConfig } from "../types/circuit";
 
@@ -171,9 +172,10 @@ describe("Quantum Circuit Mathematical Foundations", () => {
     const readoutError: [number, number] = [0.1, 0.1]; // 10% flip rate
 
     let flippedCount = 0;
+    const generator=seededRandom(2026);
     const trials = 1000;
     for (let i = 0; i < trials; i++) {
-      const noisy = NoiseEngine.applyReadoutConfusion(cleanBitstring, readoutError);
+      const noisy = NoiseEngine.applyReadoutConfusion(cleanBitstring, readoutError,generator);
       if (noisy !== cleanBitstring) {
         flippedCount++;
       }

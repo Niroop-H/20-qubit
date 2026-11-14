@@ -1,106 +1,60 @@
-import { NoiseConfig } from "../types/circuit";
-import { QuantumCircuit } from "./QuantumCircuit";
-import { GATES } from "../math/gates";
+import type {NoiseConfig} from "../types/circuit";
+import {QuantumCircuit} from "./QuantumCircuit";
+import {GATES} from "../math/gates";
 
-/**
- * NoiseEngine implements classical approximations of real quantum hardware noise:
- *
- * 1. Thermal Relaxation (T1 / Amplitude Damping):
- *    Probability of spontaneous decay |1⟩ → |0⟩: γ = 1 - exp(-t_gate / T1)
- *
- * 2. Pure Dephasing (T2):
- *    Probability of random phase flip: λ = 1 - exp(-t_gate / T_φ)
- *    where 1/T_φ = 1/T2 - 1/(2*T1)
- *
- * 3. Depolarizing Channel:
- *    With probability p, randomly apply one of {X, Y, Z} with probability p/3 each.
- *
- * 4. Readout / SPAM Errors:
- *    Apply a classical confusion matrix to measured bitstrings.
+/** Seeded, normalized quantum-trajectory Monte Carlo noise.
+ * The caller MUST provide the random stream (use seededRandom(seed)); this
+ * keeps hardware-like Monte Carlo results reproducible for research evidence.
  */
 export class NoiseEngine {
-  /**
-   * Apply gate-level noise to qubits that participated in a gate operation.
-   * Called after each circuit step when noise is enabled.
-   */
-  public static applyStepNoise(
-    circuit: QuantumCircuit,
-    targetQubits: number[],
-    config: NoiseConfig
-  ): void {
-    if (!config.enabled) return;
-
-    const tGate = config.gateTime;
-
-    // Compute decay and dephasing probabilities
-    const gammaT1 = 1.0 - Math.exp(-tGate / config.t1);
-
-    // T_phi: pure dephasing rate (1/T_phi = 1/T2 - 1/(2*T1))
-    const tPhiInv = (1.0 / config.t2) - (1.0 / (2.0 * config.t1));
-    const tPhi = tPhiInv > 0 ? 1.0 / tPhiInv : Infinity;
-    const gammaDephase = tPhi === Infinity ? 0 : 1.0 - Math.exp(-tGate / tPhi);
-
-    for (const q of targetQubits) {
-      if (q < 0 || q >= circuit.numQubits) continue;
-
-      // 1. Amplitude Damping (T1 relaxation: |1⟩ → |0⟩ decay)
-      if (Math.random() < gammaT1) {
-        const bit = 1 << q;
-        for (let i = 0; i < circuit.stateSize; i++) {
-          if ((i & bit) !== 0) {
-            const j = i & ~bit; // corresponding |0⟩ state
-            // Transfer amplitude with decay factor
-            const decayFactor = Math.sqrt(gammaT1);
-            const surviveFactor = Math.sqrt(1.0 - gammaT1);
-            const r1 = circuit.real[i];
-            const m1 = circuit.imag[i];
-            circuit.real[j] += r1 * decayFactor;
-            circuit.imag[j] += m1 * decayFactor;
-            circuit.real[i] *= surviveFactor;
-            circuit.imag[i] *= surviveFactor;
-          }
-        }
-      }
-
-      // 2. Pure Dephasing (T2: random Z gate)
-      if (Math.random() < gammaDephase) {
-        circuit.applySingleQubitGate(q, GATES.Z);
-      }
-
-      // 3. Depolarizing Channel: with probability p, apply random Pauli
-      if (Math.random() < config.depolarizingRate) {
-        const roll = Math.random();
-        if (roll < 1.0 / 3.0) {
-          circuit.applySingleQubitGate(q, GATES.X);
-        } else if (roll < 2.0 / 3.0) {
-          circuit.applySingleQubitGate(q, GATES.Y);
-        } else {
-          circuit.applySingleQubitGate(q, GATES.Z);
-        }
-      }
-    }
+  public static validateNoise(config:NoiseConfig):void {
+    if(!config||!Array.isArray(config.readoutError)||config.readoutError.length!==2||
+      ![config.t1,config.t2,config.gateTime,config.depolarizingRate,...config.readoutError].every(Number.isFinite)||
+      config.t1<=0||config.t2<=0||config.gateTime<=0||config.t2>2*config.t1||
+      [config.depolarizingRate,...config.readoutError].some(x=>x<0||x>1))
+      throw Error("Noise requires positive times, T2 ≤ 2×T1, and error probabilities between 0 and 1.");
   }
-
-  /**
-   * Apply classical readout confusion to a measured bitstring.
-   * Models SPAM (State Preparation and Measurement) errors:
-   *   P(1|0) = readoutError[0]  (false positive)
-   *   P(0|1) = readoutError[1]  (false negative)
-   */
-  public static applyReadoutConfusion(
-    bitstring: string,
-    readoutError: [number, number]
-  ): string {
-    const [p10, p01] = readoutError;
-    let noisyBits = "";
-    for (let i = 0; i < bitstring.length; i++) {
-      const bit = bitstring[i];
-      if (bit === "0") {
-        noisyBits += Math.random() < p10 ? "1" : "0";
-      } else {
-        noisyBits += Math.random() < p01 ? "0" : "1";
+  public static applyStepNoise(circuit:QuantumCircuit,targetQubits:number[],config:NoiseConfig,rng:()=>number):void {
+    if(!config.enabled)return;
+    this.validateNoise(config);
+    if(typeof rng!=="function")throw Error("A seeded RNG must be supplied for noise trajectories.");
+    const gamma=1-Math.exp(-config.gateTime/config.t1);
+    const dephase=(1-Math.exp(-config.gateTime*Math.max(0,1/config.t2-1/(2*config.t1))))/2;
+    for(const q of new Set(targetQubits)){
+      if(!Number.isInteger(q)||q<0||q>=circuit.numQubits)
+        throw Error("Noise target qubit is out of range.");
+      const bit=1<<q;
+      let excited=0;
+      for(let i=0;i<circuit.stateSize;i++)if(i&bit)
+        excited+=circuit.real[i]**2+circuit.imag[i]**2;
+      const jumpProbability=gamma*excited;
+      if(rng()<jumpProbability){
+        const scale=1/Math.sqrt(excited);
+        for(let i=0;i<circuit.stateSize;i++)if(!(i&bit)){
+          circuit.real[i]=circuit.real[i|bit]*scale;
+          circuit.imag[i]=circuit.imag[i|bit]*scale;
+          circuit.real[i|bit]=0;circuit.imag[i|bit]=0;
+        }
+      }else{
+        const scale=1/Math.sqrt(Math.max(1e-300,1-jumpProbability));
+        const survive=Math.sqrt(1-gamma);
+        for(let i=0;i<circuit.stateSize;i++){
+          const factor=(i&bit?survive:1)*scale;
+          circuit.real[i]*=factor;circuit.imag[i]*=factor;
+        }
+      }
+      if(rng()<dephase)circuit.applySingleQubitGate(q,GATES.Z);
+      if(rng()<config.depolarizingRate){
+        const gate=["X","Y","Z"][Math.min(2,Math.floor(rng()*3))];
+        circuit.applySingleQubitGate(q,GATES[gate]);
       }
     }
-    return noisyBits;
+    if(Math.abs(circuit.normSquared()-1)>1e-8)throw Error("Noisy trajectory lost normalization.");
+  }
+  public static applyReadoutConfusion(bits:string,errors:[number,number],rng:()=>number):string{
+    if(!/^[01]*$/.test(bits)||!Array.isArray(errors)||errors.length!==2||
+       errors.some(v=>!Number.isFinite(v)||v<0||v>1)||typeof rng!=="function")
+      throw Error("Valid binary outcome, probabilities and seeded RNG required.");
+    return Array.from(bits,b=>rng()<errors[b==="0"?0:1]?(b==="0"?"1":"0"):b).join("");
   }
 }
