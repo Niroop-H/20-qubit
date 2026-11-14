@@ -251,7 +251,7 @@ async function main(){
   assert.equal(await page.locator(".rq-equipment-card").count(),1);
   await page.locator(".rq-equipment-card summary").first().click();
   const detail=await page.locator(".rq-equipment-card").first().innerText();
-  assert.match(detail,/No live instrument API|Not connected/i);
+  assert.match(detail,/documentation profile, not a live device connection/i);
   await page.getByRole("button",{name:/Industrial models/}).click();
   assert.equal(await page.locator(".rq-app-card").count(),10);
   return{instrumentReferenceMinimum:30,platformFiltered:platformCount,models:10,hardwareConnected:false};
@@ -423,7 +423,7 @@ async function main(){
   await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("128");
   const expectedQasm=await page.getByRole("textbox",{name:"Large quantum QASM code"}).inputValue();
   await page.locator(".rq-rail>button").filter({hasText:"Integration Bridge"}).click();
-  await page.getByRole("heading",{name:"Connect engineering systems with the quantum simulator"}).waitFor({timeout:20000});
+  await page.getByRole("heading",{name:"Connect engineering systems with the MAH Quantum engine"}).waitFor({timeout:20000});
   assert.equal(await page.locator(".rq-integration input[type=password]").count(),0);
   const next=page.waitForEvent("download",{timeout:12000});
   await page.getByRole("button",{name:"Download API request"}).click();

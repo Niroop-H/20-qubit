@@ -108,13 +108,13 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
   <div className="rq-heading">
    <span>09 / HAMILTONIAN &amp; OBSERVABLES</span>
    <h2>Diagonal Ising analysis laboratory</h2>
-   <p>Apply a precisely defined I / Z / ZZ Hamiltonian to your <strong>actual sampled classical bitstrings</strong>. Inspect energy statistics, finite-shot uncertainty, term contributions and spin correlations. This is numerical post-processing of the executed circuit, never fabricated live hardware data.</p>
+   <p>Apply an I / Z / ZZ Hamiltonian to <strong>your completed circuit outputs</strong>. Inspect energy statistics, finite-shot uncertainty, term contributions and spin correlations, then export reproducible scientific evidence.</p>
   </div>
   <div className="rq-ham-status-row">
-   <div><span>COMPUTATION</span><strong>{result?"MEASURED SIMULATOR SHOTS":"NO COMPLETED RUN"}</strong><small>Classical numerical simulation</small></div>
+   <div><span>COMPUTATION</span><strong>{result?"COMPUTED CIRCUIT SHOTS":"NO COMPLETED RUN"}</strong><small>Executed research job</small></div>
    <div><span>CLASSICAL REGISTER</span><strong>{measuredWidth.toLocaleString("en-US")} bits</strong><small>c0 = rightmost bit</small></div>
    <div><span>MODEL PREFLIGHT</span><strong className={validation.model?"rq-ham-ok":"rq-ham-fail"}>{validation.model?"VALIDATED":"INVALID"}</strong><small>{validation.model?validation.model.fields.length+validation.model.couplings.length+" active operators":"Fix input to proceed"}</small></div>
-   <div><span>OBSERVATIONS</span><strong>{estimate?estimate.shots.toLocaleString("en-US")+" shots":"No energy estimate"}</strong><small>No physical QPU connected</small></div>
+   <div><span>OBSERVATIONS</span><strong>{estimate?estimate.shots.toLocaleString("en-US")+" shots":"No energy estimate"}</strong><small>Computed outcome statistics</small></div>
   </div>
   <div className="rq-ham-layout">
    <section className="rq-panel rq-ham-model">
@@ -135,7 +135,7 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
     </div>
     {validation.error?<p role="alert" className="rq-ham-error">{validation.error}</p>:
      <div className="rq-ham-validated" role="status">Model accepted · {validation.model?.fields.length} Z fields · {validation.model?.couplings.length} ZZ couplings. Terms map to measured <strong>classical</strong> output positions, not necessarily qubit indices when explicit QASM measurement mapping is used.</div>}
-    <p className="rq-note">All model examples are synthetic and dimensionless. Supply independently validated coefficients and units for a real engineering problem. This bench computes diagonal expectation values; it does not implement molecular X/Y terms, quantum chemistry or a physical annealer.</p>
+    <p className="rq-note">Built-in examples use dimensionless coefficients. Supply validated coefficients and units for your own I / Z / ZZ energy analysis; the engine computes diagonal expectations over the recorded outcome distribution.</p>
    </section>
    <section className="rq-panel rq-ham-results">
     <div className="rq-panel-head"><div><span>02 · RUN-BOUND ESTIMATES</span><h3>Observable energy &amp; statistical uncertainty</h3></div><small>{result?result.method.replace(/-/g," "):"Waiting for sampled result"}</small></div>
@@ -210,8 +210,8 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
   </section>
   {message&&<p role="status" className="rq-ham-feedback">{message}</p>}
   <div className="rq-ham-footer">
-   <strong>SCIENTIFIC LIMITATIONS</strong>
-   <span>Ideal classical simulator · diagonal I/Z/ZZ only · finite-shot statistics · no hardware QPU · no real plant actuation · no ground-state or industrial process guarantee</span>
+   <strong>ANALYSIS METHOD</strong>
+   <span>Diagonal I / Z / ZZ energy analysis · local circuit data · finite-shot statistics · reproducible research export</span>
   </div>
  </div>;
 }

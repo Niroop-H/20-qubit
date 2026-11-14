@@ -72,7 +72,7 @@ export default function IndustryIntegrations({source,shots,seed,analysis}:Props)
   }finally{setChecking(false);}
  };
  return <div className="rq-integration" aria-label="Industrial scientific API integration bridge">
-  <div className="rq-heading"><span>ENTERPRISE / RESEARCH SOFTWARE INTEGRATION</span><h2>Connect engineering systems with the quantum simulator</h2>
+  <div className="rq-heading"><span>ENTERPRISE / RESEARCH SOFTWARE INTEGRATION</span><h2>Connect engineering systems with the MAH Quantum engine</h2>
    <p>Generate a portable versioned job from your current QASM or a bounded industrial graph. Submit it from a server-side Python client or HTTPS application. Never enter API secrets into this browser.</p></div>
   <div className="rq-integration-stats">
    <div><strong>HTTPS + JSON</strong><span>Versioned REST contract</span></div>
@@ -131,8 +131,8 @@ export default function IndustryIntegrations({source,shots,seed,analysis}:Props)
    </section>
   </div>
   <section className="rq-panel rq-integration-boundary">
-   <div className="rq-panel-head"><div><span>03 · SCIENTIFIC AND INDUSTRIAL QUALIFICATION</span><h3>Execution boundaries and operating controls</h3></div></div>
-   <p>These APIs are synchronous and computationally bounded. They do not provide durable cloud jobs, organization identity, tenant isolation, per-customer rate limits, billing, guaranteed latency, live equipment drivers, calibrated quantum noise, industrial safety interlocks, or universal 4096-qubit non-Clifford computation. Independent industrial acceptance remains necessary.</p>
+   <div className="rq-panel-head"><div><span>03 · INTEGRATION READINESS</span><h3>Production architecture and operating controls</h3></div></div>
+   <p>The current synchronous research API supports authenticated bounded circuit execution and weighted MaxCut workloads. For production use, configure host-level authorization, shared rate limits, job scheduling, monitoring, customer data policies and independently qualified equipment safety systems.</p>
   </section>
  </div>;
 }

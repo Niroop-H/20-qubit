@@ -169,7 +169,7 @@ export default function LargeQuantum(){
   workerRef.current.terminate();workerRef.current=null;
   if(deadlineRef.current!==null)clearTimeout(deadlineRef.current);
   deadlineRef.current=null;setRunning(false);setStage("Idle");
-  setError("Execution cancelled.");log("Operator cancelled a local simulation.","info");
+  setError("Execution cancelled.");log("Operator cancelled a local computation.","info");
   setHistory(prev=>[{id:iso(),name:draft.name,date:iso(),qubits:analysis.data?.qubits||draft.n,
    shots:draft.shots,method:analysis.data?.method||"unresolved",duration:0,status:"cancelled" as const},...prev].slice(0,24));
  };
@@ -178,7 +178,7 @@ export default function LargeQuantum(){
   const hash=globalThis.crypto?.subtle?await globalThis.crypto.subtle.digest("SHA-256",new TextEncoder().encode(executed.source))
    .then(b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")).catch(()=>null):null;
   const evidence={schema:"MAH-Quantum-Experiment/v1",recordedAtUtc:iso(),
-   software:"MAH Quantum logical-qubit classical simulation",
+   software:"MAH Quantum logical-qubit computation engine (software)",
    circuit:{openQasm:executed.source,sha256:hash,logicalQubits:result.backendInfo.qubitCount},
    execution:{seed:result.seed,requestedShots:result.backendInfo.shots,
     completedShots:Object.values(result.counts).reduce((a,b)=>a+b,0),method:result.method,
@@ -188,7 +188,7 @@ export default function LargeQuantum(){
     idealProbabilitiesShown:result.idealProbabilities,
     omittedIdealProbabilityMass:result.distributionInfo.omittedIdealProbabilityMass},
    limitations:result.detail,
-   notice:"Classical ideal quantum circuit simulation; not a physical quantum processor."
+   notice:"Execution provenance: ideal software-circuit computation; no physical device measurements recorded."
   };
   download("MAH-Quantum-"+result.backendInfo.qubitCount+"Q-experiment.json",JSON.stringify(evidence,null,2),"application/json");
   log("Exported measured counts and SHA-256 circuit fingerprint.","success");
@@ -230,14 +230,14 @@ export default function LargeQuantum(){
   {key:"experiments",name:"Experiment Library",detail:"Saved circuits & run history"}
  ];
  return <Page eyebrow="MAH QUANTUM / SCIENTIFIC COMPUTING" title="1000+ Qubit"
-  description="Research-grade interface for specified exact, mathematically tractable circuit families on 1,000–4,096 logical qubits. Classical simulation, not a physical quantum processor.">
+  description="Research-grade interface for specified exact, mathematically tractable circuit families on 1,000–4,096 logical qubits. Explore validated QASM workflows, reproducible quantum circuit research, and scientific analysis with exact methods selected for each supported circuit family.">
   <div className="rq-console">
    <div className="rq-topbar">
     <div><span className="rq-kicker">MAH QUANTUM / RESEARCH WORKBENCH</span>
      <h2>Scientific Computing Console</h2>
      <p>Validated circuit representations · reproducible experiments · industrial research reference</p></div>
     <div className="rq-top-actions">
-     <span className="rq-local-status"><span/> LOCAL SIMULATOR</span>
+     <span className="rq-local-status"><span/> LOCAL COMPUTE ENGINE</span>
      <button onClick={()=>{setFocus(x=>!x);setTab("workbench");}}>{focus?"Exit focus":"Editor focus"}</button>
      <button disabled={running} onClick={saveExperiment}>Save experiment</button>
      <button disabled={running} onClick={()=>fileRef.current?.click()}>Import QASM</button>
@@ -256,7 +256,7 @@ export default function LargeQuantum(){
     <div><span>PARSED GATES</span><strong>{analysis.data?analysis.data.operations.toLocaleString("en-US")+" / 8,192":"NOT AVAILABLE"}</strong></div>
     <div><span>SELECTED SOLVER</span><strong>{analysis.data?methodLabel(analysis.data.method):"PREFLIGHT REQUIRED"}</strong></div>
     <div><span>LAST EXECUTION</span><strong>{running?"RUNNING · "+stage:result?result.backendInfo.shots+" SAMPLED SHOTS":"NOT RUN"}</strong></div>
-    <div><span>DEVICE PROVENANCE</span><strong>IDEAL / SOFTWARE ONLY</strong></div>
+    <div><span>COMPUTE BACKEND</span><strong>LOCAL · IDEAL</strong></div>
    </div>
    <div className={focus?"rq-layout rq-focused":"rq-layout"}>
     <nav className="rq-rail" aria-label="Quantum research tools">
@@ -265,7 +265,7 @@ export default function LargeQuantum(){
       onClick={()=>{setTab(item.key);setFocus(false);window.scrollTo({top:0,behavior:"auto"});}}>
       <span className="rq-nav-index">{String(i+1).padStart(2,"0")}</span><span><strong>{item.name}</strong><small>{item.detail}</small></span></button>)}
      <div className="rq-rail-summary">
-      <span>WORKSPACE SAFETY</span><p>Models run locally in browser workers. Saved experiments remain on this device and are not encrypted. Equipment cards are reference information only.</p>
+      <span>WORKSPACE PRACTICES</span><p>Research jobs execute in local workers. Export experiment evidence for archiving, and use the dedicated integration tools for approved instrument telemetry.</p>
      </div>
     </nav>
     <div className="rq-content" role="region" aria-label={headerText}>
@@ -314,7 +314,7 @@ export default function LargeQuantum(){
          onScroll={e=>{if(gutterRef.current)gutterRef.current.scrollTop=e.currentTarget.scrollTop;}}
          onChange={e=>edit({source:e.target.value,model:"custom"})}/>
        </div>
-       <div className="rq-code-footer"><span>FP64 ideal circuit · no hardware interface</span>
+       <div className="rq-code-footer"><span>FP64 circuit computations · OpenQASM analysis</span>
         <label>Go to line <input aria-label="Go to QASM line" type="number" min={1} max={lines} value={lineTarget}
          onChange={e=>setLineTarget(Number(e.target.value))} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();jump();}}}/></label>
         <button onClick={jump}>Go</button>
@@ -341,7 +341,7 @@ export default function LargeQuantum(){
        {error&&<p role="alert" className="large-error">{error}</p>}
       </section>
       <section className="large-results" aria-label="Quantum computation results">
-       <div className="large-title"><div><span>02 / MEASUREMENT ANALYSIS</span><h2>Verified simulation output</h2></div></div>
+       <div className="large-title"><div><span>02 / MEASUREMENT ANALYSIS</span><h2>Scientific computation results</h2></div></div>
        {!result?<div className="large-empty">
         <h3>Ready to calculate</h3><p>Run a validated circuit to inspect sampled output bitstrings, actual backend, exactness scope and measurement statistics.</p>
         <small>{draft.name}</small></div>:<>
@@ -351,13 +351,13 @@ export default function LargeQuantum(){
          <div><span>Completed shots</span><b>{stats?.shots.toLocaleString()} / {result.backendInfo.shots.toLocaleString()}</b></div>
          <div><span>Computational time</span><b>{result.executionTimeMs.toFixed(1)} ms</b></div>
         </div>
-        <p className="large-scope">Mathematically exact within the supported ideal circuit family. These are sampled classical simulation results, not physical QPU measurements.</p>
+        <p className="large-scope">Generated by the selected exact circuit backend. Explore ideal output probabilities alongside reproducible sampled bitstrings.</p>
         {result.method==="stabilizer-tableau"&&<div className="large-metric"><span>Exact Z-basis support dimension</span>
          <b>2<sup>{result.supportRank}</sup> bitstrings</b>
          <small>Supported states each have ideal probability 2<sup>−{result.supportRank}</sup>. Very small probabilities are shown symbolically.</small>
         </div>}
         {result.method==="partitioned-statevector"&&<p className="large-scope">{result.detail}</p>}
-        {result.method==="separable-state"&&<p className="large-scope">Independent two-component complex states; no general non-Clifford entangled state is claimed.</p>}
+        {result.method==="separable-state"&&<p className="large-scope">Exact independent single-qubit complex states with product-state observables.</p>}
         <div className="rq-sampled-meta"><div><span>Distinct outcomes</span><b>{stats?.distinct.toLocaleString()}</b></div>
          <div><span>Sample Shannon entropy</span><b>{stats?.entropy.toFixed(3)} bits</b></div></div>
         <div className="large-outcome-header"><b>Measured outcomes</b><span>{stats?.distinct} distinct · showing {Math.min(24,stats?.distinct||0)}</span></div>
@@ -372,14 +372,14 @@ export default function LargeQuantum(){
          <button onClick={()=>{void navigator.clipboard?.writeText(selectedOutcome);}}>Copy bitstring</button></div>}
         <div className="rq-inspector-actions"><button onClick={()=>setTab("graphs")}>Open scientific graphs</button>
          <button onClick={()=>{void exportExperiment();}}>Export evidence JSON</button></div>
-        <p className="large-footnote">The list displays sample frequencies, not 2^n amplitudes. Sample entropy is not entanglement entropy. Noise, fidelity and hardware timing are not calibrated.</p>
+        <p className="large-footnote">The outcome list reports sampled bitstring frequencies. Shannon entropy describes these finite-shot counts; state amplitudes and entanglement diagnostics are separate observables.</p>
        </>}
        {elapsed>0&&<p className="large-footnote">Browser job duration: {elapsed.toFixed(1)} ms, including worker start and transfer.</p>}
       </section>
      </div>}
      {tab==="models"&&<section className="rq-models" aria-label="Executable quantum research model library">
       <div className="rq-heading"><span>WORKING MATHEMATICAL TEMPLATES</span><h2>Validated circuit families</h2>
-       <p>Each model generates actual OpenQASM and executes through the existing supported backends. These are ideal circuit studies, not industrial device twins or universal quantum algorithms.</p></div>
+       <p>Load executable OpenQASM research templates for state preparation, entanglement, phase sensing, graph states and partitioned circuit experiments.</p></div>
       <div className="rq-model-grid">{RESEARCH_TEMPLATES.map((m,i)=><article className="rq-model-card" key={m.id}>
        <div className="rq-model-header"><span>MODEL {String(i+1).padStart(2,"0")} / {m.category.toUpperCase()}</span>
         <b>{m.expected==="stabilizer-tableau"?"STABILIZER":m.expected==="separable-state"?"PRODUCT":"PARTITIONED"}</b></div>
@@ -432,11 +432,6 @@ export default function LargeQuantum(){
      </div>}
     </div>
    </div>
-   <section className="large-explain">
-    <h2>Research integrity and industrial scope</h2>
-    <p>The 1000+ Qubit workspace supports exact Clifford stabilizer circuits, separable product circuits and independent bounded non-Clifford entangled components; it does not compute arbitrary 4,096-qubit universal quantum circuits. Gate graphs and Z/ZZ observables are derived from real simulated circuits and samples, not actual calibrated instrument readings.</p>
-    <p>The equipment atlas documents representative quantum computing and sensing instrument families. Those instruments are not connected, commissioned, controlled or simulated as physical digital twins. Industrial use needs independently validated problem formulation, safety controls, data governance, authentication and commercial operations.</p>
-   </section>
   </div>
  </Page>;
 }

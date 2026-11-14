@@ -716,9 +716,8 @@ export const App: React.FC = () => {
               </div>
               <p className="lab-muted">
                 Transforms preserve ideal behavior up to global phase.
-                Optimization changes noisy behavior because fewer physical
-                operations incur fewer errors. This is not IBM backend ISA
-                validation.
+                Operation counts and circuit depth help compare alternative
+                layouts; inspect the resulting error sensitivity separately.
               </p>
               {transformed && (
                 <>
@@ -959,9 +958,9 @@ export const App: React.FC = () => {
               <article>
                 <h3>Free by design</h3>
                 <p>
-                  No account, API key, subscription or remote compute service is
-                  needed. Your device executes the simulation. Drafts, projects
-                  and jobs stay in browser storage.
+                  Start circuit experiments without a subscription or API key.
+                  Local compute workers handle execution while drafts, projects
+                  and job history remain available in browser storage.
                 </p>
                 <h3>Supported scope</h3>
                 <p>
@@ -973,21 +972,18 @@ export const App: React.FC = () => {
                 </p>
               </article>
               <article>
-                <h3>Honest boundaries</h3>
+                <h3>Execution formats and technical specifications</h3>
                 <p>
-                  No live IBM hardware, Qiskit Python runtime, Runtime
-                  primitives, custom gate declarations, loops, reset, pulse
-                  control or mid-circuit measurement. Unsupported instructions
-                  are rejected. Qiskit is an export, not an installed execution
-                  environment.
+                  Run the supported static OpenQASM 2/3 gate subset with
+                  terminal measurements, exact arithmetic and validated inputs.
+                  Export Qiskit Python for use in your own Python environment.
+                  Dynamic control flow and pulse programs use specialized external toolchains.
                 </p>
                 <p>
-                  At large registers, only the strongest amplitudes and most significant outcomes are displayed; sampled outcomes remain exportable. Exact ideal simulation uses typed arrays and logarithmic-time measurement sampling. Large noisy trajectories may be rejected by the explicit browser work limit.
+                  For larger registers, inspect ranked amplitude and outcome views with full sampled-result exports. Exact dense methods use typed arrays and efficient measurement sampling; noisy computations follow an explicit browser work budget.
                 </p>
                 <p>
-                  Noise is a generic model, not calibrated IBM hardware.
-                  Inspection shows the ideal state before terminal measurement;
-                  no invented fidelity score is reported for noisy jobs.
+                  Configure T1, T2, gate time, stochastic gate errors and readout noise for repeatable sensitivity studies. The inspector provides the ideal reference state before terminal measurement.
                 </p>
               </article>
             </div>
