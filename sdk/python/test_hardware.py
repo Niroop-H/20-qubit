@@ -129,7 +129,7 @@ class TestRealHardwareGateway(unittest.TestCase):
             log = Path(tmp)/"audit.log"
             with self.assertRaisesRegex(HardwareError, "interlock"):
                 run_approved_sweep(self.profile, approval, secret=secret,
-                                   independent_interlock=None, audit_path=log)
+                                   independent_interlock=None, operator_identity_authorized=lambda _: True, audit_path=log)
             self.assertNotIn("INIT:IMM", self.instrument.commands)
             with self.assertRaisesRegex(HardwareError, "signature"):
                 run_approved_sweep(self.profile, approval, secret=secret+"tampered",
@@ -146,7 +146,8 @@ class TestRealHardwareGateway(unittest.TestCase):
             path = Path(tmp)/"equipment-audit.jsonl"
             result = run_approved_sweep(
                 self.profile, approval, secret=secret, audit_path=path,
-                independent_interlock=lambda _: True)
+                independent_interlock=lambda _: True,
+                operator_identity_authorized=lambda _: True)
             self.assertEqual(result["status"], "dispatched_not_calibrated")
             self.assertIn("INIT:IMM", self.instrument.commands)
             record = json.loads(path.read_text().strip())
@@ -154,10 +155,23 @@ class TestRealHardwareGateway(unittest.TestCase):
             self.assertNotIn("signed-local-edge-authorization", path.read_text())
             with self.assertRaisesRegex(HardwareError, "replayed"):
                 run_approved_sweep(self.profile, approval, secret=secret,
-                                   audit_path=path, independent_interlock=lambda _: True)
+                                   audit_path=path, independent_interlock=lambda _: True,
+                                   operator_identity_authorized=lambda _: True)
             self.assertEqual(self.instrument.commands.count("INIT:IMM"), 1)
 
-    def test_expired_and_cross-device_approval_fails_closed(self):
+    def test_names_and_signature_do_not_replace_external_human_authorization(self):
+        secret = "signed-local-edge-authorization-not-cloud-2026"
+        approval = authorize_single_sweep(
+            self.profile, operator="Engineer Ada", supervisor="Shift Lead Ben",
+            reason="Approved measurement", secret=secret)
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(HardwareError, "identity approval"):
+                run_approved_sweep(self.profile, approval, secret=secret,
+                                   audit_path=Path(tmp)/"audit.jsonl",
+                                   independent_interlock=lambda _: True)
+        self.assertNotIn("INIT:IMM", self.instrument.commands)
+
+    def test_expired_and_cross_device_approval_fails_closed(self):
         secret = "signed-local-edge-authorization-not-cloud-2026"
         approval = authorize_single_sweep(
             self.profile, operator="Engineer Ada", supervisor="Shift Lead Ben",
