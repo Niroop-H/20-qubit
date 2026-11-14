@@ -4,7 +4,7 @@ import struct
 import threading
 import unittest
 
-from mah_quantum_hardware import HardwareError, telemetry_to_parameter_job
+from mah_quantum_hardware import HardwareError, telemetry_to_parameter_job, sign_hardware_snapshot
 from mah_quantum_modbus import ModbusProfile, Register, read_modbus_snapshot
 
 
@@ -95,10 +95,12 @@ class TestModbusHardware(unittest.TestCase):
         self.assertTrue(all(fc==3 for fc,_,_ in self.emulator.calls))
 
     def test_telemetry_maps_into_1000q_ideal_research_job_without_plant_writes(self):
-        result=read_modbus_snapshot(self.profile)
+        result=sign_hardware_snapshot(read_modbus_snapshot(self.profile),
+            "independent-hardware-edge-test-hmac-key-2026")
         job=telemetry_to_parameter_job(
             result,channel="temperature",scale=.01,offset=0,
-            job_id="modbus-sensor-pilot")
+            job_id="modbus-sensor-pilot",
+            attestation_key="independent-hardware-edge-test-hmac-key-2026")
         self.assertEqual(job["kind"],"circuit")
         self.assertIn("ry(0.245",job["source"])
         self.assertEqual(self.emulator.calls,[(3,10,1),(3,20,2)])
