@@ -301,3 +301,14 @@
 @media(max-width:1200px){.rq-opt-columns,.rq-opt-results-grid{grid-template-columns:1fr}.rq-opt-map{max-height:385px}}
 @media(max-width:680px){.rq-opt{padding:13px}.rq-opt-capabilities{grid-template-columns:1fr 1fr}.rq-opt-capabilities>div{padding:10px}.rq-opt-parameters{gap:7px}.rq-opt-partitions{grid-template-columns:1fr}.rq-opt-metrics{grid-template-columns:1fr 1fr}.rq-opt-results-grid{gap:9px}.rq-opt-outcome-header,.rq-opt-outcome-row{grid-template-columns:1fr .45fr .7fr .9fr;gap:4px;font-size:9px}}
 @media(max-width:400px){.rq-opt-buttons button{width:100%}.rq-opt-parameters{grid-template-columns:1fr}.rq-opt-metrics{grid-template-columns:1fr}.rq-opt-capabilities strong{font-size:16px}}
+
+
+/* Reproducible scientific A/B experiment comparison panel. */
+.rq-comparison{background:linear-gradient(130deg,#172b3e,#102536);border:1px solid #477084;border-radius:10px;padding:18px;margin-bottom:14px;min-width:0}
+.rq-comparison .rq-panel-head{margin-bottom:10px}
+.rq-comparison-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rq-comparison-metrics>div{background:#0d2030;border:1px solid #33576c;border-radius:7px;padding:12px;display:flex;flex-direction:column;gap:7px}
+.rq-comparison-metrics span{font-size:10px;line-height:1.5;color:#a6c2d1}
+.rq-comparison-metrics strong{font:600 15px/1.4 ui-monospace,Consolas,monospace;color:#f0dfb5;overflow-wrap:anywhere}
+@media(max-width:850px){.rq-comparison-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.rq-comparison-metrics{grid-template-columns:1fr}}
