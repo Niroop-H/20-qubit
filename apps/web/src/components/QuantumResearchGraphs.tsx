@@ -76,7 +76,7 @@ export function QuantumResearchGraphs({diagnostic,result,comparison}:{diagnostic
      <div className="rq-mini-metrics">
       <div><span>Active wires</span><strong>{fmt(diagnostic.activeQubits,0)}</strong></div>
       <div><span>Multi-qubit gates</span><strong>{fmt(diagnostic.multiQubitGates,0)}</strong></div>
-      <div><span>Greedy depth</span><strong>{fmt(diagnostic.logicalDepthUpperBound,0)}</strong></div>
+      <div><span>Logical gate depth (unit cost)</span><strong>{fmt(diagnostic.logicalDepth,0)}</strong></div>
       <div><span>Interaction component</span><strong>{fmt(diagnostic.observedMaxComponent,0)} wires</strong></div>
      </div>
      <p className="rq-note">Regions are aggregated for legibility; line thickness represents counts of parsed cross-region gate references. The component size describes an interaction graph, not independently verified entanglement.</p>
@@ -135,7 +135,7 @@ export function QuantumResearchGraphs({diagnostic,result,comparison}:{diagnostic
      {marg&&<div className="rq-mini-metrics">
       <div><span>P(c{a}=1)</span><strong>{fmt(100*marg.pOne,2)}%</strong></div>
       <div><span>Sample &lt;Z{a}&gt;</span><strong>{fmt(marg.zMean,4)}</strong></div>
-      <div><span>Wilson 95% P(1) CI</span><strong>{fmt(100*marg.normal95[0],1)}–{fmt(100*marg.normal95[1],1)}%</strong></div>
+      <div><span>Wilson 95% P(1) CI</span><strong>{fmt(100*marg.wilson95[0],1)}–{fmt(100*marg.wilson95[1],1)}%</strong></div>
       <div><span>Sample &lt;Z{a}Z{b}&gt;</span><strong>{corr?fmt(corr.zz,4):"Select distinct bits"}</strong></div>
       <div><span>Connected ZZ statistic</span><strong>{corr?fmt(corr.connected,4):"—"}</strong></div>
      </div>}

@@ -326,7 +326,7 @@ export default function LargeQuantum(){
          <div><span>Selected solver</span><b>{methodLabel(analysis.data.method)}</b></div>
          <div><span>Expanded gates</span><b>{analysis.data.operations.toLocaleString()} / 8,192</b></div>
          <div><span>Active qubits</span><b>{analysis.data.activeQubits.toLocaleString()}</b></div>
-         <div><span>Logical depth estimate</span><b>{analysis.data.logicalDepthUpperBound.toLocaleString()}</b></div>
+         <div><span>Logical gate depth (unit cost)</span><b>{analysis.data.logicalDepth.toLocaleString()}</b></div>
         </div>:<p role="status">{analysis.error}</p>}
         {analysis.data?.method==="partitioned-statevector"&&<p className="rq-warning">Non-Clifford entanglement uses bounded independent components (≤18 qubits each, aggregate 2^20 amplitudes). Resource checks are enforced during execution.</p>}
        </div>
