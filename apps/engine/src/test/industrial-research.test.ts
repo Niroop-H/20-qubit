@@ -48,6 +48,15 @@ describe("industrial 2–10-variable quantum optimization companion",()=>{
   assert.equal(r.execution.completedShots,512);
   assert.equal(r.execution.logicalQubits,2);
   assert.equal(r.execution.physicalHardware,false);
+  assert.equal(r.landscape.gammaPoints,12);
+  assert.equal(r.landscape.betaPoints,9);
+  assert.equal(r.landscape.samples.length,108);
+  for(const p of r.landscape.samples){
+   const prob=qaoaDistribution(validateIndustrialGraph(pair),p.gamma,p.beta);
+   const mean=Array.from(prob,(v,mask)=>v*cutObjective(validateIndustrialGraph(pair),mask)).reduce((a,b)=>a+b,0);
+   near(p.expectedScore,mean);
+   assert.ok(p.expectedScore<=r.classical.optimum+1e-9);
+  }
  });
  it("follows identical results and shot distributions for the same seed and graph",()=>{
   const graph={name:"Production separation pilot",nodes:["Line A","Line B","Line C","Line D"],edges:[
