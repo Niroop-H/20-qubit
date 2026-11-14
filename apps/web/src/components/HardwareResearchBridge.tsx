@@ -15,7 +15,7 @@ type Snapshot={
 };
 const DRIVERS=[
  {name:"SCPI / TCP",status:"Implemented",summary:"Explicit configured private IP · identity check · bounded numeric instrument queries",controls:"One qualified analyzer sweep, gated locally by approvals and physical interlocks"},
- {name:"Modbus / TCP",status:"Implemented",summary:"Read-only FC03 configured holding registers · numeric scaling · no network scans",controls:"No Modbus coil, setpoint or actuator writes"},
+ {name:"Modbus / TCP",status:"Implemented · read-only",summary:"Read-only FC03 configured holding registers · numeric scaling · no network scans",controls:"No Modbus coil, setpoint or actuator writes"},
  {name:"OPC UA",status:"Not implemented",summary:"Requires vendor-validated secure endpoint, certificate trust and data map",controls:"No OPC UA read/write client yet"},
  {name:"USB / VISA",status:"Not implemented",summary:"Requires approved vendor VISA runtime and per-instrument drivers",controls:"No USB or GPIB hardware adapter yet"},
  {name:"PLC / SCADA",status:"Not implemented",summary:"Requires site-specific safety and process automation architecture",controls:"No PLC or process-control commands"}
