@@ -398,6 +398,75 @@ async function main(){
   assert.ok(text.includes("Sampled"));
   return{repeatedSeed:21,sameInput:true,sampleTvd:0,visualComparison:true};
  });
+ await test("Industry Integration Bridge exports exact current QASM as a valid versioned circuit job",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("1000");
+  await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("128");
+  await page.locator(".rq-rail>button").filter({hasText:"Integration Bridge"}).click();
+  await page.getByRole("heading",{name:"Connect engineering systems with the quantum simulator"}).waitFor({timeout:20000});
+  assert.equal(await page.locator(".rq-integration input[type=password]").count(),0);
+  const next=page.waitForEvent("download",{timeout:12000});
+  await page.getByRole("button",{name:"Download API request"}).click();
+  const d=await next;
+  const request=JSON.parse(readFileSync(await d.path(),"utf8"));
+  assert.equal(request.schema,"MAH-Quantum-Industry-Job/v1");
+  assert.equal(request.kind,"circuit");
+  assert.equal(request.operation,"execute");
+  assert.equal(request.shots,128);
+  assert.match(request.source,/qreg q\[1000\];/);
+  assert.ok(request.source.includes("cx q[0],q[1];"));
+  return{manifestSchema:true,sourceMatchesEditor:true,serverOnlyCredentials:true};
+ });
+ await test("Industry bridge blocks unsupported 4096Q remote execution but permits inspect-only manifest",async()=>{
+  await page.locator(".rq-rail>button").filter({hasText:"Circuit Workbench"}).click();
+  await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("4096");
+  await page.locator(".rq-rail>button").filter({hasText:"Integration Bridge"}).click();
+  assert.equal(await page.getByRole("button",{name:"Download API request"}).isDisabled(),true);
+  await page.getByRole("combobox",{name:"Integration operation"}).selectOption("inspect");
+  assert.equal(await page.getByRole("button",{name:"Download API request"}).isDisabled(),false);
+  const next=page.waitForEvent("download",{timeout:12000});
+  await page.getByRole("button",{name:"Download API request"}).click();
+  const file=await next;
+  const job=JSON.parse(readFileSync(await file.path(),"utf8"));
+  assert.equal(job.operation,"inspect");
+  assert.ok(job.source.includes("qreg q[4096]"));
+  assert.equal("shots" in job,false);
+  return{oversizedRemoteExecutionPrevented:true,largeInspectManifest:true};
+ });
+ await test("Industry Integration Bridge can build bounded weighted MaxCut job for customer backend",async()=>{
+  await page.getByRole("combobox",{name:"Integration operation"}).selectOption("optimization");
+  await page.getByRole("combobox",{name:"Integration graph example"}).selectOption("computing");
+  const next=page.waitForEvent("download",{timeout:12000});
+  await page.getByRole("button",{name:"Download API request"}).click();
+  const file=await next;
+  const job=JSON.parse(readFileSync(await file.path(),"utf8"));
+  assert.equal(job.kind,"optimization");
+  assert.equal(job.operation,"execute");
+  assert.equal(job.graph.nodes.length,8);
+  assert.equal(job.shots,256);
+  return{graphDecisionNodes:8,shots:256,mathematicalObjective:"weighted-maxcut"};
+ });
+ await test("Industry integration layout and API instructions fit 390px scientific mobile viewport",async()=>{
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  await context.addInitScript(()=>{
+   localStorage.setItem("mah-workspace-access-v1",JSON.stringify({
+    version:1,active:"c0",codes:{"c0":{usedMs:0,cooldownUntil:0}},owner:null,heartbeat:0
+   }));
+  });
+  const mobile=await context.newPage();
+  try{
+   await mobile.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+   await mobile.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+   await mobile.locator(".rq-rail>button").filter({hasText:"Integration Bridge"}).click();
+   const sizes=await mobile.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
+   assert.ok(sizes.document<=sizes.viewport+8,"Industry integration mobile overflow: "+JSON.stringify(sizes));
+   await mobile.getByRole("button",{name:"Download API request"}).waitFor({timeout:10000});
+   mkdirSync("artifacts",{recursive:true});
+   await mobile.screenshot({path:"artifacts/industry-integration-mobile.png",fullPage:true});
+   return{viewportPx:390,pageWidthPx:sizes.document,source:"real Chromium mobile viewport"};
+  }finally{await context.close();}
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
@@ -412,7 +481,7 @@ finally{
  const result={schema:"MQ-DSQ-BROWSER-RELEASE/v1",dateUtc:new Date().toISOString(),
   sha:process.env.GITHUB_SHA||"local",
   environment:"GitHub Actions Chromium, locally hosted production build; no cloud deployment",
-  scope:"20/100/1000+/2048 quantum UI, 8 scientific models, equipment atlas and bounded industrial QAOA; access control not evaluated",
+  scope:"20/100/1000+/2048 UI, 8 models, industrial QAOA and secure API job-manifest integration; hosted access control not evaluated",
   durationMs:+(performance.now()-started).toFixed(2),
   counts:{total:evidence.length,passed:evidence.length-fails.length,failed:fails.length},cases:evidence};
  mkdirSync("artifacts",{recursive:true});
