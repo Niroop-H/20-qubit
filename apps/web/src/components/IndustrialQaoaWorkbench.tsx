@@ -106,7 +106,7 @@ export default function IndustrialQaoaWorkbench(){
   download("MAH-Quantum-Industrial-QAOA-Evidence.json",JSON.stringify(evidence,null,2),"application/json");
  };
  const best=result?groups(result.quantum.bestSampleAssignment,result.graph):null;
- const values=result?[["Classical global optimum",result.classical.optimum],
+ const values:[string,number][]=result?[["Classical global optimum",result.classical.optimum],
   ["Classical greedy",result.classical.greedyScore],
   ["QAOA exact expectation",result.quantum.expectedScore],
   ["Best QAOA sample",result.quantum.bestSampleScore]]:[] as [string,number][];
