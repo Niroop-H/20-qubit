@@ -208,6 +208,67 @@ async function main(){
    return{viewportPx:widths.viewport,pagePx:widths.page,executed:true};
   }finally{await mobileContext.close();}
  });
+ await test("Research console exposes eight executable large-qubit models and selects exact Ramsey circuit",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:25000});
+  await page.locator(".rq-rail>button").filter({hasText:"Research Models"}).click();
+  assert.equal(await page.locator(".rq-model-card").count(),8);
+  await page.locator(".rq-model-card").filter({hasText:"Ideal Ramsey interference array"}).getByRole("button",{name:"Load executable model"}).click();
+  assert.equal(await page.getByRole("combobox",{name:"Large circuit preset"}).inputValue(),"ramsey");
+  const qasm=await page.getByRole("textbox",{name:"Large quantum QASM code"}).inputValue();
+  assert.ok(qasm.includes("rz(pi/3) q[0];"));
+  assert.ok(qasm.includes("qreg q[1000];"));
+  return{modelCount:8,selected:"ramsey",generatedQasm:true};
+ });
+ await test("Real scientific Ramsey run produces separable-state backend and sampled Z observables",async()=>{
+  await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("1024");
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.locator(".large-telemetry").getByText("Separable pure-state").waitFor({timeout:60000});
+  await page.locator(".rq-rail>button").filter({hasText:"Scientific Graphs"}).click();
+  await page.getByRole("heading",{name:"Bit marginals & ZZ correlation"}).waitFor({timeout:10000});
+  const numeric=await page.locator(".rq-graph-grid").innerText();
+  assert.match(numeric,/Sample Shannon entropy/);
+  assert.match(numeric,/Gate population/);
+  const marginal=await page.locator(".rq-panel").filter({hasText:"Bit marginals & ZZ correlation"}).innerText();
+  assert.match(marginal,/P\(c0=1\)/);
+  assert.match(marginal,/Sample/);
+  const csv=page.waitForEvent("download",{timeout:15000});
+  await page.getByRole("button",{name:"Export CSV"}).click();
+  const file=await csv,rows=readFileSync(await file.path(),"utf8").trim().split("\n");
+  assert.equal(rows[0],"bitstring,shots,relative_frequency");
+  assert.ok(rows.length>=2);
+  assert.equal(rows.slice(1).reduce((sum,line)=>sum+Number(line.split(",")[1]),0),1024);
+  return{backend:"separable-state",shots:1024,graphComputed:true,completeCsvDistribution:true};
+ });
+ await test("Quantum industrial atlas filters real reference categories without claiming hardware connection",async()=>{
+  await page.locator(".rq-rail>button").filter({hasText:"Equipment Atlas"}).click();
+  assert.ok(await page.locator(".rq-equipment-card").count()>=30);
+  await page.getByRole("combobox",{name:"Equipment technology platform"}).selectOption("Superconducting");
+  const platformCount=await page.locator(".rq-equipment-card").count();
+  assert.ok(platformCount>=6&&platformCount<30);
+  await page.getByRole("searchbox",{name:"Search quantum equipment"}).fill("refrigerator");
+  assert.equal(await page.locator(".rq-equipment-card").count(),1);
+  await page.locator(".rq-equipment-card summary").first().click();
+  const detail=await page.locator(".rq-equipment-card").first().innerText();
+  assert.match(detail,/No live instrument API|Not connected/i);
+  await page.getByRole("button",{name:/Industrial models/}).click();
+  assert.equal(await page.locator(".rq-app-card").count(),10);
+  return{instrumentReferenceMinimum:30,platformFiltered:platformCount,models:10,hardwareConnected:false};
+ });
+ await test("Research QASM snapshots are autosaved and recovered after browser reload",async()=>{
+  await page.locator(".rq-rail>button").filter({hasText:"Circuit Workbench"}).click();
+  await page.getByRole("textbox",{name:"Research experiment name"}).fill("Research validation session");
+  await page.getByRole("button",{name:"Save experiment"}).click();
+  await page.getByText(/Autosaved locally/).waitFor({timeout:12000});
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  assert.equal(await page.getByRole("textbox",{name:"Research experiment name"}).inputValue(),"Research validation session");
+  await page.locator(".rq-rail>button").filter({hasText:"Experiment Library"}).click();
+  await page.getByRole("searchbox",{name:"Search saved quantum experiments"}).fill("Research validation session");
+  await page.getByText("Research validation session").waitFor({timeout:10000});
+  assert.ok((await page.locator(".rq-run-log").innerText()).includes("completed"));
+  return{draftRestored:true,namedSnapshot:true,runMetadataPersisted:true};
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
