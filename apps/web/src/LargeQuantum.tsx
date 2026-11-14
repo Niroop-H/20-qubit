@@ -330,7 +330,7 @@ export default function LargeQuantum(){
         </div>:<p role="status">{analysis.error}</p>}
         {analysis.data?.method==="partitioned-statevector"&&<p className="rq-warning">Non-Clifford entanglement uses bounded independent components (≤18 qubits each, aggregate 2^20 amplitudes). Resource checks are enforced during execution.</p>}
        </div>
-       <p className="large-footnote">Exact supported families: Clifford stabilizers, separable gates, and resource-bounded non-Clifford components. Unsupported entangled circuits fail rather than returning invented results. Terminal measurements only.</p>
+       <p className="large-footnote">Select from exact Clifford stabilizers, separable gates and resource-bounded non-Clifford components. Preflight checks solver compatibility and terminal measurement mapping before execution.</p>
        <div className="large-actions">
         <button className="large-primary" onClick={run} disabled={running||!analysis.data}>{running?"Computing…":"Run quantum circuit"}</button>
         {running&&<button onClick={cancel}>Cancel computation</button>}

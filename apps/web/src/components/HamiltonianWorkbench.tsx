@@ -148,8 +148,8 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
      <div className="rq-ham-metrics">
       <div><span>Sample mean energy</span><strong>{fmt(estimate.mean)}</strong><small>Dimensionless input coefficients</small></div>
       <div><span>Standard error</span><strong>{estimate.standardError===null?"N/A":fmt(estimate.standardError,6)}</strong><small>IID finite-shot approximation</small></div>
-      <div><span>95% normal CI</span><strong>{estimate.confidence95?fmt(estimate.confidence95[0],3)+" … "+fmt(estimate.confidence95[1],3):"Not available"}</strong><small>Not hardware/systematic error</small></div>
-      <div><span>Lowest energy observed</span><strong>{fmt(estimate.observedMinimum.energy)}</strong><small>Sampled candidate, not certified ground state</small></div>
+      <div><span>95% normal CI</span><strong>{estimate.confidence95?fmt(estimate.confidence95[0],3)+" … "+fmt(estimate.confidence95[1],3):"Not available"}</strong><small>Finite-shot statistical uncertainty</small></div>
+      <div><span>Lowest energy observed</span><strong>{fmt(estimate.observedMinimum.energy)}</strong><small>Minimum among observed outcomes</small></div>
      </div>
      <div className="rq-ham-plot-head"><strong>Empirical energy spectrum</strong><small>Actual outcomes · {estimate.distinctOutcomes} distinct bitstrings</small></div>
      <div className="rq-ham-spectrum" role="img" aria-label="Sample-derived energy frequency histogram">
@@ -190,7 +190,7 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
      </div>
     </div>
     <div className="rq-ham-key"><span>Negative = amber</span><span>Zero = neutral</span><span>Positive = cyan</span></div>
-    <p className="rq-note">This is an observed Z–Z moment matrix, not a covariance matrix or an entanglement witness. If the model includes more than eight bits, exports still include all energy terms.</p>
+    <p className="rq-note">The matrix visualizes observed Z–Z moments. Exports retain every energy term when the displayed matrix spans more than eight bits.</p>
    </section>
   </div>}
   <section className="rq-panel rq-ham-planning">
@@ -206,7 +206,7 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
     <div><span>Estimated target</span><strong>{recommended===null?"N/A":recommended.toLocaleString("en-US")+" shots"}</strong>
      <small>{recommended!==null&&recommended>1024?"Above local 1,024-shot limit":"Based on observed variance"}</small></div>
    </div>}
-   <p className="rq-note">Projection assumes future independent, identically distributed samples from the same ideal distribution and stable sample variance. It is not a guaranteed precision, a readout mitigation model or a claim about physical experimental uncertainty.</p>
+   <p className="rq-note">Shot projections use independent-sample statistics and the observed variance of the current distribution. Experimental measurements need their own calibration and systematic-error budget.</p>
   </section>
   {message&&<p role="status" className="rq-ham-feedback">{message}</p>}
   <div className="rq-ham-footer">
