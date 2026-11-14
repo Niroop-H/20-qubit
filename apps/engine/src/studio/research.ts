@@ -117,8 +117,13 @@ export function measuredBit(counts:Record<string,number>,index:number):MeasuredB
   shots+=n;if(s[width-index-1]==="1")ones+=n;
  }
  if(!shots)throw Error("No measured shots available.");
- const p=ones/shots,margin=1.96*Math.sqrt(p*(1-p)/shots);
- return{index,ones,shots,pOne:p,zMean:1-2*p,normal95:[Math.max(0,p-margin),Math.min(1,p+margin)]};
+ // Wilson score interval avoids zero-width "certainty" with all-zero/all-one samples.
+ const p=ones/shots,z=1.959963984540054,zz=z*z;
+ const denominator=1+zz/shots;
+ const center=(p+zz/(2*shots))/denominator;
+ const halfWidth=z*Math.sqrt((p*(1-p)+zz/(4*shots))/shots)/denominator;
+ return{index,ones,shots,pOne:p,zMean:1-2*p,
+  normal95:[Math.max(0,center-halfWidth),Math.min(1,center+halfWidth)]};
 }
 export function pairCorrelation(counts:Record<string,number>,a:number,b:number):PairCorrelation{
  const pa=measuredBit(counts,a),pb=measuredBit(counts,b);
