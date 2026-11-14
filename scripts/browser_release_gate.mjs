@@ -469,6 +469,48 @@ async function main(){
    return{viewportPx:390,pageWidthPx:sizes.document,source:"real Chromium mobile viewport"};
   }finally{await context.close();}
  });
+ await test("Hardware Bridge shows real SCPI/Modbus drivers and does not expose browser actuation controls",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  await page.locator(".rq-rail>button").filter({hasText:"Hardware Bridge"}).click();
+  await page.getByRole("heading",{name:"Connect industrial instruments with quantum research"}).waitFor({timeout:15000});
+  assert.equal(await page.locator(".rq-hardware-drivers details").count(),5);
+  assert.equal(await page.getByRole("button",{name:/actuat|control machine|run equipment/i}).count(),0);
+  await page.getByRole("combobox",{name:"Hardware protocol filter"}).selectOption("Modbus");
+  assert.equal(await page.locator(".rq-hardware-drivers details").count(),1);
+  assert.match(await page.locator(".rq-hardware-drivers").innerText(),/read-only/i);
+  return{driverReferences:5,implemented:["SCPI TCP","Modbus FC03"],directBrowserActuation:false};
+ });
+ await test("Hardware imported evidence is accurately labeled offline and preview-QASM uses recorded numeric telemetry",async()=>{
+  await page.getByRole("combobox",{name:"Hardware protocol filter"}).selectOption("All");
+  const imported={
+   schema:"MAH-Quantum-Hardware-Snapshot/v1",recordedAtUtc:new Date().toISOString(),
+   device:{deviceId:"pilot-sensor",class:"industrial_telemetry",transport:"modbus_tcp_fc03",identityVerified:false},
+   measurements:[
+    {channel:"temperature",value:25.5,unit:"degC",source:"real_modbus_tcp_fc03",register:10},
+    {channel:"pressure",value:1.5,unit:"bar",source:"real_modbus_tcp_fc03",register:20}],
+   hardwareConnected:true,calibrated:false,
+   attestation:{algorithm:"HMAC-SHA256",digest:"a".repeat(64),scope:"configured-MAH-Quantum-edge-gateway"}
+  };
+  await page.getByLabel("Import physical equipment snapshot").setInputFiles({
+   name:"edge-snapshot.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(imported))
+  });
+  await page.getByText("pilot-sensor").waitFor({timeout:12000});
+  assert.equal(await page.locator(".rq-hardware-measurements>div").count(),2);
+  const text=await page.locator(".rq-hardware").innerText();
+  assert.match(text,/NOT verified in this browser/);
+  assert.match(text,/No independent identity/);
+  await page.getByRole("combobox",{name:"Hardware measurement channel"}).selectOption("temperature");
+  await page.getByRole("spinbutton",{name:"Hardware mapping scale"}).fill("0.01");
+  const saved=page.waitForEvent("download",{timeout:15000});
+  await page.getByRole("button",{name:"Download exploratory QASM"}).click();
+  const file=await saved;
+  const qasm=readFileSync(await file.path(),"utf8");
+  assert.match(qasm,/qreg q\[1000\]/);
+  const angle=Number(qasm.match(/ry\(([^)]+)\)/)?.[1]);
+  assert.ok(Math.abs(angle-.255)<1e-12);
+  return{measurements:2,offlineEvidenceClearlyLabeled:true,scientificAngleRad:.255};
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
@@ -483,7 +525,7 @@ finally{
  const result={schema:"MQ-DSQ-BROWSER-RELEASE/v1",dateUtc:new Date().toISOString(),
   sha:process.env.GITHUB_SHA||"local",
   environment:"GitHub Actions Chromium, locally hosted production build; no cloud deployment",
-  scope:"20/100/1000+/2048 UI, 8 models, industrial QAOA and secure API job-manifest integration; hosted access control not evaluated",
+  scope:"Quantum UI, numerical models, industrial QAOA, authenticated job builder and physical SCPI/Modbus evidence UX; production hardware not evaluated",
   durationMs:+(performance.now()-started).toFixed(2),
   counts:{total:evidence.length,passed:evidence.length-fails.length,failed:fails.length},cases:evidence};
  mkdirSync("artifacts",{recursive:true});
