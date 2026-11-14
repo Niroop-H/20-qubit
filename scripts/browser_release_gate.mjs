@@ -478,6 +478,7 @@ async function main(){
   assert.equal(await page.getByRole("button",{name:/actuat|control machine|run equipment/i}).count(),0);
   await page.getByRole("combobox",{name:"Hardware protocol filter"}).selectOption("Modbus");
   assert.equal(await page.locator(".rq-hardware-drivers details").count(),1);
+  await page.locator(".rq-hardware-drivers details summary").click();
   assert.match(await page.locator(".rq-hardware-drivers").innerText(),/read-only/i);
   return{driverReferences:5,implemented:["SCPI TCP","Modbus FC03"],directBrowserActuation:false};
  });
