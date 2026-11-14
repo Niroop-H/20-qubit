@@ -2,12 +2,13 @@ import {useMemo,useState} from "react";
 import type {CircuitDiagnostic} from "../../../engine/src/studio/research";
 import {measuredBit,pairCorrelation,measuredHistogramStats} from "../../../engine/src/studio/research";
 import type {ScalableResult} from "../../../engine/src/studio/scalable";
+import type {ScientificRunComparison} from "../../../engine/src/studio/research-comparison";
 import {download} from "../services/projects";
 
 const fmt=(n:number,digits=3)=>Number.isFinite(n)?n.toLocaleString("en-US",{maximumFractionDigits:digits}):"—";
 const label=(n:number)=>"q"+n;
 const BINS=32;
-export function QuantumResearchGraphs({diagnostic,result}:{diagnostic:CircuitDiagnostic|null;result:ScalableResult|null}){
+export function QuantumResearchGraphs({diagnostic,result,comparison}:{diagnostic:CircuitDiagnostic|null;result:ScalableResult|null;comparison?:ScientificRunComparison|null}){
  const [bitA,setBitA]=useState(0),[bitB,setBitB]=useState(1),[offset,setOffset]=useState(0);
  const stats=useMemo(()=>result?measuredHistogramStats(result.counts):null,[result]);
  const width=stats?.rows[0]?.[0].length||0;
@@ -38,6 +39,19 @@ export function QuantumResearchGraphs({diagnostic,result}:{diagnostic:CircuitDia
   <div className="rq-heading"><span>SCIENTIFIC VISUAL ANALYTICS</span><h2>Computed circuit structure and measurement diagnostics</h2>
    <p>Every graph below is calculated from the current parsed circuit or completed local measurement counts. Neither instrument telemetry nor entanglement entropy is inferred.</p>
   </div>
+  {comparison&&<section className="rq-comparison" aria-label="Scientific run-to-run comparison">
+   <div className="rq-panel-head"><div><span>REPRODUCIBILITY / INDEPENDENT RUNS</span><h3>Sampled run comparison</h3></div>
+    <small>{comparison.runA.shots} vs {comparison.runB.shots} shots</small></div>
+   {!comparison.comparable?<p className="rq-note">{comparison.explanation}</p>:<>
+    <div className="rq-comparison-metrics">
+     <div><span>Empirical total-variation distance</span><strong>{comparison.totalVariationDistance?.toFixed(5)}</strong></div>
+     <div><span>Previous entropy</span><strong>{comparison.sampledEntropyA?.toFixed(3)} bits</strong></div>
+     <div><span>Latest entropy</span><strong>{comparison.sampledEntropyB?.toFixed(3)} bits</strong></div>
+     <div><span>Seed comparison</span><strong>{comparison.runA.seed} / {comparison.runB.seed}</strong></div>
+    </div>
+    <p className="rq-note">{comparison.explanation} Lower total-variation distance means the observed distributions are more alike; it is not a measurement of QPU fidelity or algorithmic superiority.</p>
+   </>}
+  </section>}
   <div className="rq-graph-grid">
    <section className="rq-panel" aria-label="Quantum interaction connectivity graph">
     <div className="rq-panel-head"><div><span>01 · CIRCUIT TOPOLOGY</span><h3>Interaction network</h3></div><small>32 aggregated register regions</small></div>
