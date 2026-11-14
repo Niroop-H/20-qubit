@@ -95,3 +95,7 @@ These are executed *classical numerical experiments*. The Hamiltonian lab is not
 ### License and release boundary
 
 The hosted browser experience may be used without a subscription, but the source is **UNLICENSED / proprietary**. Free use does not grant open-source modification or redistribution rights. Industrial use of real equipment requires separate vendor/site qualification.
+
+## Security and correctness audit
+
+The [November 2026 34-point remediation ledger](docs/SECURITY_CORRECTNESS_AUDIT_2026_11.md) records the fixes, regression tests and residual distributed/hardware deployment limitations. Passing CI is not a physical certification.
