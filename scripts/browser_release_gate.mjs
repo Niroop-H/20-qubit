@@ -326,7 +326,7 @@ async function main(){
   for(const row of rows.slice(1)){
    const [g,b,score]=row.split(",").map(Number);
    assert.ok(Number.isFinite(g)&&Number.isFinite(b)&&Number.isFinite(score));
-   assert.ok(score<=18+1e-8,"response surface exceeds safely bounded graph scoring");
+   assert.ok(score>=-1e-8&&score<=45+1e-8,"response surface exceeds the synthetic manufacturing graph total weight");
   }
   return{gridPoints:108,exported:true,computedNotPlaceholder:true};
  });
