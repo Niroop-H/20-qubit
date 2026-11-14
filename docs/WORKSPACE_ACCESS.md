@@ -21,3 +21,13 @@ This is a browser-only visitor gate, as requested. Clearing site data, using ano
 ## Validation
 
 Compile `apps/web/src/access/engine.ts` into a temporary CommonJS directory and run `ACCESS_TEST_BUILD=<directory> node --test apps/web/tests/access.test.cjs`. The tests cover exact code matching, cumulative usage, re-entry, visibility, tab coordination, cooldown boundaries, reuse and corrupt data. No production time or stored usage is altered for testing.
+
+## Computation credits (separate from workspace entry)
+
+The Studio, 1000+ Qubit workbench and weighted QAOA workbench now share **20 local computation launches per browser site-storage profile**. On consuming the 20th launch, the next computation requires a **five-hour wall-clock cooldown**. After five hours a new allowance of 20 launches is available. A validated run that launches a worker spends one credit; ordinary inspection/editing, exports and saved-project access do not.
+
+The local credit counter is numeric browser data under `mah-quantum-execution-budget-v1`, with Web Locks for cross-tab coordination where available. It does **not** identify a physical device, read a network identifier, track IP addresses, or send an identifier to the server. **Clearing site data resets these local credits**; private browsing or another browser profile also has its own allowance. This is a UX budget, not anti-abuse security or billing enforcement. The separate 24-hour browsing-access / 12-hour code cooldown policy above is unchanged.
+
+The authenticated industry API has a separate **20 execution-credit allowance per observed network address** with a five-hour cooldown. Batch jobs consume one credit per execute operation, and inspect-only operations are free. The API derives a keyed HMAC digest of the observed IP and stores **only that digest and counters in process memory**. No raw addresses are retained by this limiter. On Vercel, only the platform-overwritten `X-Forwarded-For` value is used; in a direct Express deployment the socket's peer address is used instead of spoofable forwarded headers.
+
+**Deployment limitation:** The API limiter is volatile and process-local, so serverless cold starts, multiple instances, redeployments, NAT/shared networks, proxies and VPN changes limit reliability. Global five-hour enforcement requires a trusted shared short-lived store (e.g., TTL counter in an existing managed database) and server-side account/session authorization. That change would require storing an anonymous derived quota key for its five-hour lifecycle; it cannot be fully enforced while storing no identifying quota state anywhere. The current release does not claim to solve that contradiction.
