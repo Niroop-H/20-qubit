@@ -194,7 +194,7 @@ class TestRealHardwareGateway(unittest.TestCase):
              attestation_key="independent-hardware-edge-test-hmac-key-2026")
         self.assertEqual(job["schema"], "MAH-Quantum-Industry-Job/v1")
         self.assertEqual(job["kind"], "circuit")
-        self.assertIn("ry(-0.2375)", job["source"])
+        self.assertAlmostEqual(float(job["source"].split("ry(")[1].split(")")[0]),-0.2375,places=12)
         self.assertEqual(job["seed"], 42)
         self.assertNotIn("INIT:IMM", self.instrument.commands)
 
