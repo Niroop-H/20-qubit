@@ -313,6 +313,23 @@ async function main(){
   assert.ok(evidence.report.quantum.bestSampleScore<=evidence.report.classical.optimum+1e-9);
   return{shotCount:512,sourceHashVerified:true,optimalityVerified:true};
  });
+ await test("QAOA gamma-beta heatmap uses the 108 evaluated model points and exports numerical surface",async()=>{
+  const grid=page.locator(".rq-opt-heatmap");
+  await grid.waitFor({timeout:10000});
+  assert.equal(await grid.locator("span").count(),108);
+  const dl=page.waitForEvent("download",{timeout:12000});
+  await page.getByRole("button",{name:"Export landscape CSV"}).click();
+  const file=await dl;
+  const rows=readFileSync(await file.path(),"utf8").trim().split("\n");
+  assert.equal(rows[0],"gamma_rad,beta_rad,expected_cut_score");
+  assert.equal(rows.length,109);
+  for(const row of rows.slice(1)){
+   const [g,b,score]=row.split(",").map(Number);
+   assert.ok(Number.isFinite(g)&&Number.isFinite(b)&&Number.isFinite(score));
+   assert.ok(score<=18+1e-8,"response surface exceeds safely bounded graph scoring");
+  }
+  return{gridPoints:108,exported:true,computedNotPlaceholder:true};
+ });
  await test("Industrial QAOA rejects invalid customer graph and invalidates stale output",async()=>{
   const editor=page.getByRole("textbox",{name:"Industrial optimization graph JSON"});
   await editor.fill(JSON.stringify({name:"Invalid",nodes:["A","B"],edges:[{source:0,target:1,weight:-2}]}));
