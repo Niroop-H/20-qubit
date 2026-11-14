@@ -402,7 +402,9 @@ async function main(){
   await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
   await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
   await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("1000");
+  await page.getByRole("combobox",{name:"Large circuit preset"}).selectOption("ghz");
   await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("128");
+  const expectedQasm=await page.getByRole("textbox",{name:"Large quantum QASM code"}).inputValue();
   await page.locator(".rq-rail>button").filter({hasText:"Integration Bridge"}).click();
   await page.getByRole("heading",{name:"Connect engineering systems with the quantum simulator"}).waitFor({timeout:20000});
   assert.equal(await page.locator(".rq-integration input[type=password]").count(),0);
@@ -415,7 +417,7 @@ async function main(){
   assert.equal(request.operation,"execute");
   assert.equal(request.shots,128);
   assert.match(request.source,/qreg q\[1000\];/);
-  assert.ok(request.source.includes("cx q[0],q[1];"));
+  assert.equal(request.source,expectedQasm,"API manifest must exactly match actual QASM editor content");
   return{manifestSchema:true,sourceMatchesEditor:true,serverOnlyCredentials:true};
  });
  await test("Industry bridge blocks unsupported 4096Q remote execution but permits inspect-only manifest",async()=>{
