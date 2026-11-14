@@ -391,19 +391,71 @@ def run_approved_sweep(profile: DeviceProfile, approval: ApprovedAction, *,
 _USED_ACTION_NONCES: set[str] = set()
 
 
+def sign_hardware_snapshot(reading: dict[str, Any], secret: str) -> dict[str, Any]:
+    """Local edge HMAC integrity attestation, not device-vendor certification.
+
+    The signing secret must stay in the isolated OT edge service. Never use
+    the ordinary cloud API key as the hardware snapshot signing secret.
+    """
+    if not isinstance(secret, str) or len(secret) < 32:
+        raise ValueError("An independent strong edge HMAC key is required.")
+    if reading.get("schema") != SCHEMA or reading.get("hardwareConnected") is not True:
+        raise ValueError("Only an instrument gateway snapshot may be attested.")
+    if "attestation" in reading:
+        raise ValueError("Refusing to sign an already-attested snapshot.")
+    payload = _signed_message(reading)
+    digest = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    return {**reading, "attestation": {
+        "algorithm": "HMAC-SHA256",
+        "digest": digest,
+        "scope": "configured-MAH-Quantum-edge-gateway"
+    }}
+
+
+def verify_hardware_snapshot(reading: dict[str, Any], secret: str,
+                             *, max_age_seconds: int = 600) -> bool:
+    """Check edge HMAC, timestamp freshness and complete telemetry structure.
+
+    This integrity signal authenticates the holder of the edge key, not the
+    physical sensor calibration, device identity on Modbus or an external lab.
+    """
+    if not isinstance(secret, str) or len(secret) < 32:
+        raise ValueError("Strong edge attestation secret is required.")
+    if reading.get("schema") != SCHEMA or reading.get("hardwareConnected") is not True:
+        raise ValueError("Snapshot is not a completed physical acquisition.")
+    stamp = reading.get("recordedAtUtc")
+    try:
+        instant = datetime.fromisoformat(stamp)
+        age = (datetime.now(timezone.utc) - instant.astimezone(timezone.utc)).total_seconds()
+    except (ValueError, TypeError, AttributeError) as exc:
+        raise ValueError("Snapshot timestamp is missing or malformed.") from exc
+    if instant.tzinfo is None or not 0 <= age <= max_age_seconds or max_age_seconds > 3600:
+        raise ValueError("Snapshot is expired, from the future or has no timezone.")
+    auth = reading.get("attestation")
+    if not isinstance(auth, dict) or set(auth) != {"algorithm","digest","scope"} or auth.get("algorithm") != "HMAC-SHA256":
+        raise ValueError("Missing or invalid edge HMAC attestation.")
+    unsigned = {k:v for k,v in reading.items() if k != "attestation"}
+    signature = hmac.new(secret.encode("utf-8"), _signed_message(unsigned), hashlib.sha256).hexdigest()
+    if not isinstance(auth.get("digest"),str) or not hmac.compare_digest(auth["digest"],signature):
+        raise ValueError("Hardware snapshot integrity verification failed.")
+    if not isinstance(reading.get("device"),dict) or not isinstance(reading.get("measurements"),list):
+        raise ValueError("Hardware snapshot structure is invalid.")
+    return True
+
+
 def telemetry_to_parameter_job(reading: dict[str, Any], *,
                                channel: str, scale: float,
                                offset: float, job_id: str,
                                shots: int = 128, seed: int = 42,
-                               logical_qubits: int = 1000) -> dict[str, Any]:
+                               logical_qubits: int = 1000,
+                               attestation_key: str | None = None) -> dict[str, Any]:
     """Explicit linear calibration map from approved telemetry to RY angle.
 
     The map is purely illustrative without a domain-certified calibration and
     does not feed commands or quantum results back into the physical device.
     """
     from mah_quantum import circuit_job
-    if reading.get("schema") != SCHEMA or reading.get("hardwareConnected") is not True:
-        raise ValueError("Only a real verified hardware snapshot may be converted.")
+    verify_hardware_snapshot(reading, attestation_key or "")
     measurements = [x for x in reading.get("measurements", []) if x.get("channel") == channel]
     if len(measurements) != 1 or not all(math.isfinite(x) for x in (scale, offset)):
         raise ValueError("Missing unique telemetry channel or invalid calibration coefficients.")
