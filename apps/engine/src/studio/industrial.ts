@@ -16,6 +16,7 @@ export interface IndustrialOptimizationResult{
  graph:IndustrialGraph;
  method:"ideal-classical-statevector-qaoa-p1";
  settings:{shots:number;seed:number;parametersEvaluated:number};
+ landscape:{gammaMax:number;betaMax:number;gammaPoints:number;betaPoints:number;samples:Array<{gamma:number;beta:number;expectedScore:number}>};
  classical:{optimum:number;optimalAssignment:string;degeneracy:number;greedyScore:number;greedyAssignment:string;randomBaseline:number};
  quantum:{gamma:number;beta:number;expectedScore:number;approximationRatio:number;optimalOutcomeProbability:number;
   sampledMeanScore:number;bestSampleScore:number;bestSampleAssignment:string;
@@ -108,14 +109,16 @@ export function runIndustrialOptimization(raw:unknown,shots:number,seed:number):
  }
  const biggest=Math.max(...graph.edges.map(e=>e.weight)),gammaRange=2*Math.PI/biggest;
  let gamma=0,beta=0,expected=-Infinity,evaluated=0;
- const evaluate=(g:number,b:number)=>{
+ const landscape:Array<{gamma:number;beta:number;expectedScore:number}>=[];
+ const evaluate=(g:number,b:number,recordGrid=false)=>{
   const probabilities=qaoaDistribution(graph,g,b);
   let objective=0;for(let i=0;i<size;i++)objective+=probabilities[i]*scores[i];
   evaluated++;
+  if(recordGrid)landscape.push({gamma:g,beta:b,expectedScore:objective});
   if(objective>expected+1e-12){expected=objective;gamma=g;beta=b;}
  };
  for(let i=0;i<12;i++)for(let j=0;j<=8;j++)
-  evaluate(i*gammaRange/12,j*Math.PI/16);
+  evaluate(i*gammaRange/12,j*Math.PI/16,true);
  let dGamma=gammaRange/24,dBeta=Math.PI/32;
  for(let pass=0;pass<2;pass++){
   const centerG=gamma,centerB=beta;
@@ -150,6 +153,7 @@ export function runIndustrialOptimization(raw:unknown,shots:number,seed:number):
  return{
   schema:"MAH-Quantum-Industrial-QAOA-MaxCut/v1",graph,method:"ideal-classical-statevector-qaoa-p1",
   settings:{shots,seed,parametersEvaluated:evaluated},
+  landscape:{gammaMax:gammaRange,betaMax:Math.PI/2,gammaPoints:12,betaPoints:9,samples:landscape},
   classical:{optimum,optimalAssignment:label(optimalMask,n),degeneracy,
    greedyScore,greedyAssignment:label(greedyMask,n),
    randomBaseline:graph.edges.reduce((sum,e)=>sum+e.weight,0)/2},

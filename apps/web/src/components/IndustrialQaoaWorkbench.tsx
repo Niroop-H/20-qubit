@@ -195,6 +195,30 @@ export default function IndustrialQaoaWorkbench(){
       <div><span>Statevector memory</span><strong>{fmt(result.execution.statevectorBytes/1024,1)} KiB</strong></div>
       <div><span>Local duration</span><strong>{fmt(result.execution.durationMs,1)} ms</strong></div>
      </div>
+     <section className="rq-opt-landscape" aria-label="QAOA beta gamma objective parameter landscape">
+      <div className="rq-opt-landscape-head"><div><span>04 / VARIATIONAL PARAMETER LANDSCAPE</span>
+       <h3>Evaluated γ–β response surface</h3>
+       <p>Each cell is the exact ideal QAOA expectation calculated at a tested parameter pair, not a fabricated or hardware-calibrated visualization.</p></div>
+       <button type="button" onClick={()=>{
+        const rows="gamma_rad,beta_rad,expected_cut_score\n"+
+         result.landscape.samples.map(p=>p.gamma+","+p.beta+","+p.expectedScore).join("\n")+"\n";
+        download("MAH-Quantum-QAOA-Parameter-Landscape.csv",rows,"text/csv");
+       }}>Export landscape CSV</button>
+      </div>
+      <div className="rq-opt-heatmap-scroll"><div className="rq-opt-heatmap"
+       role="img" aria-label="Exact calculated QAOA expectation heatmap over 12 gamma values and 9 beta values"
+       style={{gridTemplateColumns:"repeat("+result.landscape.gammaPoints+",minmax(0,1fr))"}}>
+       {Array.from({length:result.landscape.betaPoints},(_,j)=>Array.from({length:result.landscape.gammaPoints},(_,i)=>{
+        const point=result.landscape.samples[i*result.landscape.betaPoints+j];
+        const ratio=Math.min(1,Math.max(0,point.expectedScore/result.classical.optimum));
+        return <span key={i+":"+j} title={"γ="+fmt(point.gamma,5)+" rad; β="+fmt(point.beta,5)+" rad; expected cut="+fmt(point.expectedScore,6)}
+         style={{background:"rgba(109,216,225,"+(.12+.86*ratio)+")"}}/>;
+       }))}
+      </div></div>
+      <div className="rq-opt-heatmap-legend"><span>β: 0 → π/2 (vertical)</span><span>γ: 0 → {fmt(result.landscape.gammaMax,4)} rad (horizontal)</span>
+       <span>{result.landscape.samples.length} exact sampled parameter pairs</span></div>
+      <p className="rq-note">This displays the coarse 12 × 9 search grid actually evaluated by the solver. The final reported angles may improve after local refinement and need not coincide with the best heatmap cell. Parameter performance is not a benchmark against real quantum hardware.</p>
+     </section>
      <details className="rq-opt-outcomes"><summary>Inspect complete sampled outcomes ({result.quantum.outcomes.length} observed)</summary>
       <div role="table" aria-label="QAOA sampled assignment statistics"><div className="rq-opt-outcome-header"><span>Assignment</span><span>Shots</span><span>Cut score</span><span>Ideal probability</span></div>
        {result.quantum.outcomes.map(row=><div key={row.bits} className="rq-opt-outcome-row">

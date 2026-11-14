@@ -2,7 +2,7 @@
 
 ## Scope and scientific integrity
 
-This package extends **only** the \`Niroop-H/20-qubit\` repository's 1,000+ logical-qubit web console and local analytics. It does **not** control, manufacture, or emulate physical quantum equipment; the instrument atlas is reference material.
+This package extends **only** the \`Niroop-H/20-qubit\` repository's 1,000+ logical-qubit web console and local analytics. It does **not** manufacture or emulate a physical QPU; the equipment atlas remains reference material. The separate Hardware Bridge has bounded customer-side edge drivers with explicitly qualified safety gates, not general production machine control.
 
 The 1,000–4,096-qubit claim is specific to **mathematically tractable circuit families** supported by the simulator. The 1,000+ console cannot run arbitrary universal non-Clifford 4,096-qubit statevector circuits. It uses one of three supported ideal algorithms: exact Clifford tableau, exact separable product state, or resource-bounded independent exact non-Clifford components. Exceeding capability produces a visible error rather than fabricated measurements.
 
@@ -32,7 +32,7 @@ Each model generates a real bounded QASM circuit, is parsed with the existing va
 
 ## Continuous research workflow
 
-The 1,000+ Qubit page has six modules: Circuit Workbench, Research Models, Scientific Graphs, Equipment Atlas, Industrial Optimization, and Experiment Library. The editor provides line numbers, direct line jump, Ctrl+Enter execution, Ctrl+S snapshot, QASM import/export, worker cancellation, execution status, active backend and scientific preflight.
+The 1,000+ Qubit page now has nine modules: Circuit Workbench, Research Models, Scientific Graphs, Hamiltonian Lab, Equipment Atlas, Industrial Optimization, Integration Bridge, Hardware Bridge, and Experiment Library. The editor provides line numbers, direct line jump, Ctrl+Enter execution, Ctrl+S snapshot, QASM import/export, worker cancellation, execution status, active backend and scientific preflight.
 
 A local draft is autosaved where browser storage permits; up to 12 named snapshots and 24 recent *metadata-only* run records are retained locally. Running results can be exported as versioned JSON, including input QASM SHA-256 when cryptography is available, shot count, seed, execution method, measurement counts and limitation disclosures. Shot-distribution CSV exports also include all observed outcomes.
 
@@ -42,7 +42,7 @@ A local draft is autosaved where browser storage permits; up to 12 named snapsho
 
 The searchable atlas lists representative equipment for superconducting, trapped-ion, neutral-atom, silicon-spin, photonic, quantum-sensing and shared-laboratory setups. Each reference documents the instrument's purpose, typical controllable parameters, measured outputs, industry relevance, and the independent calibration/validation needed to use it.
 
-Every equipment reference is labeled **Reference only**. No cryogenic machines, optical sources, instruments, chips, photon sensors, magnets, networked instruments, SCPI drivers, safety systems, real physical sensor measurements, or remote laboratory APIs are wired to this software.
+Every entry in the equipment atlas remains labeled **Reference only**. Independently, the Hardware Bridge includes customer-operated read-only SCPI/TCP and Modbus/TCP edge acquisition adapters, offline unverified browser previews, and a narrowly gated local SCPI analyzer single-sweep action requiring independently qualified safety/identity callbacks. There is no browser actuation, real physical QPU, certified PLC control, universal machine digital twin or general vendor-approved connectivity. See [physical integration boundaries](PHYSICAL_EQUIPMENT_INTEGRATION.md).
 
 An industry modeling matrix describes 10 domains: chemistry/materials, manufacturing, energy, logistics, finance, cryptography, networking, sensing, error-correction research and quantum control. A domain is only marked executable where the existing ideal circuit simulator supports a relevant circuit primitive; no complete domain-specific industrial solver is implied.
 
@@ -63,7 +63,7 @@ Release gates must include:
 - Chromium browser runs of the models, graphs, catalog filtering, QASM export, local persistence and responsive layout;
 - checks that unsupported entangled quantum circuits reject clearly, and all CSV/JSON outputs match actual executed seeds and shots.
 
-Potential subsequent stages (not included here) are validated pulse Hamiltonians with actual calibration, noise and error-correction models, external simulator interoperability, larger and constrained QUBO/QAOA optimization, chemistry Hamiltonians, secure customer accounts, real instrument drivers, and industry-specific operational workflows. Those cannot be honestly advertised as already connected.
+The later scientific and industry integration layers add a validated server-only QASM/MaxCut REST contract and Python client, local SCPI/Modbus telemetry adapters, and a diagonal I/Z/ZZ Hamiltonian energy analysis with finite-shot uncertainty and an actual QAOA parameter surface. See [industry API](INDUSTRY_INTEROPERABILITY_V1.md) and [Hamiltonian specification](SCIENTIFIC_HAMILTONIAN_ANALYSIS.md). Still absent: measured pulse-Hamiltonian calibration, full noncommuting chemistry models, full VQE, unrestricted QPU access, OPC UA/VISA and PLC command integrations, certified production safety controls and multi-tenant industrial SLAs.
 
 **Commercial claim supported by this work:** “MAH Quantum provides an exact, bounded, classical software platform for selected 1,000–4,096-logical-qubit circuit families with scientific analytics, reproducible experimentation, a bounded QAOA/MaxCut research companion, and quantum industrial equipment reference tools.”
 

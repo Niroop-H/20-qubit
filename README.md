@@ -85,3 +85,9 @@ python -m unittest discover -s sdk/python -p 'test_*.py'
 ```
 
 Passing offline CI does not establish third-party instrument compatibility, production safety certification, hosted API availability, quantum advantage, or commercial SLA readiness. Commissioning requires qualified vendor/site validation.
+
+## Scientific Hamiltonian and variational diagnostics
+
+The **1000+ Qubit** research console now includes a **Hamiltonian Lab** for statistically rigorous I/Z/ZZ diagonal observables over actual sampled bitstrings, editable and importable Ising coefficients, per-term expectation tables, sampled energy spectrum, Z–Z moment matrix, finite-shot confidence intervals, shot-budget planning, and SHA-256-linked analysis exports. The industrial MaxCut/QAOA bench additionally exports and visualizes all **108 actual coarse-grid γ/β objective evaluations**.
+
+These are executed *classical numerical experiments*. The Hamiltonian lab is not a general molecular chemistry, VQE, non-diagonal Hamiltonian, hardware calibration, or ground-state solver; the QAOA module uses only 2–10 decision variables, not the 1,000+ circuit engine. View [scientific equations, input contracts and validation](docs/SCIENTIFIC_HAMILTONIAN_ANALYSIS.md). Hardware and commercial operational capabilities remain limited as described above.
