@@ -4,6 +4,7 @@ import {Page} from "./lab/Shared";
 import {download} from "./services/projects";
 import {analyzeLargeCircuit,measuredHistogramStats,RESEARCH_TEMPLATES,RESEARCH_WIDTHS,templateQasm,type ResearchModel,type CircuitDiagnostic} from "../../engine/src/studio/research";
 import type {ScalableResult} from "../../engine/src/studio/scalable";
+import {compareScientificRuns,type ComparisonSample} from "../../engine/src/studio/research-comparison";
 import {QuantumResearchGraphs} from "./components/QuantumResearchGraphs";
 import QuantumIndustrialCatalog from "./components/QuantumIndustrialCatalog";
 import IndustrialQaoaWorkbench from "./components/IndustrialQaoaWorkbench";
@@ -45,6 +46,7 @@ export default function LargeQuantum(){
  const [tab,setTab]=useState<Tab>("workbench");
  const [result,setResult]=useState<ScalableResult|null>(null);
  const [executed,setExecuted]=useState<Saved|null>(null);
+ const [previousRun,setPreviousRun]=useState<ComparisonSample|null>(null);
  const [error,setError]=useState("");
  const [running,setRunning]=useState(false),[elapsed,setElapsed]=useState(0);
  const [stage,setStage]=useState("Idle");
@@ -77,6 +79,12 @@ export default function LargeQuantum(){
   }catch(e){return{data:null,error:e instanceof Error?e.message:String(e)};}
  },[draft.source]);
  const stats=useMemo(()=>result?measuredHistogramStats(result.counts):null,[result]);
+ const runComparison=useMemo(()=>{
+  if(!previousRun||!result||!executed)return null;
+  try{return compareScientificRuns(previousRun,{source:executed.source,method:result.method,
+   qubits:result.backendInfo.qubitCount,shots:result.backendInfo.shots,seed:result.seed,counts:result.counts});}
+  catch{return null;}
+ },[previousRun,result,executed]);
  const cleanResult=()=>{setResult(null);setExecuted(null);setError("");setSelectedOutcome(null);};
  const edit=(patch:Partial<Saved>)=>{setStorage("Saving changes…");setDraft(s=>({...s,...patch,updated:iso()}));cleanResult();};
  const loadModel=(id:ResearchModel,width=draft.n)=>{
@@ -136,7 +144,10 @@ export default function LargeQuantum(){
    const status:RunRecord["status"]=payload.result?"completed":"failed";
    setHistory(prev=>[{id:iso(),name:current.name,date:iso(),qubits:width,shots:current.shots,
     method:payload.result?.method||analysis.data!.method,duration,status},...prev].slice(0,24));
-   if(payload.result){setResult(payload.result);setExecuted(current);
+   if(payload.result){
+    if(result&&executed)setPreviousRun({source:executed.source,method:result.method,
+     qubits:result.backendInfo.qubitCount,shots:result.backendInfo.shots,seed:result.seed,counts:result.counts});
+    setResult(payload.result);setExecuted(current);
     log("Completed "+payload.result.backendInfo.shots+" shots, "+methodLabel(payload.result.method)+".","success");}
    else{setError(payload.error||"Computation finished without a result.");log(payload.error||"Simulation failed.","error");}
   };
@@ -149,7 +160,7 @@ export default function LargeQuantum(){
   deadlineRef.current=setTimeout(()=>finish({error:"120-second computation limit exceeded; reduce workload."}),jobLimitMs);
   try{worker.postMessage({source:current.source,shots:current.shots,seed:current.seed});}
   catch{finish({error:"Unable to transfer circuit to worker."});}
- },[draft,analysis,running,log]);
+ },[draft,analysis,running,log,result,executed]);
  const cancel=()=>{
   if(!workerRef.current)return;
   workerRef.current.terminate();workerRef.current=null;
@@ -363,7 +374,7 @@ export default function LargeQuantum(){
        <button disabled={running} onClick={()=>loadModel(m.id)}>Load executable model</button>
       </article>)}</div>
      </section>}
-     {tab==="graphs"&&<QuantumResearchGraphs diagnostic={analysis.data} result={result}/>}
+     {tab==="graphs"&&<QuantumResearchGraphs diagnostic={analysis.data} result={result} comparison={runComparison}/>}
      {tab==="equipment"&&<QuantumIndustrialCatalog/>}
      {tab==="optimization"&&<IndustrialQaoaWorkbench/>}
      {tab==="experiments"&&<div className="rq-experiments">
