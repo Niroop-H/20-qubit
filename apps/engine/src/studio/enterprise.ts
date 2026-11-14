@@ -61,7 +61,6 @@ const uint=(n:unknown,name:string,max:number,min:number)=>{
   throw new IndustryInputError(name+" must be an integer from "+min+" to "+max+".");
  return n;
 };
-const digest=(value:unknown)=>createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const sourceDigest=(source:string)=>createHash("sha256").update(source,"utf8").digest("hex");
 export function inspectIndustryCapability(){
  return {

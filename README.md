@@ -1,6 +1,6 @@
 # MAH Quantum™ Development Studio
 
-Developed by **Devashri S Quantum**. A free, browser-local quantum circuit simulator with a visual composer, executable OpenQASM editor, and circuit transpiler. No API key, paid service, or backend is required for the studio.
+Developed by **Devashri S Quantum**. A free-to-use, proprietary-source browser-local quantum circuit simulator with a visual composer, executable OpenQASM editor, and circuit transpiler. No API key, paid service, or backend is required for the studio.
 
 **Current research scope (November 2026):** exact dense statevector simulation through **20 qubits**, selected exact Clifford/separable/partitioned calculations in the **100-qubit Studio**, and a **1,000–4,096 logical-qubit research workspace** for mathematically tractable families. These are classical simulations, **not** access to a physical quantum processor or unrestricted universal thousands-of-qubits computation. See [scalability](docs/SCALABLE_QUANTUM_ENGINE.md), [1000+ tools](docs/1000PLUS_SCIENTIFIC_INDUSTRIAL_WORKBENCH.md), and [validation evidence](docs/TECHNICAL_VALIDATION_20_QUBIT.md).
 
@@ -91,3 +91,7 @@ Passing offline CI does not establish third-party instrument compatibility, prod
 The **1000+ Qubit** research console now includes a **Hamiltonian Lab** for statistically rigorous I/Z/ZZ diagonal observables over actual sampled bitstrings, editable and importable Ising coefficients, per-term expectation tables, sampled energy spectrum, Z–Z moment matrix, finite-shot confidence intervals, shot-budget planning, and SHA-256-linked analysis exports. The industrial MaxCut/QAOA bench additionally exports and visualizes all **108 actual coarse-grid γ/β objective evaluations**.
 
 These are executed *classical numerical experiments*. The Hamiltonian lab is not a general molecular chemistry, VQE, non-diagonal Hamiltonian, hardware calibration, or ground-state solver; the QAOA module uses only 2–10 decision variables, not the 1,000+ circuit engine. View [scientific equations, input contracts and validation](docs/SCIENTIFIC_HAMILTONIAN_ANALYSIS.md). Hardware and commercial operational capabilities remain limited as described above.
+
+### License and release boundary
+
+The hosted browser experience may be used without a subscription, but the source is **UNLICENSED / proprietary**. Free use does not grant open-source modification or redistribution rights. Industrial use of real equipment requires separate vendor/site qualification.

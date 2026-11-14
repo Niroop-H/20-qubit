@@ -19,6 +19,11 @@ jobs:
         run: npm audit --registry=https://registry.npmjs.org --omit=dev --audit-level=high
       - run: npm test
       - run: npm run build:web
+      - name: Validate all workspace access policy regression tests
+        run: |
+          mkdir -p artifacts/access
+          npx --no-install esbuild apps/web/src/access/engine.ts --bundle --platform=node --format=cjs --outfile=artifacts/access/engine.js
+          ACCESS_TEST_BUILD="$PWD/artifacts/access" node --test apps/web/tests/access.test.cjs
       - name: Verify protected industrial API serverless entrypoints
         run: node scripts/verify_industry_routes.mjs
       - run: node scripts/verify-20.mjs
