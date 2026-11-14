@@ -26,7 +26,7 @@ Each model generates a real bounded QASM circuit, is parsed with the existing va
 1. **Interaction network:** 32 contiguous logical register regions; line thickness equals the number of gate references crossing those regions. This is a circuit graph, not a physical device connectivity graph.
 2. **Gate distribution:** actual expanded gate operations by type, active wires, measurement operations and a greedy logical-depth estimate. Does not estimate real pulse lengths or T1/T2 times.
 3. **Sampled outcome histogram:** full measured counts available for export, top outcomes rendered for speed, normalized sampled frequency and empirical Shannon entropy. This entropy is *not* entanglement entropy.
-4. **Marginal bit measurements:** \`P(c_i=1)\`, empirical \`<Z_i>\` and normal-approximation 95% interval from sampled output counts. Intervals are approximate and can misrepresent uncertainty near 0 or 1.
+4. **Marginal bit measurements:** \`P(c_i=1)\`, empirical \`<Z_i>\` and Wilson-score 95% interval from sampled output counts. Intervals describe finite-shot sampling only and do not quantify hardware/systematic errors.
 5. **Two-bit correlations:** \`<Z_i Z_j>\` and connected \`<Z_i Z_j> - <Z_i><Z_j>\` from the same shots. These are measurement statistics, not by themselves proof of entanglement or hardware readout fidelity.
 6. **Density heatmap:** actual number of gate-operand references in logical register regions. It is not device activity or live laboratory telemetry.
 
