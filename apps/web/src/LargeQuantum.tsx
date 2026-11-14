@@ -149,7 +149,7 @@ export default function LargeQuantum(){
   deadlineRef.current=null;setRunning(false);setStage("Idle");
   setError("Execution cancelled.");log("Operator cancelled a local simulation.","info");
   setHistory(prev=>[{id:iso(),name:draft.name,date:iso(),qubits:analysis.data?.qubits||draft.n,
-   shots:draft.shots,method:analysis.data?.method||"unresolved",duration:0,status:"cancelled"},...prev].slice(0,24));
+   shots:draft.shots,method:analysis.data?.method||"unresolved",duration:0,status:"cancelled" as const},...prev].slice(0,24));
  };
  const exportExperiment=async()=>{
   if(!result||!executed||running)return;
