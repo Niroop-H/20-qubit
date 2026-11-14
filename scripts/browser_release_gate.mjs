@@ -41,7 +41,7 @@ async function main(){
   assert.equal(response?.status(),200);
   await page.getByRole("link",{name:/1000\+ Qubit workspace/i}).waitFor({timeout:25000});
   const copy=await page.locator(".landing").innerText();
-  assert.ok(copy.includes("CONTROLLED WORKSPACE ACCESS"));
+  assert.ok(copy.includes("CONTROLLED RESEARCH ACCESS"));
   assert.match(copy,/100\s+logical qubits/i);
   assert.ok(!copy.includes("NO SIGN-UP REQUIRED"));
   return{controlledAccessDisclosure:true,largeWorkspaceLinked:true};
@@ -283,7 +283,7 @@ async function main(){
   await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:30000});
   await page.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
   await page.getByRole("heading",{name:"Weighted graph optimization · quantum versus classical"}).waitFor({timeout:20000});
-  assert.ok((await page.locator(".rq-opt").innerText()).includes("2–10 qubits"));
+  assert.ok((await page.locator(".rq-opt").innerText()).includes("2–10-variable"));
   await page.getByRole("button",{name:"Run QAOA and classical reference"}).click();
   await page.getByRole("heading",{name:"Quantum/classical benchmark and reproducibility"}).waitFor({timeout:35000});
   await page.locator(".rq-opt-metrics").getByText("QAOA expectation / exact optimum").waitFor({timeout:35000});
