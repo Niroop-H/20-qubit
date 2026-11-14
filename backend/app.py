@@ -34,16 +34,36 @@ def application(environ, start_response):
     if method != 'POST':
         return respond('405 Method Not Allowed', {'error': 'Use POST'})
     try:
-        length = int(environ.get('CONTENT_LENGTH', '0') or 0)
-        if length < 1 or length > MAX_BYTES:
-            return respond('413 Payload Too Large', {'error': 'Expected JSON body of 1–16384 bytes'})
-        if not environ.get('CONTENT_TYPE', '').startswith('application/json'):
+        media_type = environ.get('CONTENT_TYPE', '').split(';', 1)[0].strip().lower()
+        if media_type != 'application/json':
             return respond('415 Unsupported Media Type', {'error': 'Use application/json'})
-        data = json.loads(environ['wsgi.input'].read(length))
+        length_header = environ.get('CONTENT_LENGTH')
+        if length_header is None or str(length_header).strip() == '':
+            if not environ.get('wsgi.input_terminated'):
+                return respond('411 Length Required', {'error': 'Provide Content-Length or supported chunked transfer encoding'})
+            # Bounded EOF-delimited chunked body exposed by supporting WSGI servers.
+            body = environ['wsgi.input'].read(MAX_BYTES + 1)
+            if len(body) > MAX_BYTES:
+                return respond('413 Payload Too Large', {'error': 'Maximum body size is 16384 bytes'})
+            if not body:
+                return respond('400 Bad Request', {'error': 'Expected a nonempty JSON body'})
+        else:
+            try:
+                length = int(length_header)
+            except (ValueError, TypeError):
+                return respond('400 Bad Request', {'error': 'Invalid Content-Length'})
+            if length < 1:
+                return respond('400 Bad Request', {'error': 'Expected a nonempty JSON body'})
+            if length > MAX_BYTES:
+                return respond('413 Payload Too Large', {'error': 'Maximum body size is 16384 bytes'})
+            body = environ['wsgi.input'].read(length)
+            if len(body) != length:
+                return respond('400 Bad Request', {'error': 'Incomplete JSON body'})
+        data = json.loads(body)
         if not isinstance(data, dict):
             raise ValueError('Expected JSON object')
         return respond('200 OK', {'modelVersion': '1.0', 'model': model, 'result': MODELS[model](data)})
-    except (ValueError, TypeError, OverflowError) as exc:
+    except (ValueError, TypeError, OverflowError, RecursionError, UnicodeDecodeError) as exc:
         return respond('400 Bad Request', {'error': str(exc)[:200]})
 
 

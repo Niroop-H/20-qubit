@@ -19,8 +19,10 @@ export interface IndustryHttpResponse{
  json(value:unknown):unknown;
 }
 function bearerValid(raw:unknown,secret:string):boolean{
- if(typeof raw!=="string"||!raw.startsWith("Bearer ")||raw.length>1200)return false;
- const candidate=raw.slice(7);
+ if(typeof raw!=="string"||raw.length>1200)return false;
+ const match=/^Bearer[ \t]+([^\s]+)[ \t]*$/i.exec(raw);
+ if(!match)return false;
+ const candidate=match[1];
  if(candidate.length<1||candidate.length>1024)return false;
  const hash=(s:string)=>createHash("sha256").update(s,"utf8").digest();
  return timingSafeEqual(hash(candidate),hash(secret));
@@ -73,9 +75,6 @@ export function serveIndustryHttp(
  }catch(error){
   if(error instanceof IndustryInputError)
    return write(res,error.status,{error:"invalid_industry_request",message:error.message});
-  return write(res,422,{
-   error:"unsupported_or_unavailable_workload",
-   message:error instanceof Error?error.message.slice(0,400):"The requested workload is unavailable."
-  });
+  return write(res,500,{error:"internal_execution_failure",message:"The operation failed internally; consult server logs."});
  }
 }
