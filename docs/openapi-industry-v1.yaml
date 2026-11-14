@@ -1,0 +1,289 @@
+openapi: 3.1.0
+info:
+  title: MAH Quantum Industry Research API
+  version: 1.0.0
+  description: |
+    Synchronous, bounded ideal quantum-circuit and weighted MaxCut research
+    simulation on classical hardware. No physical quantum hardware, industrial
+    control system, universal thousand-qubit statevector, durable job queue,
+    authenticated user identities, or uptime SLA.
+servers:
+  - url: https://YOUR-APPROVED-DOMAIN.example
+paths:
+  /api/v1/capabilities:
+    get:
+      operationId: getIndustryCapabilities
+      summary: Public read-only numerical capability negotiation
+      security: []
+      responses:
+        '200':
+          description: Bounded computational capabilities and limitations
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [schema, physicalQpu, formats]
+                properties:
+                  schema:
+                    const: MAH-Quantum-Industry-Capability/v1
+                  physicalQpu:
+                    const: false
+                  formats:
+                    type: object
+                    additionalProperties: true
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+  /api/v1/execute:
+    post:
+      operationId: executeIndustryJob
+      summary: Inspect or execute a bounded research job
+      security:
+        - IndustryBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/CircuitInspect'
+                - $ref: '#/components/schemas/CircuitExecute'
+                - $ref: '#/components/schemas/OptimizationExecute'
+      responses:
+        '200':
+          description: Completed bounded computation or circuit inspection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '422':
+          $ref: '#/components/responses/UnsupportedJob'
+        '503':
+          $ref: '#/components/responses/Disabled'
+  /api/v1/batch:
+    post:
+      operationId: executeIndustryBatch
+      summary: Execute up to three validated jobs synchronously (not queued)
+      security:
+        - IndustryBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [schema, jobs]
+              properties:
+                schema:
+                  const: MAH-Quantum-Industry-Batch/v1
+                jobs:
+                  type: array
+                  minItems: 1
+                  maxItems: 3
+                  items:
+                    oneOf:
+                      - $ref: '#/components/schemas/CircuitInspect'
+                      - $ref: '#/components/schemas/CircuitExecute'
+                      - $ref: '#/components/schemas/OptimizationExecute'
+      responses:
+        '200':
+          description: All bounded subjobs completed or inspected
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [schema, execution, items, total]
+                properties:
+                  schema:
+                    const: MAH-Quantum-Industry-Batch-Result/v1
+                  execution:
+                    const: synchronous
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JobResult'
+                  total:
+                    type: integer
+                    minimum: 1
+                    maximum: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnsupportedJob'
+        '503':
+          $ref: '#/components/responses/Disabled'
+components:
+  securitySchemes:
+    IndustryBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: server-only high entropy credential
+      description: Requires MAH_QUANTUM_INDUSTRY_API_KEY set in the server environment.
+  schemas:
+    BaseJob:
+      type: object
+      required: [schema, jobId, kind, operation]
+      properties:
+        schema:
+          const: MAH-Quantum-Industry-Job/v1
+        jobId:
+          type: string
+          pattern: '^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$'
+          maxLength: 64
+        kind:
+          type: string
+        operation:
+          type: string
+    CircuitInspect:
+      type: object
+      additionalProperties: false
+      required: [schema, jobId, kind, operation, source]
+      properties:
+        schema:
+          const: MAH-Quantum-Industry-Job/v1
+        jobId:
+          type: string
+          pattern: '^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$'
+        kind:
+          const: circuit
+        operation:
+          const: inspect
+        source:
+          type: string
+          description: OpenQASM 2.0 / supported QASM 3 subset, up to 100 KiB UTF-8.
+    CircuitExecute:
+      type: object
+      additionalProperties: false
+      required: [schema, jobId, kind, operation, source, shots, seed]
+      properties:
+        schema:
+          const: MAH-Quantum-Industry-Job/v1
+        jobId:
+          type: string
+          pattern: '^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$'
+        kind:
+          const: circuit
+        operation:
+          const: execute
+        source:
+          type: string
+          description: Supported QASM source; max 2048 logical qubits and 3072 gates.
+        shots:
+          type: integer
+          minimum: 1
+          maximum: 256
+        seed:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+    Edge:
+      type: object
+      required: [source, target, weight]
+      properties:
+        source:
+          type: integer
+          minimum: 0
+        target:
+          type: integer
+          minimum: 0
+        weight:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1000
+      additionalProperties: true
+    Graph:
+      type: object
+      required: [name, nodes, edges]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 110
+        nodes:
+          type: array
+          minItems: 2
+          maxItems: 10
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+        edges:
+          type: array
+          minItems: 1
+          maxItems: 45
+          items:
+            $ref: '#/components/schemas/Edge'
+        context:
+          type: string
+          maxLength: 400
+      additionalProperties: true
+      description: Positive undirected weighted MaxCut, no self edges or duplicates.
+    OptimizationExecute:
+      type: object
+      additionalProperties: false
+      required: [schema, jobId, kind, operation, graph, shots, seed]
+      properties:
+        schema:
+          const: MAH-Quantum-Industry-Job/v1
+        jobId:
+          type: string
+          pattern: '^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$'
+        kind:
+          const: optimization
+        operation:
+          const: execute
+        graph:
+          $ref: '#/components/schemas/Graph'
+        shots:
+          type: integer
+          minimum: 128
+          maximum: 1024
+        seed:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+    JobResult:
+      type: object
+      required: [schema, status, jobId, inputSha256, canonicalInputJson, physicalQpu]
+      properties:
+        schema:
+          const: MAH-Quantum-Industry-Result/v1
+        status:
+          enum: [completed, inspected]
+        jobId:
+          type: string
+        inputSha256:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        canonicalInputJson:
+          type: string
+          description: Hash this exact UTF-8 string to independently check inputSha256.
+        physicalQpu:
+          const: false
+        sourceSha256:
+          type: string
+        analysis:
+          type: object
+          additionalProperties: true
+        samples:
+          type: object
+          additionalProperties: true
+        result:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+  responses:
+    Unauthorized:
+      description: Missing or invalid server-only Bearer credential
+    Disabled:
+      description: API disabled pending server key configuration
+    UnsupportedJob:
+      description: Invalid job or mathematically unsupported workload
+    TooLarge:
+      description: Payload exceeds 128 KiB or QASM source exceeds 100 KiB
+    MethodNotAllowed:
+      description: Request method is not supported
