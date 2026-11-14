@@ -26,7 +26,8 @@ describe("scientific run comparison",()=>{
   const a=run({"00":60,"11":40}),b=run({"00":25,"11":75});
   const c=compareScientificRuns(a,b);
   near(c.totalVariationDistance!,.35);
-  near(c.mostChanged[0].absoluteDelta,.35);
+  assert.ok(c.mostChanged.length>0);
+  near(c.mostChanged[0]!.absoluteDelta,.35);
  });
  it("forbids direct numerical comparison of different QASM, solvers or widths",()=>{
   const a=run({"00":128});
