@@ -91,6 +91,8 @@ describe("1000+ scientific research workbench",()=>{
   assert.throws(()=>pairCorrelation({"01":3},0,0),/distinct/);
   assert.throws(()=>measuredBit({"a1":3},0),/Malformed/);
   assert.throws(()=>measuredBit({"10":-1},0),/Malformed/);
+  const boundary=measuredBit({"0":100},0);
+  assert.ok(boundary.normal95[1]>0,"Wilson interval must not claim zero uncertainty after 100 zeros");
   assert.throws(()=>templateQasm(999,"plus"),/1,000/);
   assert.throws(()=>templateQasm(4097,"plus"),/4,096/);
  });
