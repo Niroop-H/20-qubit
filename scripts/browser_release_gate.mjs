@@ -535,6 +535,7 @@ async function main(){
  await test("Hamiltonian laboratory evaluates actual GHZ shots with traceable finite-shot estimates",async()=>{
   await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
   await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:25000});
+  await page.getByRole("combobox",{name:"Large circuit qubit count"}).selectOption("1000");
   await page.getByRole("combobox",{name:"Large circuit preset"}).selectOption("ghz");
   await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("128");
   await page.getByRole("button",{name:"Run quantum circuit"}).click();
