@@ -18,9 +18,9 @@ await build({
  packages:"external"
 });
 const require=createRequire(import.meta.url);
-const execute=require(resolve(root,"execute.cjs")).default;
-const batch=require(resolve(root,"batch.cjs")).default;
-const caps=require(resolve(root,"capabilities.cjs")).default;
+const execute=require(resolve(root,"v1/execute.cjs")).default;
+const batch=require(resolve(root,"v1/batch.cjs")).default;
+const caps=require(resolve(root,"v1/capabilities.cjs")).default;
 const legacy=require(resolve(root,"circuit/simulate.cjs")).default;
 const health=require(resolve(root,"health.cjs")).default;
 const evidence=[];
