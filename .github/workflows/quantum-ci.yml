@@ -15,6 +15,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Audit production dependencies against npm advisories
+        run: npm audit --registry=https://registry.npmjs.org --omit=dev --audit-level=high
       - run: npm test
       - run: npm run build:web
       - name: Verify protected industrial API serverless entrypoints
