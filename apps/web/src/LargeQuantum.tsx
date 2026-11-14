@@ -8,9 +8,10 @@ import {compareScientificRuns,type ComparisonSample} from "../../engine/src/stud
 import {QuantumResearchGraphs} from "./components/QuantumResearchGraphs";
 import QuantumIndustrialCatalog from "./components/QuantumIndustrialCatalog";
 import IndustrialQaoaWorkbench from "./components/IndustrialQaoaWorkbench";
+import IndustryIntegrations from "./components/IndustryIntegrations";
 import "./large-quantum.css";
 
-type Tab="workbench"|"models"|"graphs"|"equipment"|"optimization"|"experiments";
+type Tab="workbench"|"models"|"graphs"|"equipment"|"optimization"|"integrations"|"experiments";
 type Log={date:string;message:string;level:"info"|"error"|"success"};
 type Saved={id:string;name:string;source:string;n:number;shots:number;seed:number;model:ResearchModel|"custom";updated:string};
 type RunRecord={id:string;name:string;date:string;qubits:number;shots:number;method:string;duration:number;status:"completed"|"failed"|"cancelled"};
@@ -211,6 +212,7 @@ export default function LargeQuantum(){
   workbench:"Quantum computation workbench",models:"Executable research models",
   graphs:"Computed scientific graphs",equipment:"Industrial equipment & application atlas",
   optimization:"Industrial optimization · verified QAOA & classical",
+  integrations:"Industry software / quantum engine interoperability",
   experiments:"Experiment management & local job history"
  }[tab];
  const navItems:Array<{key:Tab;name:string;detail:string}>=[
@@ -219,6 +221,7 @@ export default function LargeQuantum(){
   {key:"graphs",name:"Scientific Graphs",detail:"Real statistics & connectivity"},
   {key:"equipment",name:"Equipment Atlas",detail:"Physical instrument references"},
   {key:"optimization",name:"Industrial Optimization",detail:"QAOA vs exact classical"},
+  {key:"integrations",name:"Integration Bridge",detail:"REST jobs & Python SDK"},
   {key:"experiments",name:"Experiment Library",detail:"Saved circuits & run history"}
  ];
  return <Page eyebrow="MAH QUANTUM / SCIENTIFIC COMPUTING" title="1000+ Qubit"
@@ -245,7 +248,7 @@ export default function LargeQuantum(){
    </div>
    <div className={focus?"rq-layout rq-focused":"rq-layout"}>
     <nav className="rq-rail" aria-label="Quantum research tools">
-     <div className="rq-rail-title"><span>RESEARCH MODULES</span><b>01–06</b></div>
+     <div className="rq-rail-title"><span>RESEARCH MODULES</span><b>01–07</b></div>
      {navItems.map((item,i)=><button key={item.key} aria-current={tab===item.key?"page":undefined}
       onClick={()=>{setTab(item.key);setFocus(false);window.scrollTo({top:0,behavior:"auto"});}}>
       <span className="rq-nav-index">{String(i+1).padStart(2,"0")}</span><span><strong>{item.name}</strong><small>{item.detail}</small></span></button>)}
@@ -377,6 +380,7 @@ export default function LargeQuantum(){
      {tab==="graphs"&&<QuantumResearchGraphs diagnostic={analysis.data} result={result} comparison={runComparison}/>}
      {tab==="equipment"&&<QuantumIndustrialCatalog/>}
      {tab==="optimization"&&<IndustrialQaoaWorkbench/>}
+     {tab==="integrations"&&<IndustryIntegrations source={draft.source} shots={draft.shots} seed={draft.seed} analysis={analysis.data}/>}
      {tab==="experiments"&&<div className="rq-experiments">
       <div className="rq-heading"><span>REPRODUCIBILITY / LONG-SESSION RESEARCH</span><h2>Saved circuits, job history and export</h2>
        <p>Only bounded QASM snapshots and recent run metadata persist locally. Measurement distributions are not saved to history. Export important results before leaving the page.</p></div>
