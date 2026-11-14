@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from "react";
-import {validateIndustrialGraph,type IndustrialGraph,type IndustrialOptimizationResult} from "../../engine/src/studio/industrial";
+import {validateIndustrialGraph,type IndustrialGraph,type IndustrialOptimizationResult} from "../../../engine/src/studio/industrial";
 import {SCENARIOS,type Scenario} from "../services/industrial-research-examples";
 import {download} from "../services/projects";
 type WorkerResponse={result?:IndustrialOptimizationResult;error?:string};
