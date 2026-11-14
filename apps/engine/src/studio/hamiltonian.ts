@@ -111,7 +111,7 @@ export function analyzeIsingSamples(modelInput:unknown,counts:Record<string,numb
  const edgeSums=new Map<string,number>(
   model.couplings.map(t=>[t.a+":"+t.b,0]));
  const spin=(bits:string,index:number)=>bits[width-index-1]==="1"?-1:1;
- let meanSum=0,energy2Sum=0;
+ let meanSum=0;
  let min:null|{bits:string;energy:number;shots:number}=null;
  let max:null|{bits:string;energy:number;shots:number}=null;
  for(const [bits,count] of entries){
@@ -125,7 +125,7 @@ export function analyzeIsingSamples(modelInput:unknown,counts:Record<string,numb
   for(const t of model.couplings)energy+=t.weight*spin(bits,t.a)*spin(bits,t.b);
   if(!Number.isFinite(energy))throw Error("Energy exceeded finite numeric precision.");
   energies.push({bits,count,energy});
-  meanSum+=energy*count;energy2Sum+=energy*energy*count;
+  meanSum+=energy*count;
   if(!min||energy<min.energy||(energy===min.energy&&bits<min.bits))
    min={bits,energy,shots:count};
   if(!max||energy>max.energy||(energy===max.energy&&bits<max.bits))
@@ -150,11 +150,11 @@ export function analyzeIsingSamples(modelInput:unknown,counts:Record<string,numb
   {label:"Offset · I",weight:model.offset,expectation:1,contribution:model.offset},
   ...model.fields.map(t=>{
    const expectation=zSum.get(t.bit)!/shots;
-   return{label:"Z(c"+t.bit+")",weight:t.weight,expectation,contribution:t.weight*expectation};
+   return{label:"Z(c"+t.bit+")",weight:t.weight,expectation,contribution:t.weight*expectation+0};
   }),
   ...model.couplings.map(t=>{
    const expectation=edgeSums.get(t.a+":"+t.b)!/shots;
-   return{label:"Z(c"+t.a+")·Z(c"+t.b+")",weight:t.weight,expectation,contribution:t.weight*expectation};
+   return{label:"Z(c"+t.a+")·Z(c"+t.b+")",weight:t.weight,expectation,contribution:t.weight*expectation+0};
   })
  ];
  // Up to eight active classical bits for an interpretable, bounded Z/ZZ matrix.
