@@ -312,3 +312,32 @@
 .rq-comparison-metrics strong{font:600 15px/1.4 ui-monospace,Consolas,monospace;color:#f0dfb5;overflow-wrap:anywhere}
 @media(max-width:850px){.rq-comparison-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.rq-comparison-metrics{grid-template-columns:1fr}}
+
+
+/* Research interoperability gateway: no browser secrets, clear engineering contract. */
+.rq-integration{border:1px solid #34556e;background:linear-gradient(155deg,#12283c,#0b1927);border-radius:10px;padding:22px;min-width:0}
+.rq-integration-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:18px}
+.rq-integration-stats>div{padding:14px;background:#10273a;border:1px solid #34546c;border-radius:8px;display:flex;flex-direction:column;gap:7px}
+.rq-integration-stats strong{font:600 14px/1.4 ui-monospace,Consolas,monospace;color:#e9d5a4}
+.rq-integration-stats span{font-size:10px;color:#a4bfce}
+.rq-integration>section.rq-panel{margin-bottom:14px}
+.rq-integration-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:13px;margin-bottom:14px}
+.rq-integration-label{display:flex;flex-direction:column;gap:7px;font-size:11px;color:#b4cada;margin:13px 0}
+.rq-integration-label input,.rq-integration-label select,.rq-integration-label textarea{width:100%;background:#091e30;border:1px solid #45647a;color:#edf7fe;border-radius:6px;padding:10px;min-width:0;font:11px/1.6 ui-monospace,Consolas,monospace}
+.rq-integration-label textarea{min-height:240px;resize:vertical;max-height:480px}
+.rq-integration-metrics{display:flex;flex-wrap:wrap;gap:9px;padding:13px;background:#142d40;border:1px solid #36566a;border-radius:7px}
+.rq-integration-metrics>span{display:flex;flex-direction:column;font-size:10px;color:#adc5d4;flex:1;gap:5px}
+.rq-integration-metrics strong{font:600 15px ui-monospace,monospace;color:#f3e2b8}
+.rq-integration-metrics p{color:#aec3d1!important;font-size:10px!important;line-height:1.8!important;margin:9px 0 0!important;width:100%}
+.rq-integration-buttons{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.rq-integration-buttons button,.rq-integration-code-title button{padding:10px 12px;background:#1b3c50;border:1px solid #55778c;color:#eff5fc;border-radius:6px;font:600 10px Inter,'Segoe UI',sans-serif}
+.rq-integration-buttons button:first-child{background:linear-gradient(125deg,#ecd6a3,#d6b774);color:#26313a;border-color:#edd9a8}
+.rq-integration-buttons button:disabled{opacity:.42;cursor:not-allowed}
+.rq-integration-error{background:#412331;border:1px solid #975969;color:#ffd3cc!important;border-radius:6px;padding:11px;font-size:10px!important;line-height:1.7!important}
+.rq-integration-code-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0 8px}
+.rq-integration-code-title strong{font:600 11px ui-monospace,monospace;color:#d8e8f3}
+.rq-integration-code-title button{padding:6px 10px}
+.rq-integration-code{padding:14px;background:#061521;border:1px solid #2f4d62;border-radius:8px;color:#c8e8f3;font:10px/1.8 ui-monospace,Consolas,monospace;overflow:auto;white-space:pre}
+.rq-integration-boundary p{font-size:11px!important;line-height:1.8!important;color:#a7bfce!important}
+@media(max-width:1120px){.rq-integration-grid{grid-template-columns:1fr}.rq-integration-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:610px){.rq-integration{padding:13px}.rq-integration-stats>div{padding:11px}.rq-integration-stats strong{font-size:11px}.rq-integration-stats span{font-size:9px}.rq-integration-buttons button{flex:1}}
