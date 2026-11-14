@@ -80,7 +80,7 @@ export function useExecutionBudget(){
   }
  },[]);
  const server=remote!==null&&!networkFallback;
- const remoteWaiting=!!remote&&remote.retryAt>now&&!remote.allowed;
+ const remoteWaiting=!!remote&&remote.retryAt>now&&remote.remaining===0;
  const localWaiting=budget.cooldownUntil>now;
  const waiting=server?remoteWaiting:localWaiting;
  const remaining=server?(remote!.retryAt>0&&now>=remote!.retryAt?BROWSER_EXECUTION_LIMIT:remote!.remaining):

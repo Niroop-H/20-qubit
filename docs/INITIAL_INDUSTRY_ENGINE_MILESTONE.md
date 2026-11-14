@@ -3,7 +3,7 @@
 ## Delivered on this branch
 
 1. Both QASM 2/3 parsers lower 11 additional standard composite gates using a shared primitive gate library. Numerically checked controlled phase, controlled rotations, ZZ parity phase, controlled Y/H, Fredkin, CCZ and iSWAP. Per-parser expanded operation ceilings still apply.
-2. Browser workspace: a shared 20-run allowance across Studio, the 1000+ Qubit circuit executor and the industrial QAOA tool. The 20th launch starts a five-hour cooldown. Credits renew to 20 at expiry. Clear browser site data and the browser budget resets. No network identifier is obtained by browser JavaScript.
+2. Browser workspace: a shared 20-run allowance across Studio, the 1000+ Qubit circuit executor and industrial QAOA, using the server network quota endpoint when configured. The 20th launch starts a five-hour cooldown; a new 20-run allowance follows. In offline/deployment-unavailable fallback mode the local browser counter resets when clearing site data. Browser JavaScript never obtains a network identifier.
 3. Industrial API: 20 execute credits per observed network address, five-hour cooldown, batch-weight accounting, input and budget preflight before charging, no stored raw IP address (only an ephemeral keyed HMAC counter). Inspect-only requests are free.
 4. CI and regression tests cover QASM extensions and local/network allowance math.
 
@@ -20,4 +20,4 @@
 
 ## Operational limits
 
-Client-side workers execute fully on users' devices: an HTTP network quota cannot protect a purely offline JavaScript computation. The local counter is a convenience feature and is not anti-abuse protection. A fully enforceable policy requires moving protected compute to authenticated server-managed jobs and a shared server-side quota ledger. The current API quota is also per-process, so it is insufficient for reliable production-wide metering. Machine safety and identity are separate controls, never inferred from an IP address.
+Client-side workers execute fully on users' devices: an HTTP network permit for the normal website UI cannot prevent someone directly running the public JavaScript engine offline. When configured, the server route improves browser-reset resistance for normal users, but is not a secure paywall. Without a quota secret, the visible local fallback resets on site-data clearing. A fully enforceable policy requires authenticated server-managed compute jobs and a shared server-side quota ledger. The current API quota is also per-process and insufficient for reliable production-wide metering. Machine safety and identity are separate controls, never inferred from an IP address.
