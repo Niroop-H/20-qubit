@@ -10,9 +10,10 @@ import QuantumIndustrialCatalog from "./components/QuantumIndustrialCatalog";
 import IndustrialQaoaWorkbench from "./components/IndustrialQaoaWorkbench";
 import IndustryIntegrations from "./components/IndustryIntegrations";
 import HardwareResearchBridge from "./components/HardwareResearchBridge";
+import HamiltonianWorkbench from "./components/HamiltonianWorkbench";
 import "./large-quantum.css";
 
-type Tab="workbench"|"models"|"graphs"|"equipment"|"optimization"|"integrations"|"hardware"|"experiments";
+type Tab="workbench"|"models"|"graphs"|"hamiltonian"|"equipment"|"optimization"|"integrations"|"hardware"|"experiments";
 type Log={date:string;message:string;level:"info"|"error"|"success"};
 type Saved={id:string;name:string;source:string;n:number;shots:number;seed:number;model:ResearchModel|"custom";updated:string};
 type RunRecord={id:string;name:string;date:string;qubits:number;shots:number;method:string;duration:number;status:"completed"|"failed"|"cancelled"};
@@ -211,7 +212,7 @@ export default function LargeQuantum(){
  const shownHistory=history.slice(0,24);
  const headerText={
   workbench:"Quantum computation workbench",models:"Executable research models",
-  graphs:"Computed scientific graphs",equipment:"Industrial equipment & application atlas",
+  graphs:"Computed scientific graphs",hamiltonian:"Diagonal Hamiltonian & uncertainty laboratory",equipment:"Industrial equipment & application atlas",
   optimization:"Industrial optimization · verified QAOA & classical",
   integrations:"Industry software / quantum engine interoperability",
   hardware:"Laboratory instrumentation and industrial edge gateway",
@@ -221,6 +222,7 @@ export default function LargeQuantum(){
   {key:"workbench",name:"Circuit Workbench",detail:"QASM, solver & output"},
   {key:"models",name:"Research Models",detail:"8 executable templates"},
   {key:"graphs",name:"Scientific Graphs",detail:"Real statistics & connectivity"},
+  {key:"hamiltonian",name:"Hamiltonian Lab",detail:"Z/ZZ energy, errors & observables"},
   {key:"equipment",name:"Equipment Atlas",detail:"Physical instrument references"},
   {key:"optimization",name:"Industrial Optimization",detail:"QAOA vs exact classical"},
   {key:"integrations",name:"Integration Bridge",detail:"REST jobs & Python SDK"},
@@ -249,9 +251,16 @@ export default function LargeQuantum(){
     <div><b>1,024</b><small>Maximum sampled shots</small></div>
     <div><b>3 METHODS</b><small>Exact supported circuit families</small></div>
    </div>
+   <div className="rq-science-telemetry" aria-label="Live scientific preflight and execution status">
+    <div><span>REGISTER</span><strong>{analysis.data?analysis.data.qubits.toLocaleString("en-US")+" logical qubits":"INVALID CIRCUIT"}</strong></div>
+    <div><span>PARSED GATES</span><strong>{analysis.data?analysis.data.operations.toLocaleString("en-US")+" / 8,192":"NOT AVAILABLE"}</strong></div>
+    <div><span>SELECTED SOLVER</span><strong>{analysis.data?methodLabel(analysis.data.method):"PREFLIGHT REQUIRED"}</strong></div>
+    <div><span>LAST EXECUTION</span><strong>{running?"RUNNING · "+stage:result?result.backendInfo.shots+" SAMPLED SHOTS":"NOT RUN"}</strong></div>
+    <div><span>DEVICE PROVENANCE</span><strong>IDEAL / SOFTWARE ONLY</strong></div>
+   </div>
    <div className={focus?"rq-layout rq-focused":"rq-layout"}>
     <nav className="rq-rail" aria-label="Quantum research tools">
-     <div className="rq-rail-title"><span>RESEARCH MODULES</span><b>01–08</b></div>
+     <div className="rq-rail-title"><span>RESEARCH MODULES</span><b>01–09</b></div>
      {navItems.map((item,i)=><button key={item.key} aria-current={tab===item.key?"page":undefined}
       onClick={()=>{setTab(item.key);setFocus(false);window.scrollTo({top:0,behavior:"auto"});}}>
       <span className="rq-nav-index">{String(i+1).padStart(2,"0")}</span><span><strong>{item.name}</strong><small>{item.detail}</small></span></button>)}
@@ -381,6 +390,7 @@ export default function LargeQuantum(){
       </article>)}</div>
      </section>}
      {tab==="graphs"&&<QuantumResearchGraphs diagnostic={analysis.data} result={result} comparison={runComparison}/>}
+     {tab==="hamiltonian"&&<HamiltonianWorkbench result={result} executedSource={executed?.source||null} currentBits={analysis.data?.bits||1000} onOpenCircuit={()=>{setTab("workbench");window.scrollTo({top:0,behavior:"auto"});}}/>}
      {tab==="equipment"&&<QuantumIndustrialCatalog/>}
      {tab==="optimization"&&<IndustrialQaoaWorkbench/>}
      {tab==="integrations"&&<IndustryIntegrations source={draft.source} shots={draft.shots} seed={draft.seed} analysis={analysis.data}/>}
