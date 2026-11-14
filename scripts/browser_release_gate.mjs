@@ -342,6 +342,25 @@ async function main(){
    return{viewportPx:390,industrialPagePx:widths.page,graphsPagePx:after.page,ranOptimization:true};
   }finally{await context.close();}
  });
+ await test("Capture reproducible scientific workbench and industrial interface visual evidence",async()=>{
+  mkdirSync("artifacts",{recursive:true});
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
+  await page.screenshot({path:"artifacts/research-console-desktop.png",fullPage:true});
+  await page.locator(".rq-rail>button").filter({hasText:"Research Models"}).click();
+  await page.locator(".rq-model-card").first().waitFor({timeout:12000});
+  await page.screenshot({path:"artifacts/research-models-desktop.png",fullPage:true});
+  await page.locator(".rq-rail>button").filter({hasText:"Scientific Graphs"}).click();
+  await page.locator(".rq-graph-grid").waitFor({timeout:12000});
+  await page.screenshot({path:"artifacts/research-graphs-desktop.png",fullPage:true});
+  await page.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+  await page.getByRole("button",{name:"Run QAOA and classical reference"}).click();
+  await page.locator(".rq-opt-metrics").waitFor({timeout:30000});
+  await page.screenshot({path:"artifacts/industrial-optimization-desktop.png",fullPage:true});
+  return{visuals:["research-console-desktop.png","research-models-desktop.png",
+   "research-graphs-desktop.png","industrial-optimization-desktop.png"],
+   source:"actual production-build Chromium"};
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
