@@ -11,7 +11,8 @@ const secret="offline-fail-closed-integration-test-secret-2026";
 const root=resolve("artifacts/industry-route-build");
 mkdirSync(root,{recursive:true});
 await build({
- entryPoints:["api/v1/execute.ts","api/v1/batch.ts","api/v1/capabilities.ts"],
+ entryPoints:["api/v1/execute.ts","api/v1/batch.ts","api/v1/capabilities.ts",
+  "api/circuit/simulate.ts","api/health.ts"],
  outdir:root,bundle:true,platform:"node",format:"cjs",target:"node22",
  outExtension:{".js":".cjs"},logLevel:"silent",
  packages:"external"
@@ -20,6 +21,8 @@ const require=createRequire(import.meta.url);
 const execute=require(resolve(root,"execute.cjs")).default;
 const batch=require(resolve(root,"batch.cjs")).default;
 const caps=require(resolve(root,"capabilities.cjs")).default;
+const legacy=require(resolve(root,"circuit/simulate.cjs")).default;
+const health=require(resolve(root,"health.cjs")).default;
 const evidence=[];
 function invoke(handler,method,body,authorization="Bearer "+secret,headers={}){
  const out={headers:{},status:0,data:null};
@@ -55,6 +58,21 @@ try{
   assert.equal(r.data.physicalInstrumentControl,false);
   assert.equal(r.data.formats.circuit.executeMaxLogicalQubits,2048);
   return{httpStatus:r.status};
+ });
+ test("Former unauthenticated compatibility route refuses execution without wildcard CORS",()=>{
+  const r=invoke(legacy,"POST",{qubits:1,shots:128,steps:[]});
+  assert.equal(r.status,410);
+  assert.equal(r.headers["access-control-allow-origin"],undefined);
+  assert.match(r.data.message,/authenticated/);
+  return{retired:true,noAnonymousExecution:true};
+ });
+ test("Public health route advertises scoped capabilities, not unsupported physical hardware",()=>{
+  const r=invoke(health,"GET",null,"");
+  assert.equal(r.status,200);
+  assert.equal(r.data.denseStatevectorMaxQubits,20);
+  assert.equal(r.data.authenticatedRemoteExecuteMaxQubits,2048);
+  assert.equal(r.data.physicalQuantumProcessor,false);
+  return{maxDenseQubits:20,remoteMax:2048};
  });
  test("Actual serverless QASM route rejects unauthenticated operator",()=>{
   const r=invoke(execute,"POST",qjob,"Bearer bad");
