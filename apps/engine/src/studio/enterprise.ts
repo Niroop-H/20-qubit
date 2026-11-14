@@ -149,7 +149,7 @@ export const INDUSTRY_MAX_BATCH_WORK=160_000_000;
 export function estimateIndustryWork(p:PreparedJob):number{
  if("graph" in p){
   const n=p.graph.nodes.length;
-  return 2**n*(180*n+200);
+  return 2**n*(600*n+500);
  }
  if(p.job.operation==="inspect")return 50000+p.program.steps.length*24;
  const {program,method}=p,n=program.qubits,shots=p.job.shots!;

@@ -48,9 +48,10 @@ describe("industrial 2–10-variable quantum optimization companion",()=>{
   assert.equal(r.execution.completedShots,512);
   assert.equal(r.execution.logicalQubits,2);
   assert.equal(r.execution.physicalHardware,false);
-  assert.equal(r.landscape.gammaPoints,12);
+  assert.equal(r.landscape.gammaPoints,36);
   assert.equal(r.landscape.betaPoints,9);
-  assert.equal(r.landscape.samples.length,108);
+  assert.equal(r.landscape.gammaSpans.length,3);
+  assert.equal(r.landscape.samples.length,324);
   for(const p of r.landscape.samples){
    const prob=qaoaDistribution(validateIndustrialGraph(pair),p.gamma,p.beta);
    const mean=Array.from(prob,(v,mask)=>v*cutObjective(validateIndustrialGraph(pair),mask)).reduce((a,b)=>a+b,0);
