@@ -10,7 +10,8 @@ from pathlib import Path
 from mah_quantum_hardware import (
     ApprovedAction, DeviceProfile, HardwareError, SCPISession,
     authorize_single_sweep, detect_configured, load_profiles,
-    run_approved_sweep, snapshot, telemetry_to_parameter_job
+    run_approved_sweep, snapshot, telemetry_to_parameter_job,
+    sign_hardware_snapshot, verify_hardware_snapshot
 )
 
 
@@ -184,15 +185,30 @@ class TestRealHardwareGateway(unittest.TestCase):
         self.assertNotIn("INIT:IMM", self.instrument.commands)
 
     def test_approved_telemetry_can_feed_real_quantum_engine_job_without_device_writes(self):
-        reading = snapshot(self.profile)
+        reading = sign_hardware_snapshot(snapshot(self.profile),
+            "independent-hardware-edge-test-hmac-key-2026")
+        self.assertTrue(verify_hardware_snapshot(reading,"independent-hardware-edge-test-hmac-key-2026"))
         job = telemetry_to_parameter_job(reading,
              channel="marker_level", scale=.01, offset=0, job_id="pilot-telemetry",
-             shots=128, seed=42)
+             shots=128, seed=42,
+             attestation_key="independent-hardware-edge-test-hmac-key-2026")
         self.assertEqual(job["schema"], "MAH-Quantum-Industry-Job/v1")
         self.assertEqual(job["kind"], "circuit")
         self.assertIn("ry(-0.2375)", job["source"])
         self.assertEqual(job["seed"], 42)
         self.assertNotIn("INIT:IMM", self.instrument.commands)
+
+    def test_tampering_and_missing_attestation_cannot_feed_quantum_engine(self):
+        secret="independent-hardware-edge-test-hmac-key-2026"
+        unsigned=snapshot(self.profile)
+        with self.assertRaises(ValueError):
+            telemetry_to_parameter_job(unsigned,channel="marker_level",scale=.01,
+                                       offset=0,job_id="untrusted",attestation_key=secret)
+        signed=sign_hardware_snapshot(unsigned,secret)
+        signed["measurements"][0]["value"]=999
+        with self.assertRaisesRegex(ValueError,"integrity"):
+            telemetry_to_parameter_job(signed,channel="marker_level",scale=.01,
+                                       offset=0,job_id="tampered",attestation_key=secret)
 
     def test_profile_file_validation_rejects_public_addresses_and_unknown_reads(self):
         for ip in ("8.8.8.8", "localhost", "224.0.0.1", "0.0.0.0"):
