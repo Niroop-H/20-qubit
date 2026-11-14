@@ -38,4 +38,6 @@ jobs:
             artifacts/preannouncement-release-gate.json
             artifacts/partitioned-independent-validation.json
             artifacts/browser-release-gate.json
+            artifacts/research-*.png
+            artifacts/industrial-optimization-desktop.png
           if-no-files-found: ignore
