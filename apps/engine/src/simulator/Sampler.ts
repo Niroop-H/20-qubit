@@ -20,7 +20,7 @@ export class Sampler {
     seed = 42
   ): { counts: Record<string, number>; measuredProbs: Record<string, number> } {
     if(!Number.isInteger(numQubits)||numQubits<1||numQubits>20||
-       probs.length!==2**numQubits||!Number.isInteger(shots)||shots<1||shots>8192||
+       probs.length!==2**numQubits||!Number.isInteger(shots)||shots<1||shots>100000||
        !Number.isInteger(seed)||seed<0||seed>4294967295)
       throw Error("Invalid seeded sampling dimensions or shot request.");
     const stateSize = probs.length,rng=seededRandom(seed);

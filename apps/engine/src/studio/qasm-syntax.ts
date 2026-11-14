@@ -57,6 +57,6 @@ export function readQuantumOperation(statement:string):QuantumOperation{
   rest=rest.slice(close+1);
  }
  if(!rest||!/^\s/.test(rest)||!rest.trim())
-  throw Error("Gate must be followed by quantum operands.");
+  throw Error("Unsupported gate syntax: expected quantum operands.");
  return{kind:"gate",name:name[0].toLowerCase(),angles,operands:rest.trim()};
 }
