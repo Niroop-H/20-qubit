@@ -347,9 +347,13 @@ async function main(){
   await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
   await page.locator(".rq-rail>button").filter({hasText:"Research Models"}).click();
   await page.locator(".rq-model-card").first().waitFor({timeout:10000});
-  await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+  await page.evaluate(()=>{
+   document.documentElement.style.scrollBehavior="auto";
+   document.body.style.scrollBehavior="auto";
+   window.scrollTo({top:document.documentElement.scrollHeight,behavior:"instant"});
+  });
+  await page.waitForFunction(()=>window.scrollY>100,null,{timeout:10000});
   const before=await page.evaluate(()=>window.scrollY);
-  assert.ok(before>100,"Expected long research model page to be scrollable");
   await page.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
   await page.waitForFunction(()=>window.scrollY<5,null,{timeout:10000});
   assert.equal(await page.locator(".rq-rail>button[aria-current=page]").count(),1);
