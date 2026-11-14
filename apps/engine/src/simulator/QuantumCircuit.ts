@@ -171,6 +171,7 @@ export class QuantumCircuit {
    *   [c_{i0}']   [u00 u01] [c_{i0}]
    *   [c_{i1}'] = [u10 u11] [c_{i1}]
    */
+  public applySingleQubitGate(target: number, u: ComplexMatrix2x2): void {
     this.checkQubit(target);
     const bit = 1 << target;
     const uR = u.real;
@@ -200,6 +201,7 @@ export class QuantumCircuit {
    * Apply controlled-U gate: apply unitary U to `target` qubit only when
    * `control` qubit is |1⟩. Iterates only over states where control bit is set.
    */
+  public applyControlledGate(control: number, target: number, u: ComplexMatrix2x2): void {
     this.checkQubit(control);this.checkQubit(target);
     if(control===target)throw Error("Controlled gate requires distinct qubits.");
     const cBit = 1 << control;
@@ -268,6 +270,7 @@ export class QuantumCircuit {
    * SWAP gate: exchanges amplitudes of two qubits.
    * For each state where q0 and q1 differ, swap the amplitudes.
    */
+  public applySwap(q0: number, q1: number): void {
     this.checkQubit(q0);this.checkQubit(q1);
     if(q0===q1)throw Error("SWAP requires distinct qubits.");
     const b0 = 1 << q0;
