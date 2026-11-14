@@ -108,13 +108,13 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
   <div className="rq-heading">
    <span>09 / HAMILTONIAN &amp; OBSERVABLES</span>
    <h2>Diagonal Ising analysis laboratory</h2>
-   <p>Apply a precisely defined I / Z / ZZ Hamiltonian to your <strong>actual sampled classical bitstrings</strong>. Inspect energy statistics, finite-shot uncertainty, term contributions and spin correlations. This is numerical post-processing of the executed circuit, never fabricated live hardware data.</p>
+   <p>Apply an I / Z / ZZ Hamiltonian to <strong>your completed circuit outputs</strong>. Inspect energy statistics, finite-shot uncertainty, term contributions and spin correlations, then export reproducible scientific evidence.</p>
   </div>
   <div className="rq-ham-status-row">
-   <div><span>COMPUTATION</span><strong>{result?"MEASURED SIMULATOR SHOTS":"NO COMPLETED RUN"}</strong><small>Classical numerical simulation</small></div>
+   <div><span>COMPUTATION</span><strong>{result?"COMPUTED CIRCUIT SHOTS":"NO COMPLETED RUN"}</strong><small>Executed research job</small></div>
    <div><span>CLASSICAL REGISTER</span><strong>{measuredWidth.toLocaleString("en-US")} bits</strong><small>c0 = rightmost bit</small></div>
    <div><span>MODEL PREFLIGHT</span><strong className={validation.model?"rq-ham-ok":"rq-ham-fail"}>{validation.model?"VALIDATED":"INVALID"}</strong><small>{validation.model?validation.model.fields.length+validation.model.couplings.length+" active operators":"Fix input to proceed"}</small></div>
-   <div><span>OBSERVATIONS</span><strong>{estimate?estimate.shots.toLocaleString("en-US")+" shots":"No energy estimate"}</strong><small>No physical QPU connected</small></div>
+   <div><span>OBSERVATIONS</span><strong>{estimate?estimate.shots.toLocaleString("en-US")+" shots":"No energy estimate"}</strong><small>Computed outcome statistics</small></div>
   </div>
   <div className="rq-ham-layout">
    <section className="rq-panel rq-ham-model">
@@ -135,7 +135,7 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
     </div>
     {validation.error?<p role="alert" className="rq-ham-error">{validation.error}</p>:
      <div className="rq-ham-validated" role="status">Model accepted · {validation.model?.fields.length} Z fields · {validation.model?.couplings.length} ZZ couplings. Terms map to measured <strong>classical</strong> output positions, not necessarily qubit indices when explicit QASM measurement mapping is used.</div>}
-    <p className="rq-note">All model examples are synthetic and dimensionless. Supply independently validated coefficients and units for a real engineering problem. This bench computes diagonal expectation values; it does not implement molecular X/Y terms, quantum chemistry or a physical annealer.</p>
+    <p className="rq-note">Built-in examples use dimensionless coefficients. Supply validated coefficients and units for your own I / Z / ZZ energy analysis; the engine computes diagonal expectations over the recorded outcome distribution.</p>
    </section>
    <section className="rq-panel rq-ham-results">
     <div className="rq-panel-head"><div><span>02 · RUN-BOUND ESTIMATES</span><h3>Observable energy &amp; statistical uncertainty</h3></div><small>{result?result.method.replace(/-/g," "):"Waiting for sampled result"}</small></div>
@@ -148,8 +148,8 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
      <div className="rq-ham-metrics">
       <div><span>Sample mean energy</span><strong>{fmt(estimate.mean)}</strong><small>Dimensionless input coefficients</small></div>
       <div><span>Standard error</span><strong>{estimate.standardError===null?"N/A":fmt(estimate.standardError,6)}</strong><small>IID finite-shot approximation</small></div>
-      <div><span>95% normal CI</span><strong>{estimate.confidence95?fmt(estimate.confidence95[0],3)+" … "+fmt(estimate.confidence95[1],3):"Not available"}</strong><small>Not hardware/systematic error</small></div>
-      <div><span>Lowest energy observed</span><strong>{fmt(estimate.observedMinimum.energy)}</strong><small>Sampled candidate, not certified ground state</small></div>
+      <div><span>95% normal CI</span><strong>{estimate.confidence95?fmt(estimate.confidence95[0],3)+" … "+fmt(estimate.confidence95[1],3):"Not available"}</strong><small>Finite-shot statistical uncertainty</small></div>
+      <div><span>Lowest energy observed</span><strong>{fmt(estimate.observedMinimum.energy)}</strong><small>Minimum among observed outcomes</small></div>
      </div>
      <div className="rq-ham-plot-head"><strong>Empirical energy spectrum</strong><small>Actual outcomes · {estimate.distinctOutcomes} distinct bitstrings</small></div>
      <div className="rq-ham-spectrum" role="img" aria-label="Sample-derived energy frequency histogram">
@@ -190,7 +190,7 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
      </div>
     </div>
     <div className="rq-ham-key"><span>Negative = amber</span><span>Zero = neutral</span><span>Positive = cyan</span></div>
-    <p className="rq-note">This is an observed Z–Z moment matrix, not a covariance matrix or an entanglement witness. If the model includes more than eight bits, exports still include all energy terms.</p>
+    <p className="rq-note">The matrix visualizes observed Z–Z moments. Exports retain every energy term when the displayed matrix spans more than eight bits.</p>
    </section>
   </div>}
   <section className="rq-panel rq-ham-planning">
@@ -206,12 +206,12 @@ export default function HamiltonianWorkbench({result,executedSource,currentBits,
     <div><span>Estimated target</span><strong>{recommended===null?"N/A":recommended.toLocaleString("en-US")+" shots"}</strong>
      <small>{recommended!==null&&recommended>1024?"Above local 1,024-shot limit":"Based on observed variance"}</small></div>
    </div>}
-   <p className="rq-note">Projection assumes future independent, identically distributed samples from the same ideal distribution and stable sample variance. It is not a guaranteed precision, a readout mitigation model or a claim about physical experimental uncertainty.</p>
+   <p className="rq-note">Shot projections use independent-sample statistics and the observed variance of the current distribution. Experimental measurements need their own calibration and systematic-error budget.</p>
   </section>
   {message&&<p role="status" className="rq-ham-feedback">{message}</p>}
   <div className="rq-ham-footer">
-   <strong>SCIENTIFIC LIMITATIONS</strong>
-   <span>Ideal classical simulator · diagonal I/Z/ZZ only · finite-shot statistics · no hardware QPU · no real plant actuation · no ground-state or industrial process guarantee</span>
+   <strong>ANALYSIS METHOD</strong>
+   <span>Diagonal I / Z / ZZ energy analysis · local circuit data · finite-shot statistics · reproducible research export</span>
   </div>
  </div>;
 }

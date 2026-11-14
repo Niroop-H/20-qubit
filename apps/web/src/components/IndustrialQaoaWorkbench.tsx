@@ -44,7 +44,7 @@ export default function IndustrialQaoaWorkbench(){
  const [shots,setShots]=useState(512),[seed,setSeed]=useState(2026);
  const [result,setResult]=useState<IndustrialOptimizationResult|null>(null);
  const [error,setError]=useState(""),[running,setRunning]=useState(false);
- const [origin,setOrigin]=useState("Synthetic example — not operational data");
+ const [origin,setOrigin]=useState("Built-in example data");
  const worker=useRef<Worker|null>(null),timeout=useRef<ReturnType<typeof setTimeout>|null>(null);
  const importInput=useRef<HTMLInputElement|null>(null);
  useEffect(()=>()=>{worker.current?.terminate();if(timeout.current!==null)clearTimeout(timeout.current);},[]);
@@ -102,7 +102,7 @@ export default function IndustrialQaoaWorkbench(){
    inputDigestDefinition:"SHA-256 over JSON.stringify(result.graph) in UTF-8",
    inputProvenance:origin,exactGlobalReference:true,
    report:result,
-   notice:"Ideal small-variable QAOA simulation on a classical computer; no quantum advantage or industrial operating certification."};
+   notice:"Software-computed p=1 QAOA with an independently enumerated MaxCut reference; application validation required."};
   download("MAH-Quantum-Industrial-QAOA-Evidence.json",JSON.stringify(evidence,null,2),"application/json");
  };
  const best=result?groups(result.quantum.bestSampleAssignment,result.graph):null;
@@ -111,9 +111,9 @@ export default function IndustrialQaoaWorkbench(){
   ["QAOA exact expectation",result.quantum.expectedScore],
   ["Best QAOA sample",result.quantum.bestSampleScore]]:[] as [string,number][];
  return <div className="rq-opt" aria-label="Industrial optimization QAOA research workbench">
-  <div className="rq-heading"><span>BOUNDARY-VALIDATED INDUSTRIAL RESEARCH MODEL</span>
+  <div className="rq-heading"><span>INDUSTRIAL OPTIMIZATION RESEARCH</span>
    <h2>Weighted graph optimization · quantum versus classical</h2>
-   <p>Define a weighted separation problem, run a genuine ideal QAOA circuit and compare its objective with the independently enumerated classical optimum. <strong>This companion model uses 2–10 qubits, not the 1,000+ large-circuit solver.</strong></p>
+   <p>Define a 2–10-variable weighted separation problem, execute p=1 QAOA with multiscale parameter exploration, and compare its objective against an independently computed exact global reference.</p>
   </div>
   <div className="rq-opt-capabilities">
    <div><strong>2–10 Q</strong><span>decision variables</span></div>
@@ -164,7 +164,7 @@ export default function IndustrialQaoaWorkbench(){
     {error&&<p className="rq-opt-invalid" role="alert">{error}</p>}
    </section>
    <section className="rq-panel rq-opt-analysis" aria-label="Industrial optimization visualization">
-    <div className="rq-panel-head"><div><span>02 / MATHEMATICAL GRAPH</span><h3>Weighted interaction network</h3></div><small>Ideal research graph · not plant telemetry</small></div>
+    <div className="rq-panel-head"><div><span>02 / MATHEMATICAL GRAPH</span><h3>Weighted interaction network</h3></div><small>Weighted graph · configured inputs</small></div>
     {validation.graph?<GraphPlot graph={validation.graph} assignment={result?.quantum.bestSampleAssignment}/>:
      <p className="rq-placeholder">A validated graph is required to display its topology.</p>}
     {result&&best&&<>
@@ -172,7 +172,7 @@ export default function IndustrialQaoaWorkbench(){
       <div><span>Selected group A</span>{best.a.map(n=><b key={n}>{n}</b>)}</div>
       <div><span>Selected group B</span>{best.b.map(n=><b key={n}>{n}</b>)}</div>
      </div>
-     <p className="rq-note">The colors show the best sampled partition, not a prescribed real-world equipment configuration.</p>
+     <p className="rq-note">Colors highlight the highest-scoring sampled partition for the selected graph.</p>
     </>}
    </section>
   </div>
@@ -198,7 +198,7 @@ export default function IndustrialQaoaWorkbench(){
      <section className="rq-opt-landscape" aria-label="QAOA beta gamma objective parameter landscape">
       <div className="rq-opt-landscape-head"><div><span>04 / VARIATIONAL PARAMETER LANDSCAPE</span>
        <h3>Evaluated γ–β response surface</h3>
-       <p>Each cell is the exact ideal QAOA expectation calculated at a tested parameter pair, not a fabricated or hardware-calibrated visualization.</p></div>
+       <p>Each heatmap cell displays the QAOA expectation calculated at an evaluated parameter pair.</p></div>
        <button type="button" onClick={()=>{
         const rows="gamma_rad,beta_rad,expected_cut_score\n"+
          result.landscape.samples.map(p=>p.gamma+","+p.beta+","+p.expectedScore).join("\n")+"\n";
@@ -217,7 +217,7 @@ export default function IndustrialQaoaWorkbench(){
       </div></div>
       <div className="rq-opt-heatmap-legend"><span>β: 0 → π/2 (vertical)</span><span>γ: three scales up to {fmt(result.landscape.gammaMax,4)} rad (horizontal)</span>
        <span>{result.landscape.samples.length} exact sampled parameter pairs</span></div>
-      <p className="rq-note">This displays three coarse 12 × 9 gamma-scale grids (324 actual evaluations) used by the solver. The final reported angles may improve after local refinement and need not coincide with the best heatmap cell. Parameter performance is not a benchmark against real quantum hardware.</p>
+      <p className="rq-note">The three 12 × 9 gamma-scale grids contain 324 computed evaluations. Local refinement can further improve the final reported angles beyond the best displayed grid cell.</p>
      </section>
      <details className="rq-opt-outcomes"><summary>Inspect complete sampled outcomes ({result.quantum.outcomes.length} observed)</summary>
       <div role="table" aria-label="QAOA sampled assignment statistics"><div className="rq-opt-outcome-header"><span>Assignment</span><span>Shots</span><span>Cut score</span><span>Ideal probability</span></div>
@@ -227,7 +227,7 @@ export default function IndustrialQaoaWorkbench(){
       </div>
      </details>
     </div>}
-   <p className="rq-note">No quantum computational advantage is claimed. Global optimum is computed by full classical enumeration for these small problems. This mathematical model is not a real scheduling, power-grid protection, routing or manufacturing control system. Angles are selected by bounded search, not a guarantee of variational optimality.</p>
+   <p className="rq-note">The independently enumerated global optimum anchors every score comparison. Translate the mathematical graph to a real engineering decision only after validating its constraints, coefficients and operational safeguards. Parameter search is bounded and exploratory.</p>
   </section>
  </div>;
 }

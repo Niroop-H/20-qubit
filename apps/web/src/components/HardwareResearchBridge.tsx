@@ -86,12 +86,12 @@ export default function HardwareResearchBridge(){
  return <div className="rq-hardware">
   <div className="rq-heading"><span>PHYSICAL EQUIPMENT / SCIENTIFIC EDGE</span>
    <h2>Connect industrial instruments with quantum research</h2>
-   <p>Physical hardware is accessed on a customer-operated edge host. The browser displays imported acquisition evidence; it never sends direct control commands to industrial machines.</p></div>
+   <p>Configure approved SCPI/TCP and read-only Modbus/TCP instrument acquisition on your customer-operated edge host. Import signed telemetry snapshots, inspect measured channels and prepare reproducible quantum analysis jobs.</p></div>
   <div className="rq-hardware-flow">
    <div><strong>01 / Instruments</strong><small>Configured SCPI or Modbus device</small></div>
    <div><strong>02 / Local gateway</strong><small>Approved endpoint and numeric readings</small></div>
    <div><strong>03 / Integrity</strong><small>Timestamp + signed hardware snapshot</small></div>
-   <div><strong>04 / Quantum analysis</strong><small>Bounded ideal circuit via research API</small></div>
+   <div><strong>04 / Quantum analysis</strong><small>Validated circuit job via research API</small></div>
   </div>
   <section className="rq-panel rq-hardware-safety">
    <div className="rq-panel-head"><div><span>PHYSICAL EQUIPMENT SAFETY</span><h3>Interlocks are independent of the quantum engine</h3></div></div>

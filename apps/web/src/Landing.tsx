@@ -43,7 +43,7 @@ function ParticleField(){
 const faqs = [
   [
     "How does workspace access work?",
-    "The public website introduces the platform; the computational workspaces require authorized access. Supported simulations run locally in your browser. Commercial access terms depend on the organization.",
+    "The public website introduces the platform; the computational workspaces require authorized access. Circuit experiments execute through local browser compute engines. Commercial access terms depend on the organization.",
   ],
   [
     "Do I need to know quantum computing?",
@@ -55,7 +55,7 @@ const faqs = [
   ],
   [
     "What can I build?",
-    "Use the 100-logical-qubit Studio or the separate 1000+ Qubit workspace (up to 4,096 logical qubits for specified circuit families). Exact dense statevectors are limited to 20 qubits; larger circuits use restricted mathematical representations.",
+    "Build and analyze circuits in the 100-logical-qubit Studio or the 1,000–4,096 logical-qubit research workspace. Choose dense statevectors (up to 20 qubits), exact stabilizer methods, separable gates or partitioned circuit execution to match your experiment.",
   ],
 ];
 export default function Landing() {
@@ -90,7 +90,7 @@ export default function Landing() {
               </a>
             </div>
             <p className="hero-note">
-              CLASSICAL QUANTUM SIMULATION <span> / </span> CONTROLLED WORKSPACE ACCESS
+              QUANTUM COMPUTING WORKSPACES <span> / </span> CONTROLLED RESEARCH ACCESS
             </p>
           </div>
           <div className="hero-object">

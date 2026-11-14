@@ -41,7 +41,7 @@ async function main(){
   assert.equal(response?.status(),200);
   await page.getByRole("link",{name:/1000\+ Qubit workspace/i}).waitFor({timeout:25000});
   const copy=await page.locator(".landing").innerText();
-  assert.ok(copy.includes("CONTROLLED WORKSPACE ACCESS"));
+  assert.ok(copy.includes("CONTROLLED RESEARCH ACCESS"));
   assert.match(copy,/100\s+logical qubits/i);
   assert.ok(!copy.includes("NO SIGN-UP REQUIRED"));
   return{controlledAccessDisclosure:true,largeWorkspaceLinked:true};
@@ -251,7 +251,7 @@ async function main(){
   assert.equal(await page.locator(".rq-equipment-card").count(),1);
   await page.locator(".rq-equipment-card summary").first().click();
   const detail=await page.locator(".rq-equipment-card").first().innerText();
-  assert.match(detail,/No live instrument API|Not connected/i);
+  assert.match(detail,/documentation profile, not a live device connection/i);
   await page.getByRole("button",{name:/Industrial models/}).click();
   assert.equal(await page.locator(".rq-app-card").count(),10);
   return{instrumentReferenceMinimum:30,platformFiltered:platformCount,models:10,hardwareConnected:false};
@@ -283,7 +283,7 @@ async function main(){
   await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:30000});
   await page.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
   await page.getByRole("heading",{name:"Weighted graph optimization · quantum versus classical"}).waitFor({timeout:20000});
-  assert.ok((await page.locator(".rq-opt").innerText()).includes("2–10 qubits"));
+  assert.ok((await page.locator(".rq-opt").innerText()).includes("2–10-variable"));
   await page.getByRole("button",{name:"Run QAOA and classical reference"}).click();
   await page.getByRole("heading",{name:"Quantum/classical benchmark and reproducibility"}).waitFor({timeout:35000});
   await page.locator(".rq-opt-metrics").getByText("QAOA expectation / exact optimum").waitFor({timeout:35000});
@@ -423,7 +423,7 @@ async function main(){
   await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("128");
   const expectedQasm=await page.getByRole("textbox",{name:"Large quantum QASM code"}).inputValue();
   await page.locator(".rq-rail>button").filter({hasText:"Integration Bridge"}).click();
-  await page.getByRole("heading",{name:"Connect engineering systems with the quantum simulator"}).waitFor({timeout:20000});
+  await page.getByRole("heading",{name:"Connect engineering systems with the MAH Quantum engine"}).waitFor({timeout:20000});
   assert.equal(await page.locator(".rq-integration input[type=password]").count(),0);
   const next=page.waitForEvent("download",{timeout:12000});
   await page.getByRole("button",{name:"Download API request"}).click();
