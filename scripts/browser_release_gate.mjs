@@ -259,7 +259,15 @@ async function main(){
   await page.locator(".rq-rail>button").filter({hasText:"Circuit Workbench"}).click();
   await page.getByRole("textbox",{name:"Research experiment name"}).fill("Research validation session");
   await page.getByRole("button",{name:"Save experiment"}).click();
-  await page.getByText(/Autosaved locally/).waitFor({timeout:12000});
+  await page.waitForFunction(()=>{
+   const raw=localStorage.getItem("mah-quantum-1000-research-v1");
+   if(!raw)return false;
+   try{
+    const doc=JSON.parse(raw);
+    return doc.draft.name==="Research validation session"&&
+      doc.saved.some(x=>x.name==="Research validation session");
+   }catch{return false;}
+  },null,{timeout:12000});
   await page.reload({waitUntil:"domcontentloaded"});
   await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:20000});
   assert.equal(await page.getByRole("textbox",{name:"Research experiment name"}).inputValue(),"Research validation session");
