@@ -79,8 +79,10 @@ async function main(){
    assert.match(await other.locator("body").innerText(),/allowance used|renews in/i);
    await other.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
    await other.getByRole("button",{name:"Run quantum circuit"}).waitFor({timeout:30000});
+   await other.waitForFunction(()=>document.querySelector("button.large-primary")?.hasAttribute("disabled"),null,{timeout:10000});
    assert.equal(await other.getByRole("button",{name:"Run quantum circuit"}).isDisabled(),true);
    await other.locator(".rq-rail>button").filter({hasText:"Industrial Optimization"}).click();
+   await other.waitForFunction(()=>document.querySelector("button.rq-opt-primary")?.hasAttribute("disabled"),null,{timeout:10000});
    assert.equal(await other.getByRole("button",{name:"Run QAOA and classical reference"}).isDisabled(),true);
    return{sharedAllowance:true,remaining:0,cooldownHours:5,otherWorkspacesBlocked:true};
   }finally{await context.close();}
