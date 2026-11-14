@@ -21,9 +21,9 @@ from mah_quantum_hardware import (
 from mah_quantum_modbus import ModbusProfile, Register, read_modbus_snapshot
 
 
-def _load_file(path: Path) -> dict[str, Any]:
-    if path.stat().st_size>65536:
-        raise ValueError("Equipment configuration exceeds 64 KiB.")
+def _load_file(path: Path, *, max_bytes: int = 65536) -> dict[str, Any]:
+    if path.stat().st_size>max_bytes:
+        raise ValueError("Edge JSON input exceeds the configured bounded size.")
     data=json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data,dict):
         raise ValueError("Expected a configuration object.")
@@ -132,7 +132,7 @@ def run(argv:list[str]|None=None)->int:
         key=os.environ.get("MAH_QUANTUM_INDUSTRY_API_KEY","")
         if len(key)<32:
             raise RuntimeError("Industry API secret must be configured on the customer edge server.")
-        job=_load_file(args.job)
+        job=_load_file(args.job,max_bytes=131072)
         client=IndustryClient(args.base_url,key)
         result=client.execute(job)
         if not verify_result(job,result):
