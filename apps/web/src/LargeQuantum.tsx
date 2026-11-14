@@ -236,7 +236,7 @@ export default function LargeQuantum(){
     <nav className="rq-rail" aria-label="Quantum research tools">
      <div className="rq-rail-title"><span>RESEARCH MODULES</span><b>01–06</b></div>
      {navItems.map((item,i)=><button key={item.key} aria-current={tab===item.key?"page":undefined}
-      onClick={()=>{setTab(item.key);setFocus(false);}}>
+      onClick={()=>{setTab(item.key);setFocus(false);window.scrollTo({top:0,behavior:"auto"});}}>
       <span className="rq-nav-index">{String(i+1).padStart(2,"0")}</span><span><strong>{item.name}</strong><small>{item.detail}</small></span></button>)}
      <div className="rq-rail-summary">
       <span>WORKSPACE SAFETY</span><p>Models run locally in browser workers. Saved experiments remain on this device and are not encrypted. Equipment cards are reference information only.</p>
