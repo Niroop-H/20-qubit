@@ -63,27 +63,27 @@ export function parseLargeQasm(source:string):LargeProgram{
    }
    if(!qName)throw new Error("Declare quantum register before operations.");
    operation=true;
-   const operation=readQuantumOperation(statement);
-   if(operation.kind==="arrow"){
-    const a=address(operation.quantum,"q"),b=address(operation.classical,"c");
+   const parsed=readQuantumOperation(statement);
+   if(parsed.kind==="arrow"){
+    const a=address(parsed.quantum,"q"),b=address(parsed.classical,"c");
     if(a.length!==b.length)throw Error("Measurement registers must match.");
     a.forEach((q,i)=>add("MEASURE",[q],[],undefined,b[i]));continue;
    }
-   if(operation.kind==="assignment"){
+   if(parsed.kind==="assignment"){
     if(version==="2.0")throw Error("Assignment measurement requires QASM3.");
-    const a=address(operation.quantum,"q"),b=address(operation.classical,"c");
+    const a=address(parsed.quantum,"q"),b=address(parsed.classical,"c");
     if(a.length!==b.length)throw Error("Measurement registers must match.");
     a.forEach((q,i)=>add("MEASURE",[q],[],undefined,b[i]));continue;
    }
-   if(operation.kind==="barrier"){
-    const targets=operation.operands.split(",").flatMap(s=>address(s,"q"));
+   if(parsed.kind==="barrier"){
+    const targets=parsed.operands.split(",").flatMap(s=>address(s,"q"));
     if(targets.length)add("BARRIER",targets);continue;
    }
-   const name=operation.name,args=operation.angles.map(expression);
+   const name=parsed.name,args=parsed.angles.map(expression);
    const nargs:{[gate:string]:number}={id:0,i:0,h:0,x:0,y:0,z:0,s:0,t:0,sdg:0,tdg:0,sx:0,sxdg:0,rx:1,ry:1,rz:1,p:1,u1:1,u2:2,u:3,u3:3,cx:0,cz:0,swap:0,ccx:0};
    if(!Object.prototype.hasOwnProperty.call(nargs,name))throw new Error("Unsupported scalable instruction "+name);
    if(args.length!==nargs[name])throw new Error(name+" expects "+nargs[name]+" angle parameters.");
-   const operands=operation.operands.split(",").map(s=>address(s,"q"));
+   const operands=parsed.operands.split(",").map(s=>address(s,"q"));
    const arity=name==="ccx"?3:["cx","cz","swap"].includes(name)?2:1;
    if(operands.length!==arity)throw new Error(name+" requires "+arity+" operand(s).");
    const width=Math.max(...operands.map(a=>a.length));
