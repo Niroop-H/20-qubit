@@ -1,0 +1,31 @@
+{
+  "schema": "MAH-Quantum-Modbus-Config/v1",
+  "devices": [
+    {
+      "device_id": "modbus-sensor-1",
+      "ip": "192.168.10.40",
+      "port": 502,
+      "unit_id": 1,
+      "enabled": false,
+      "timeout": 2.5,
+      "registers": [
+        {
+          "label": "temperature",
+          "address": 10,
+          "encoding": "int16",
+          "scale": 0.1,
+          "offset": 0,
+          "unit": "degC"
+        },
+        {
+          "label": "pressure",
+          "address": 20,
+          "encoding": "float32",
+          "scale": 1,
+          "offset": 0,
+          "unit": "bar"
+        }
+      ]
+    }
+  ]
+}
