@@ -515,6 +515,76 @@ async function main(){
   assert.ok(Math.abs(angle-.255)<1e-12);
   return{measurements:2,offlineEvidenceClearlyLabeled:true,scientificAngleRad:.255};
  });
+ await test("Hamiltonian laboratory evaluates actual GHZ shots with traceable finite-shot estimates",async()=>{
+  await page.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:25000});
+  await page.getByRole("combobox",{name:"Large circuit preset"}).selectOption("ghz");
+  await page.getByRole("combobox",{name:"Large circuit shots"}).selectOption("128");
+  await page.getByRole("button",{name:"Run quantum circuit"}).click();
+  await page.locator(".large-telemetry").getByText("Completed shots").waitFor({timeout:60000});
+  await page.locator(".rq-rail>button").filter({hasText:"Hamiltonian Lab"}).click();
+  await page.getByRole("heading",{name:"Diagonal Ising analysis laboratory"}).waitFor({timeout:10000});
+  assert.equal(await page.locator(".rq-ham-validated").count(),1);
+  assert.match(await page.locator(".rq-ham-metrics").innerText(),/Sample mean energy/);
+  assert.ok(await page.locator(".rq-ham-matrix [role=cell]").count()>=9);
+  const dl=page.waitForEvent("download",{timeout:20000});
+  await page.getByRole("button",{name:"Export verified-input report"}).click();
+  const report=JSON.parse(readFileSync(await (await dl).path(),"utf8"));
+  assert.equal(report.schema,"MAH-Quantum-Hamiltonian-Evidence/v1");
+  assert.equal(report.physicalQpu,false);
+  assert.equal(report.input.completedShots,128);
+  assert.equal(report.analysis.shots,128);
+  assert.equal(report.analysis.schema,"MAH-Quantum-Ising-Sample-Analysis/v1");
+  assert.match(report.input.source,/qreg q\[1000\]/);
+  const model=report.analysis.model;
+  let sum=0,n=0;
+  for(const [bits,count] of Object.entries(report.observation.counts)){
+   const z=i=>bits[bits.length-i-1]==="1"?-1:1;
+   const energy=model.offset+
+    model.fields.reduce((v,t)=>v+t.weight*z(t.bit),0)+
+    model.couplings.reduce((v,t)=>v+t.weight*z(t.a)*z(t.b),0);
+   sum+=energy*count;n+=count;
+  }
+  assert.equal(n,128);
+  assert.ok(Math.abs(sum/n-report.analysis.mean)<1e-10);
+  assert.ok(Math.abs(report.analysis.termEstimates.reduce((v,t)=>v+t.contribution,0)-report.analysis.mean)<1e-10);
+  assert.equal(report.analysis.histogram.reduce((v,b)=>v+b.shots,0),128);
+  const csvNext=page.waitForEvent("download",{timeout:12000});
+  await page.getByRole("button",{name:"Export term CSV"}).click();
+  const csv=readFileSync(await (await csvNext).path(),"utf8");
+  assert.match(csv,/term,coefficient,observed_expectation,energy_contribution/);
+  return{realShots:128,energyRecomputed:true,allTermsReconciled:true,sha256Bound:!!report.input.sourceSha256};
+ });
+ await test("Hamiltonian editor rejects malformed models and restores bounded mathematical presets",async()=>{
+  await page.getByRole("textbox",{name:"Hamiltonian model JSON"}).fill("{ bad json");
+  await page.locator(".rq-ham-error").first().waitFor({timeout:10000});
+  assert.equal(await page.getByRole("button",{name:"Export verified-input report"}).count(),0);
+  await page.getByRole("combobox",{name:"Ising model preset"}).selectOption("frustration");
+  await page.locator(".rq-ham-validated").waitFor({timeout:10000});
+  assert.ok((await page.locator(".rq-ham-metrics").innerText()).includes("Sample mean energy"));
+  return{malformedRejected:true,validPresetRestored:true};
+ });
+ await test("Hamiltonian scientific analysis is usable in 390px mobile Chromium",async()=>{
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  await context.addInitScript(()=>{
+   localStorage.setItem("mah-workspace-access-v1",JSON.stringify({
+    version:1,active:"c0",codes:{"c0":{usedMs:0,cooldownUntil:0}},owner:null,heartbeat:0
+   }));
+  });
+  const mobile=await context.newPage();
+  try{
+   await mobile.goto(base+"/1000-plus",{waitUntil:"domcontentloaded"});
+   await mobile.getByRole("heading",{name:"1000+ Qubit"}).waitFor({timeout:25000});
+   await mobile.locator(".rq-rail>button").filter({hasText:"Hamiltonian Lab"}).click();
+   await mobile.getByRole("heading",{name:"Diagonal Ising analysis laboratory"}).waitFor({timeout:15000});
+   const bounds=await mobile.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
+   assert.ok(bounds.page<=bounds.viewport+8,"Hamiltonian mobile overflow: "+JSON.stringify(bounds));
+   await mobile.getByRole("button",{name:"Configure and run circuit"}).waitFor();
+   mkdirSync("artifacts",{recursive:true});
+   await mobile.screenshot({path:"artifacts/hamiltonian-scientific-mobile.png",fullPage:true});
+   return{viewportPx:390,pageWidthPx:bounds.page,emptyAnalysisHonest:true};
+  }finally{await context.close();}
+ });
  await test("No uncaught browser page exceptions",async()=>{
   assert.deepEqual(pageErrors,[]);
   return{uncaughtExceptions:pageErrors.length};
